@@ -1,0 +1,14 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "Product and engineering workflows",
+      "description": "Skills for product documentation, task governance, and reliable software delivery.",
+      "skills": [
+        "dev-docs",
+        "dev-rules"
+      ]
+    }
+  ]
+}
