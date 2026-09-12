@@ -1,0 +1,20 @@
+{
+  "name": "kovaa",
+  "description": "Agent skills maintained by kovaa.",
+  "owner": {
+    "name": "kovaa",
+    "email": "alex@kovaa.me"
+  },
+  "plugins": [
+    {
+      "name": "kovaa-agent-skills",
+      "description": "Independent skills for product documentation governance and reliable software delivery workflows.",
+      "version": "0.2.0",
+      "source": "./",
+      "author": {
+        "name": "kovaa",
+        "email": "alex@kovaa.me"
+      }
+    }
+  ]
+}

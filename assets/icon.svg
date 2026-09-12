@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">kovaa Agent Skills</title>
+  <desc id="description">Two connected vertical paths representing product documentation and engineering delivery.</desc>
+  <rect width="512" height="512" rx="112" fill="#5B5BD6"/>
+  <path d="M156 128v256M356 128v256M156 196h104c53 0 96 43 96 96v92" fill="none" stroke="#FFFFFF" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="156" cy="128" r="32" fill="#FFFFFF"/>
+  <circle cx="356" cy="384" r="32" fill="#FFFFFF"/>
+</svg>
