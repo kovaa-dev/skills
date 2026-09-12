@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 No unreleased changes.
 
+## [0.3.0](https://github.com/kovaa-dev/skills/compare/v0.2.0...v0.3.0) (2026-09-12)
+
+
+### Features
+
+* add skill and plugin distribution ([#2](https://github.com/kovaa-dev/skills/issues/2)) ([e4e194a](https://github.com/kovaa-dev/skills/commit/e4e194a6d3146af19f7c5b1682374a5e2dac8685))
+
 ## 0.2.0 - 2026-09-12
 
 ### Added
