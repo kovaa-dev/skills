@@ -1,0 +1,23 @@
+{
+  "name": "kovaa-dev",
+  "interface": {
+    "displayName": "Kovaa Dev"
+  },
+  "plugins": [
+    {
+      "name": "kovaa-agent-skills",
+      "source": {
+        "source": "local",
+        "path": "."
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL",
+        "products": [
+          "CODEX"
+        ]
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
