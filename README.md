@@ -147,23 +147,6 @@ Each skill directory contains:
 - `references/` — detailed rules, procedures, and templates;
 - `README.md` — a short human-facing overview.
 
-## Development and validation
-
-Run the same local checks used by CI:
-
-```bash
-python3 scripts/validate.py
-DISABLE_TELEMETRY=1 npx --yes skills@1.5.26 add . --list
-```
-
-The validator checks frontmatter, names, descriptions, local Markdown links and anchors, fenced blocks, machine-local paths, manifests, and the skills.sh grouping.
-
-## Releases
-
-The repository uses [Conventional Commits](https://www.conventionalcommits.org/) and Release Please. After each push to `main`, the workflow creates or updates a release PR from releasable commits. It updates `CHANGELOG.md`, plugin manifests, and README version markers together. Merging the release PR creates the corresponding `vX.Y.Z` tag and GitHub Release.
-
-The `v0.2.0` release is the automation baseline. Subsequent versions are calculated from Conventional Commit types and breaking-change markers; do not edit managed version fields independently.
-
 ## Version
 
 The current repository and plugin version is `v0.2.0`. <!-- x-release-please-version -->
