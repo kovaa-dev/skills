@@ -134,7 +134,9 @@ A public listing on [claude.com/plugins](https://claude.com/plugins) requires a 
 - `.agents/plugins/marketplace.json` — self-hosted Codex marketplace entry;
 - `skills.sh.json` — presentation metadata for the skills.sh repository page;
 - `scripts/validate.py` — dependency-free repository validation;
-- `.github/workflows/validate.yml` — pull-request and `main` validation;
+- `.github/workflows/validate.yml` — pull-request, dispatched, and `main` validation;
+- `.github/workflows/release-please.yml` — Conventional Commits release automation;
+- `release-please-config.json` and `.release-please-manifest.json` — release policy and current version;
 - `CHANGELOG.md` — repository release history;
 - `CONTRIBUTING.md` — contribution guidelines;
 - `SECURITY.md` and `PRIVACY.md` — security and privacy information.
@@ -156,9 +158,15 @@ DISABLE_TELEMETRY=1 npx --yes skills@1.5.26 add . --list
 
 The validator checks frontmatter, names, descriptions, local Markdown links and anchors, fenced blocks, machine-local paths, manifests, and the skills.sh grouping.
 
+## Releases
+
+The repository uses [Conventional Commits](https://www.conventionalcommits.org/) and Release Please. After each push to `main`, the workflow creates or updates a release PR from releasable commits. It updates `CHANGELOG.md`, plugin manifests, and README version markers together. Merging the release PR creates the corresponding `vX.Y.Z` tag and GitHub Release.
+
+The `v0.2.0` release is the automation baseline. Subsequent versions are calculated from Conventional Commit types and breaking-change markers; do not edit managed version fields independently.
+
 ## Version
 
-The current repository and plugin version is `v0.2.0`.
+The current repository and plugin version is `v0.2.0`. <!-- x-release-please-version -->
 
 ## License
 

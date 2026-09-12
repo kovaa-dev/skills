@@ -80,4 +80,4 @@ See the repository [installation guide](../../README.md#install-with-npx-skills)
 
 ## Language and version
 
-The agent-facing instructions and baseline tracker schema are written in English. This skill is included in version `v0.2.0`.
+The agent-facing instructions and baseline tracker schema are written in English. This skill is included in version `v0.2.0`. <!-- x-release-please-version -->

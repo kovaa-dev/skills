@@ -221,14 +221,95 @@ def validate_manifests(skill_names: list[str], errors: list[str]) -> None:
         claude_marketplace = json.loads(claude_marketplace_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         errors.append(f".claude-plugin/marketplace.json: {exc}")
+        claude_marketplace = {}
     else:
         plugins = claude_marketplace.get("plugins", [])
         if claude_marketplace.get("name") != "kovaa":
             errors.append(".claude-plugin/marketplace.json: marketplace name must be kovaa")
         if len(plugins) != 1 or plugins[0].get("name") != "kovaa-agent-skills":
             errors.append(".claude-plugin/marketplace.json: expected one kovaa-agent-skills entry")
-        elif plugins[0].get("source") != "./":
-            errors.append(".claude-plugin/marketplace.json: plugin source must be ./")
+        else:
+            if plugins[0].get("source") != "./":
+                errors.append(".claude-plugin/marketplace.json: plugin source must be ./")
+            if not SEMVER_RE.fullmatch(str(plugins[0].get("version", ""))):
+                errors.append(".claude-plugin/marketplace.json: plugin version must be SemVer")
+
+    release_manifest_path = ROOT / ".release-please-manifest.json"
+    try:
+        release_manifest = json.loads(release_manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f".release-please-manifest.json: {exc}")
+        release_manifest = {}
+    release_version = str(release_manifest.get(".", ""))
+    if not SEMVER_RE.fullmatch(release_version):
+        errors.append(".release-please-manifest.json: root version must be SemVer")
+    claude_marketplace_plugins = claude_marketplace.get("plugins", [])
+    claude_marketplace_version = (
+        claude_marketplace_plugins[0].get("version")
+        if len(claude_marketplace_plugins) == 1
+        else None
+    )
+    for manifest_name, manifest_version in (
+        (".codex-plugin/plugin.json", plugin.get("version")),
+        (".claude-plugin/plugin.json", claude_plugin.get("version")),
+        (".claude-plugin/marketplace.json", claude_marketplace_version),
+    ):
+        if release_version and manifest_version != release_version:
+            errors.append(f"{manifest_name}: version must match the release manifest")
+
+    release_config_path = ROOT / "release-please-config.json"
+    try:
+        release_config = json.loads(release_config_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f"release-please-config.json: {exc}")
+    else:
+        package = release_config.get("packages", {}).get(".", {})
+        if package.get("release-type") != "simple":
+            errors.append("release-please-config.json: root release type must be simple")
+        expected_json_files = {
+            (".codex-plugin/plugin.json", "$.version"),
+            (".claude-plugin/plugin.json", "$.version"),
+            (".claude-plugin/marketplace.json", "$.plugins[0].version"),
+        }
+        configured_json_files = {
+            (item.get("path"), item.get("jsonpath"))
+            for item in package.get("extra-files", [])
+            if isinstance(item, dict) and item.get("type") == "json"
+        }
+        if configured_json_files != expected_json_files:
+            errors.append("release-please-config.json: managed JSON version files are incomplete")
+        expected_readme_files = {
+            "README.md",
+            "skills/dev-docs/README.md",
+            "skills/dev-rules/README.md",
+        }
+        configured_readme_files = {
+            item for item in package.get("extra-files", []) if isinstance(item, str)
+        }
+        if configured_readme_files != expected_readme_files:
+            errors.append("release-please-config.json: managed README version files are incomplete")
+
+    for readme_path in (
+        ROOT / "README.md",
+        ROOT / "skills" / "dev-docs" / "README.md",
+        ROOT / "skills" / "dev-rules" / "README.md",
+    ):
+        marker_lines = [
+            line
+            for line in readme_path.read_text(encoding="utf-8").splitlines()
+            if "x-release-please-version" in line
+        ]
+        if len(marker_lines) != 1:
+            errors.append(
+                f"{readme_path.relative_to(ROOT)}: expected one release-please version marker, found {len(marker_lines)}"
+            )
+            continue
+        version_match = re.search(r"`v([^`]+)`.*x-release-please-version", marker_lines[0])
+        readme_version = version_match.group(1) if version_match else ""
+        if not SEMVER_RE.fullmatch(readme_version):
+            errors.append(f"{readme_path.relative_to(ROOT)}: marker line must contain a SemVer `vX.Y.Z`")
+        elif release_version and readme_version != release_version:
+            errors.append(f"{readme_path.relative_to(ROOT)}: version must match the release manifest")
 
 
 def main() -> int:
@@ -240,6 +321,8 @@ def main() -> int:
         "CONTRIBUTING.md",
         "SECURITY.md",
         "PRIVACY.md",
+        ".release-please-manifest.json",
+        "release-please-config.json",
     ):
         if not (ROOT / required).is_file():
             errors.append(f"{required}: required repository file is missing")
