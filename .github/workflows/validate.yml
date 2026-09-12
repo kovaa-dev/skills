@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 jobs:
   validate:
@@ -31,3 +32,16 @@ jobs:
         env:
           DISABLE_TELEMETRY: "1"
         run: npx --yes skills@1.5.26 add . --list
+
+      - name: Report dispatched validation status
+        if: ${{ always() && github.event_name == 'workflow_dispatch' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATION_STATE: ${{ job.status == 'success' && 'success' || 'failure' }}
+        run: >-
+          gh api --method POST
+          'repos/${{ github.repository }}/statuses/${{ github.sha }}'
+          -f state="$VALIDATION_STATE"
+          -f context='validate'
+          -f description="Repository validation: $VALIDATION_STATE"
+          -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'

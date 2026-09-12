@@ -10,10 +10,13 @@ No unreleased changes.
 
 ## [0.3.0](https://github.com/kovaa-dev/skills/compare/v0.2.0...v0.3.0) (2026-09-12)
 
+### Added
 
-### Features
+- Added Release Please automation for synchronized version updates, changelog entries, Git tags, and GitHub Releases.
 
-* add skill and plugin distribution ([#2](https://github.com/kovaa-dev/skills/issues/2)) ([e4e194a](https://github.com/kovaa-dev/skills/commit/e4e194a6d3146af19f7c5b1682374a5e2dac8685))
+### Changed
+
+- Moved development, validation, and release guidance from the root README to the contribution guide.
 
 ## 0.2.0 - 2026-09-12
 
