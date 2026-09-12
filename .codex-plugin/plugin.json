@@ -1,0 +1,45 @@
+{
+  "name": "kovaa-agent-skills",
+  "version": "0.2.0",
+  "description": "Independent agent skills for product documentation governance and reliable software delivery workflows.",
+  "author": {
+    "name": "kovaa",
+    "email": "alex@kovaa.me",
+    "url": "https://github.com/kovaa-dev"
+  },
+  "homepage": "https://github.com/kovaa-dev/skills",
+  "repository": "https://github.com/kovaa-dev/skills",
+  "license": "MIT",
+  "keywords": [
+    "agent-skills",
+    "product-discovery",
+    "documentation",
+    "roadmap",
+    "software-delivery",
+    "pull-requests"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "kovaa Agent Skills",
+    "shortDescription": "Product documentation and software delivery workflows",
+    "longDescription": "Use dev-docs to guide product discovery, PRDs, roadmaps, decisions, maintenance, and documentation governance. Use dev-rules independently to execute engineering work with explicit scope, proportional validation, Git safety, pull-request readiness, and recoverable handoffs.",
+    "developerName": "kovaa",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/kovaa-dev/skills",
+    "privacyPolicyURL": "https://github.com/kovaa-dev/skills/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/kovaa-dev/skills/blob/main/LICENSE",
+    "defaultPrompt": [
+      "Help me shape a product idea into the smallest usable release path.",
+      "Implement this engineering task with explicit scope and proportional validation."
+    ],
+    "brandColor": "#5B5BD6",
+    "composerIcon": "./assets/icon.svg",
+    "logo": "./assets/icon.svg",
+    "screenshots": []
+  }
+}
