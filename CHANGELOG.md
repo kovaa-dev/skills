@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 No unreleased changes.
 
+## 0.2.0 - 2026-09-12
+
+### Added
+
+- Added dependency-free repository validation and pull-request CI.
+- Added `npx skills`, skills.sh, Codex plugin, and Claude Code plugin installation guides.
+- Added Codex and Claude Code marketplace metadata and manifests.
+- Added repository ownership metadata and a privacy policy.
+
+### Changed
+
+- Expanded contribution guidance for maintainer-controlled changes.
+- Updated human-facing documentation for public distribution.
+
 ## 0.1.0 - 2026-09-11
 
 ### Added

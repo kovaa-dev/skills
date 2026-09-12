@@ -61,14 +61,23 @@ Audit the current documentation and task tracker. Report conflicting sources, du
 
 ## Installation
 
-Install the skill with a compatible Agent Skills installer:
+Install the skill into the current project with the open-source [`skills`](https://github.com/vercel-labs/skills) CLI:
 
 ```bash
-npx skills add <owner>/<repository> --skill dev-docs
+npx skills add kovaa-dev/skills --skill dev-docs
 ```
 
-Use a project-local installation when the rules must be reviewed and versioned with a repository. Use a global installation for personal availability across projects. The target path is agent-specific and should be selected by the installer.
+For a global installation, add `--global`. Repeat `--agent` for each desired global-capable target and add `--yes` for a non-interactive install. Without `--agent`, the CLI detects installed agents and asks which targets to use; see the root guide for the `skills@1.5.26` limitation on global `--agent '*'`.
+
+Update or remove the skill with:
+
+```bash
+npx skills update dev-docs
+npx skills remove dev-docs
+```
+
+See the repository [installation guide](../../README.md#install-with-npx-skills) for project/global scope, reproducible commit-pinned sources, telemetry, and Codex plugin installation.
 
 ## Language and version
 
-The agent-facing instructions and baseline tracker schema are written in English. This skill is included in version `v0.1.0`.
+The agent-facing instructions and baseline tracker schema are written in English. This skill is included in version `v0.2.0`.
