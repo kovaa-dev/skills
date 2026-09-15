@@ -265,10 +265,20 @@ authority.
 - Commit a coherent, reviewable, revertible unit, not after every message or internal
   step. Do not mechanically split an atomic cross-layer vertical slice when intermediate
   commits would be inconsistent; follow the project's actual commitlint rules.
-- While the user is sending consecutive batches of the same work or known scope remains
-  open, keep the PR draft. Do not switch between draft/ready after every batch.
-- Before marking the current completed scope ready and before merge, fetch and integrate
-  the current base, resolve conflicts, and run risk-based ready checks.
+- Before opening a PR, complete all planned commits and closure locally. Do not push
+  between commits or closure steps: immediately before the PR, fetch and integrate the
+  current base, resolve conflicts, run risk-based ready checks, then publish the ready
+  branch with one push and open the PR.
+- Plan the initial publication so that one final PR CI run is sufficient. An additional
+  push and CI run is allowed only to address a discovered defect, CI failure/flake,
+  review change, conflict, or material base update; do not conceal a necessary fix merely
+  to preserve a formal run limit.
+- If incomplete scope must nevertheless be published by explicit request or for a
+  necessary remote-only check or collaborative review, create a draft. While the user is
+  sending consecutive batches of the same work or known scope remains open, keep the PR
+  draft; do not switch between draft/ready after every batch.
+- Before marking a draft ready and before merge, fetch and integrate the current base,
+  resolve conflicts, and run risk-based ready checks.
 - Update PR metadata only for a material change in scope, blocker, or readiness. A
   routine push does not require a separate body update.
 - Incomplete published scope is draft; completed scope after the boundary is ready.
