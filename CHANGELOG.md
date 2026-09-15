@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 No unreleased changes.
 
+## [0.4.0](https://github.com/kovaa-dev/skills/compare/v0.3.1...v0.4.0) (2026-09-15)
+
+
+### Features
+
+* **dev-rules:** streamline PR publication ([#8](https://github.com/kovaa-dev/skills/issues/8)) ([96a0c31](https://github.com/kovaa-dev/skills/commit/96a0c3167a34382281ea3afc755b4058c34f7554))
+
 ## [0.3.1](https://github.com/kovaa-dev/skills/compare/v0.3.0...v0.3.1) (2026-09-12)
 
 
