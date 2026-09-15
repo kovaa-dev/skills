@@ -22,6 +22,7 @@ LOCAL_PATH_RE = re.compile(r"(?:/Users/[^/<\s]+|/home/[^/<\s]+|[A-Za-z]:\\Users\
 LINK_RE = re.compile(r"(?<!!)\[[^]]*\]\(([^)]+)\)")
 HEADING_RE = re.compile(r"^#{1,6}\s+(.+?)\s*#*$")
 FENCE_RE = re.compile(r"^\s*(```+|~~~+)")
+ACTION_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
 class ValidationError(Exception):
@@ -149,6 +150,23 @@ def validate_markdown(errors: list[str]) -> None:
                 elif fragment and destination.suffix == ".md":
                     if fragment not in headings_by_path.get(destination, set()):
                         errors.append(f"{path.relative_to(ROOT)}: missing anchor {target}")
+
+
+def validate_workflows(errors: list[str]) -> None:
+    workflow_dir = ROOT / ".github" / "workflows"
+    for path in sorted((*workflow_dir.glob("*.yml"), *workflow_dir.glob("*.yaml"))):
+        for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            match = re.match(r"^\s*(?:-\s*)?uses:\s*[\"']?([^\"'\s#]+)", line)
+            if not match:
+                continue
+            action = match.group(1)
+            if action.startswith(("./", "docker://")):
+                continue
+            _, separator, revision = action.rpartition("@")
+            if not separator or not ACTION_SHA_RE.fullmatch(revision):
+                errors.append(
+                    f"{path.relative_to(ROOT)}:{line_number}: action must use a full commit SHA"
+                )
 
 
 def validate_manifests(skill_names: list[str], errors: list[str]) -> None:
@@ -329,6 +347,7 @@ def main() -> int:
 
     skill_names = validate_skills(errors)
     validate_markdown(errors)
+    validate_workflows(errors)
     validate_manifests(skill_names, errors)
 
     if errors:
