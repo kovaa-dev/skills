@@ -56,8 +56,9 @@ governance; it does not certify the product or code.
 
 1. Find existing project-work instructions and automation. In an empty project, do not
    create artificial history, CI, hooks, branches, or a task system.
-2. Agree on the minimum settings: default branch/base, Git/PR authority, required
-   project commands, generated files, and scoped exceptions. Add a worktree-local
+2. Agree on the minimum settings: default branch/base, project-specific restrictions
+   or extensions to task-scoped Git/PR authority, required project commands, generated
+   files, and scoped exceptions. Add a worktree-local
    handoff path/ignore only if the project actually uses handoff; do not create empty
    state.
 3. Ask the user to choose either a “project-local copy” or a “pinned published

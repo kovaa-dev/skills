@@ -8,8 +8,9 @@ set of rules. Historical `*.history.md` files are not part of the package.
 After adoption, use the [product discovery process](product-discovery.md):
 for a new product, it establishes the nearest minimum outcome and sequence;
 for an existing product, it determines the actual state and future feature delivery without
-retrospectively renaming history. Micro-grooming is performed before implementation of each PRD;
-empty templates do not replace it.
+retrospectively renaming history. Grooming moves a selected backlog PRD/task to
+`planned`, while a confirmed execution brief moves it to `in-progress`; empty templates
+replace neither the accepted contract nor its evidence.
 
 ## Adopting the rules
 
@@ -110,8 +111,9 @@ from the actual register. If a validator is selected, create only the structure 
 actually requires after checking the tool's requirements. Do not generate hundreds of empty
 tasks, mandatory marketing registers, or a second delivery plan.
 An explicitly assigned product hypothesis that requires tracking may be registered as a minimal
-backlog PRD before grooming; fill in the product contract and acceptance after sufficient
-grooming, and perform micro-grooming before implementation. Create a technical task for
+backlog PRD before grooming; fill in the product contract, acceptance, and grooming
+evidence before `planned`. Before implementing a `planned` PRD/task, provide only a
+short confirmed execution brief and move it to `in-progress`. Create a technical task for
 independently planned/tracked work; a local fix/refactor within an existing
 contract does not automatically receive a card. Every created task is immediately visible in the
 roadmap. Add a TD/ADR only for an actual decision; a backlog item without a decision contains

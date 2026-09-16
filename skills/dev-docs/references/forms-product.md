@@ -9,8 +9,8 @@ Adapt paths and field language to the project settings and the checks actually s
 An assigned product hypothesis may be recorded as a short PRD with `backlog` status:
 ID, source, hypothesis/problem, owner or `unassigned`, open questions, and a link from
 the roadmap. Do not fill in an invented contract, acceptance, or technical scope.
-Before implementation, expand the same card after micro-grooming; do not create a
-duplicate.
+Grooming expands the same card, records evidence, and permits `planned` only after
+acceptance; do not create a duplicate merely to change status.
 
 ## PRD — `docs/tasks/product/PRD-001.md`
 
@@ -19,6 +19,7 @@ duplicate.
 
 - Status: backlog
 - Owner: <product owner>
+- Grooming: incomplete
 - Source: <requirement source and date>
 - Product dependencies: none
 
@@ -66,8 +67,10 @@ links to technical cards. Closing technical tasks does not demonstrate end-to-en
 acceptance. An undecomposed backlog may not yet have a composition: leave the section
 with an explicit open question instead of inventing technical work.
 
-Before implementation, reread the PRD, its sources, the outcome of previous PRDs, and
-open questions; resolve only what the current outcome requires. If new information
+Before `planned`, groom the PRD and replace the metadata with
+`- Grooming: completed YYYY-MM-DD; source: <approval>`. When starting a `planned` PRD,
+reread its sources, previous outcomes, and prerequisites, give a short execution brief,
+and after confirmation set `in-progress`. If new information
 changes an accepted product decision before `done`, add a short `## Decision changes`:
 the previous and new wording, reason, date, approval source, and affected documents. A
 change to the outcome of a `done` PRD gets a new card and

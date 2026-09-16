@@ -8,8 +8,9 @@ Adapt paths and field language to the project settings and the checks actually s
 
 This is a minimal registration, not an implementation-ready specification. See the
 [maintenance rules](maintenance.md) for triage, severity, and planning rules. Replace
-example IDs with available IDs from actual layers. Before moving to planned, assign an
-owner, define the nearest task’s verifiable outcome, dependencies, and priority. For an
+example IDs with available IDs from actual layers. Grooming before `planned` assigns
+an owner, accepts the nearest task's verifiable outcome, dependencies, and priority,
+and records evidence. For an
 investigation, the outcome may be an answer to a specific question rather than a
 finished product solution. Full design is unnecessary for registration. If an
 applicable contract exists, link to it; a TD/ADR is needed only for a genuine technical
@@ -23,6 +24,7 @@ choice.
 - Status: backlog
 - Type: bug
 - Owner: unassigned
+- Grooming: incomplete
 - Source: <report/source and date>
 - Dependencies: none
 - Severity: <critical/high/medium/low/unknown + impact evidence>
@@ -61,6 +63,7 @@ Pending; record actual checks and any manual-only validation limitation.
 - Status: backlog
 - Type: investigation
 - Owner: unassigned
+- Grooming: incomplete
 - Source: <review/measurement/report and date>
 - Dependencies: none
 
@@ -95,6 +98,7 @@ Pending; investigation completion does not mean remediation completion.
 - Status: backlog
 - Type: idea
 - Owner: unassigned
+- Grooming: incomplete
 - Source: <request/interview and date>
 - Product dependencies: none
 
@@ -112,7 +116,7 @@ Not decomposed; technical scope follows validation of the product choice.
 ```
 
 This minimal backlog PRD may be registered before product grooming; it is not an
-accepted product contract. Before implementation, conduct micro-grooming, then refine
-the same card into a feature/improvement with verifiable acceptance; do not create a
-duplicate merely because its type changes. A product phase is optional, but the roadmap
+accepted product contract. Grooming refines the same card into a feature/improvement
+with verifiable acceptance and evidence, after which selected work may become
+`planned`; do not create a duplicate merely because its type changes. A product phase is optional, but the roadmap
 must link to the task.

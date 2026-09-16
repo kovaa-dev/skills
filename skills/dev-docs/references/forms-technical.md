@@ -11,6 +11,7 @@ Adapt paths and field language to the project settings and the checks actually s
 
 - Status: backlog
 - Owner: <technical owner>
+- Grooming: incomplete
 - Source: <technical requirement source and date>
 - Decisions: [TD-AUTH-001 Request validation contract](../../solutions/auth/TD-AUTH-001.md)
 - Dependencies: none
@@ -38,7 +39,7 @@ The linked proposal must be accepted before implementing it as a contract.
 
 ## Next step
 
-<Concrete next action; when blocked, add a specific “- Blocker:” metadata line.>
+<Concrete next action.>
 
 ## Closure
 
@@ -48,6 +49,13 @@ verification/manual path. Add environment/date/version/artifacts only for durabl
 tracker. Explicitly state any mandatory checks not run, unresolved documentation differences, and
 remaining limitations.
 ```
+
+Before `planned`, replace the grooming metadata with
+`- Grooming: completed YYYY-MM-DD; source: <approval>`. For `blocked`, add both
+`- Blocker: <linked task/artifact/event and reason>` and
+`- Unblock condition: <observable result>`; a child relationship is not itself a
+blocker. For `need-info`, explicitly record the question, impact, recommendation,
+alternatives, and answer owner in the card.
 
 The `Parallel with` and `Integration` fields are conditional; omit them from an ordinary task. Use them
 only for an agreed audit/migration task graph; parallel execution means there is no

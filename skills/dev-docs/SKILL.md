@@ -49,7 +49,7 @@ Read only the references you need; the paths below are relative to the skill dir
   for short cards, see [intake forms](references/forms-intake.md). First determine whether
   the issue requires separate registration; do not create a card for every locally resolved
   defect or irrelevant idea.
-- New or existing products, overall grooming/micro-grooming, and incremental delivery:
+- New or existing products, backlog grooming, start briefs, and incremental delivery:
   [product formation](references/product-discovery.md).
 - Adoption or migration: [bootstrap](references/documentation-system-template.md), then the
   required normative sections linked from it.
@@ -68,10 +68,13 @@ public canonical source, not stale policy duplicates. Do not load the entire bac
   feature delivery. It works without init: discussion results remain in responses, while write
   permission allows the minimum agreed documents. For a new product, propose
   `Alpha/Beta/RC/Release/Next`, but agree or adapt the stages; do not impose retrospective
-  labeling on an existing product. Overall grooming sets direction and unblocks the nearest
-  minimally usable result. Before implementing each PRD, conduct micro-grooming for new inputs
-  and resolve only open questions for the current PRD/stage; make local and distant decisions
-  closer to implementation. A minimal backlog PRD may be registered earlier without presenting
+  labeling on an existing product. Overall grooming sets direction and unblocks the nearest minimally usable result.
+  Perform focused grooming for a selected `backlog` PRD/task and move it to `planned`
+  only after the result is accepted; the tracker defines required evidence, `need-info`,
+  and dependency `blocked`. When starting `planned` work, do not repeat grooming:
+  restore context, present a short execution brief, and after confirmation move the
+  selected PRD/task to `in-progress`. Make local and distant decisions closer to
+  implementation. A minimal backlog PRD may be registered earlier without presenting
   it as a ready contract.
 - **init** — identify the minimum settings and propose a structure. When adoption is requested,
   create the minimum docs/task settings, ask the user to choose "copy in the repository" or

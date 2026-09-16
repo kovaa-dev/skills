@@ -21,7 +21,7 @@ Use `dev-docs` for:
 
 - **Lifecycle coverage:** connects discovery, PRDs, technical decomposition, decisions, roadmap state, maintenance, audit, and migration instead of generating one isolated artifact.
 - **Vertical Slice Development:** starts with the smallest end-to-end product slice that can be used and evaluated, then expands the same working product through independently useful features instead of completing isolated technical layers up front.
-- **Just-in-time decisions:** uses general grooming to unblock the nearest stage and a short micro-grooming pass before each PRD implementation.
+- **Just-in-time decisions:** grooms selected backlog work into `planned`, then uses a short confirmed execution brief—not repeated grooming—before `in-progress`.
 - **Context-efficient by design:** routes the agent through indexes, canonical links, and targeted references so unrelated product history, backlog, and technical documentation do not need to be loaded for the current question.
 - **Explicit ownership:** gives each requirement, decision, task, status, and piece of evidence one canonical owner while keeping indexes navigational.
 - **Existing-project support:** can establish the current product state, preserve shipped behavior, consolidate conflicting documentation, and build a forward roadmap without inventing historical stages.
@@ -38,7 +38,7 @@ It does not require strict TDD, a particular agent orchestration model, or an au
 ```text
 Use dev-docs to shape this idea into the smallest usable Alpha. Start with overall grooming and do not write project files until we agree on the direction.
 
-Before implementing PRD-012, run micro-grooming using the results of completed PRDs. Resolve only the open questions that block this PRD or the current delivery stage.
+Groom backlog PRD-012 using the results of completed PRDs, record the accepted result, and move it to planned. When it is selected for implementation, present a short execution brief before in-progress rather than repeating grooming.
 
 Audit the current documentation and task tracker. Report conflicting sources, duplicated rules, missing roadmap entries, and independent remediation tracks. Keep the audit read-only.
 ```
