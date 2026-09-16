@@ -76,6 +76,18 @@ explicit decision and shipped behavior as the preservation default. If sources a
 missing or conflict, ask; do not declare the code an accepted invariant or invent your
 own contract.
 
+When work uses a tracker with the `dev-docs` lifecycle, implementation may start from
+an entire PRD or a technical task. `backlog` first undergoes grooming and acceptance;
+`need-info` waits for an answer, and `blocked` waits for its stated unblock condition.
+For `planned`, do not repeat grooming: provide a short execution brief covering what
+will be done, the observable result, what remains unchanged, checks, and the manual
+path, then obtain explicit confirmation to start. The initial request may already
+confirm that same brief. After confirmation, update the selected PRD/task and its index
+projection to `in-progress`; in a whole-PRD workstream, children move to `in-progress`
+only as work on them actually begins. A new question after start moves the owning card
+to `need-info`; an unmet adjacent prerequisite moves it to `blocked`. The tracker owns
+reasons and return-state semantics; do not duplicate them here.
+
 Before coding, state `Source: <user-explicit or canonical link>` and, for new or changed
 user-facing behavior, briefly define:
 
@@ -257,26 +269,31 @@ deploy.
 
 ## 8. Git, commits, and PR
 
-Authority to branch/commit/push/create a PR comes from an explicit request or stored
-project policy. Do not create a branch or remote artifact merely because the skill is
-loaded. Destructive reset/delete/force, merge, release, and deploy require separate
-authority.
+Explicit confirmation of the execution brief and transition of the selected PRD/task
+to `in-progress` grant task-scoped authority to create/use a branch and, when needed,
+an isolated worktree, make coherent commits, push, and create/update a PR without
+separate questions for each action. Equivalent authority may come from a direct request
+or narrower project policy; project policy may restrict this default. Loading the skill,
+a `planned` status without start confirmation, or grooming-only work does not grant
+this authority. Destructive reset/delete/force, merge, release, and deploy always
+require separate authority.
 
 - Commit a coherent, reviewable, revertible unit, not after every message or internal
   step. Do not mechanically split an atomic cross-layer vertical slice when intermediate
   commits would be inconsistent; follow the project's actual commitlint rules.
-- Before opening a PR, complete all planned commits and closure locally. Do not push
-  between commits or closure steps: immediately before the PR, fetch and integrate the
-  current base, resolve conflicts, run risk-based ready checks, then publish the ready
-  branch with one push and open the PR.
-- Plan the initial publication so that one final PR CI run is sufficient. An additional
-  push and CI run is allowed only to address a discovered defect, CI failure/flake,
-  review change, conflict, or material base update; do not conceal a necessary fix merely
-  to preserve a formal run limit.
-- If incomplete scope must nevertheless be published by explicit request or for a
-  necessary remote-only check or collaborative review, create a draft. While the user is
-  sending consecutive batches of the same work or known scope remains open, keep the PR
-  draft; do not switch between draft/ready after every batch.
+- By default, complete planned commits and closure locally; immediately before a ready
+  PR, fetch and integrate the current base, resolve conflicts, run risk-based ready
+  checks, and publish the completed branch. An early remote PR after `in-progress` is
+  permitted but not required; if opened before scope is complete, it is always draft.
+- Plan the first publication so one final PR CI run should be sufficient. Additional
+  pushes and CI runs are allowed for a discovered defect, CI failure/flake, review
+  change, conflict, or material base update; do not hide a necessary fix to preserve a
+  formal run count.
+- When task-scoped authority is used for early publication, collaborative review, or a
+  remote-only check, create a draft. While the user is sending consecutive batches of
+  the same work or known scope remains open, keep the PR draft. Do not switch between
+  draft/ready after every batch. No separate confirmation is required to open this PR
+  after `in-progress`.
 - Before marking a draft ready and before merge, fetch and integrate the current base,
   resolve conflicts, and run risk-based ready checks.
 - Update PR metadata only for a material change in scope, blocker, or readiness. A
@@ -333,6 +350,8 @@ with the canonical PRD/task/TD/ADR. Any unresolved discrepancy is a blocker.
 Do not copy that documentation governance here. Do not require the entire product phase
 to close for a single request.
 
-The final response briefly states the result, affected files/PR, checks performed, and
-material limitations. Do not list process for process's sake. If an obvious next step
+The final response briefly states the result, affected files/PR, checks performed,
+material limitations, and the exact manual verification path. For user-facing work,
+call out the grooming decisions that the user will see and should verify; this summary
+does not replace their canonical record. Do not list process for process's sake. If an obvious next step
 remains, offer it as a question; do not perform it without scope/authority.

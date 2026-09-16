@@ -72,9 +72,10 @@ do not present it as an accepted exception. Organizational actions are performed
 within the request and project authority, rather than requiring approval merely because
 any card was changed.
 
-Do not ask for approval again when conditions have not changed. Before implementing
-each PRD, micro-grooming restores context and checks for new information after
-previous results; it does not require reconfirming decisions that remain current.
+Do not ask for approval again when conditions have not changed. Accepted grooming is
+recorded before `planned`; before `planned → in-progress`, a short execution brief
+restores context and checks for new information, but it is not repeated grooming and
+does not reopen decisions that remain current.
 An editorial correction, a move with no change in meaning, and execution of an accepted contract are not
 new choices. First propose any elaboration that changes behavior, scope, data, or constraints
 to the user; until the response, a proposed document may be prepared, but the choice must not
@@ -155,8 +156,9 @@ data/ownership boundary, dependency/runtime default, and operating model.
   canonical decision source, and the completed verification. Do not copy the full
   PRD/TD/ADR text into the task.
 - If the discrepancy is unresolved or the documents still describe the previous active
-  contract, the task remains `in-progress`/`blocked`, and the implementation is not declared
-  complete.
+  contract, the task receives `need-info`; when resolution depends on a separate artifact
+  or prerequisite, use `blocked` with a reason and observable unblock condition. The
+  implementation is not declared complete.
 - Routine reversible implementation details that do not require a separate decision
   do not generate documentation or history solely for this gate.
 

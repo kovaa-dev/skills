@@ -13,26 +13,31 @@ historical templates no longer apply.
   automatically assign a team or implementer. Subtasks such as `<LAYER>-NNN.1` are
   local checkboxes; work that can be planned independently belongs in a separate task.
 - A fully groomed product task defines the outcome, scenario, constraints, acceptance
-  criteria, product dependencies, and links to technical tasks. If a product slice is
-  needed, its composition is defined only here. A PRD represents a user outcome of any
-  size, not necessarily a phase. Before grooming, a minimal backlog PRD may be registered
-  with a stable ID, source, hypothesis/problem, an owner or `unassigned`, and open
-  questions. Do not fill it with invented scope, acceptance criteria, a delivery/release
-  date, or a predetermined solution; preserve the date of a known source. Do not begin
-  implementation before micro-grooming. If a new outcome changes the contract of an
-  already closed PRD, the new card gets a `Replaces` link to the previous one; the
-  `done` card and its closure are not rewritten.
+  criteria, product dependencies, and links to technical tasks when independently
+  planned technical work is actually needed. Product-slice composition is defined only
+  here. A PRD represents a user outcome of any size, not necessarily a phase. Before
+  grooming, a minimal backlog PRD may be registered with a stable ID, source,
+  hypothesis/problem, an owner or `unassigned`, and open questions. Do not fill it with
+  invented scope, acceptance criteria, a delivery/release date, or a predetermined
+  solution; preserve the date of a known source. A `backlog → planned` transition
+  requires accepted grooming. If a new outcome changes the contract of an already
+  closed PRD, the new card gets a `Replaces` link to the previous one; the `done` card
+  and its closure are not rewritten.
 - A PRD is a product task: it defines the user outcome to achieve and how to accept it.
-  It is not an executable development assignment; an agent receives a technical layer
-  card while retaining the PRD context. A PRD's status reflects progress toward the
-  outcome, not a separate implementation stream; `done` requires end-to-end acceptance.
-- A PRD's scope is defined by links to technical layer tasks: these are its executable
-  child tasks. Each describes a complete, verifiable increment within one layer and may
-  contain local checkbox subtasks. One technical task may relate to `0..N` PRDs, but the
-  scope and end-to-end acceptance of each PRD belong to its product owner; the technical
-  owner is responsible only for the technical outcome. A backlink registry of PRDs is
-  unnecessary in the technical card: relationships are discovered through the owning
-  PRDs. If shared work has different delivery boundaries or independently accepted parts,
+  An implementer may take an entire `planned` PRD as one product workstream after the
+  start brief is confirmed. A small, single-owner PRD with no independently planned
+  technical outcomes may be implemented directly and does not receive fictitious child
+  cards. If a PRD contains several independent layer outcomes, an agent may take the
+  whole slice, but canonical technical tasks retain their own statuses and move to
+  `in-progress` only when work on them actually starts. A PRD always requires end-to-end
+  user acceptance before `done`, not merely closure of its children.
+- A PRD's composition is defined through links to technical layer tasks. Each describes
+  a complete, verifiable increment within one layer and may contain local checkbox
+  subtasks. One technical task may relate to `0..N` PRDs, but the composition and
+  end-to-end acceptance of each PRD belong to its product owner; the technical owner is
+  responsible only for the technical outcome. A backlink registry of PRDs is
+  unnecessary in the technical card: relationships are discovered through owning PRDs.
+  If shared work has different delivery boundaries or independently accepted parts,
   split it into separate tasks. A PRD does not select individual checkboxes from an
   incomplete card. Layers grow through sequential tasks, not an endless checklist.
 - A technical task may be part of a feature, a bug, or a standalone engineering outcome:
@@ -87,9 +92,14 @@ historical templates no longer apply.
   as complete.
 - Every task and decision has one canonical status and one accountable owner, recorded
   in the canonical card. `unassigned` is permitted when an item is first registered in
-  the backlog; before it becomes `planned` or `in-progress`, an owner must be assigned
-  and the scope must be sufficiently clear for the current work. Contributors do not
-  become a second owner. Scope and API definitions remain in their canonical sources.
+  the backlog. Before `planned`, an owner is assigned, scope and acceptance are
+  accepted, explicit dependencies are named, and the card contains
+  `- Grooming: completed YYYY-MM-DD; source: <exact confirmation or stable link>`.
+  Substantive results remain in normal contract/acceptance/decision sections rather
+  than being copied into this field. A `planned` task without grooming evidence is a
+  migration defect, not ready work. Do not retrospectively rewrite historical `done`
+  cards solely to add the new field. Contributors do not become a second owner. Scope
+  and API definitions remain in their canonical sources.
 - The shared task index is the sole roadmap and lists every registered task exactly once.
   For a new product, propose the delivery groups `Alpha`, `Beta`, `RC`, `Release`, and
   `Next` by default, but the user may rename, combine, extend, or replace them with a
@@ -113,7 +123,7 @@ historical templates no longer apply.
   on feedback.
 - Beside each link, the task index shows a compact status projection from the card so
   reviewing the queue does not require opening every file. The projection uses the same
-  explicit token (`backlog`, `planned`, `in-progress`, `blocked`, `done`, or `cancelled`),
+  explicit token (`backlog`, `planned`, `in-progress`, `need-info`, `blocked`, `done`, or `cancelled`),
   does not become a second source of truth, and is updated in the same change as the
   canonical status. A mismatch between the card and index is a defect. Strikethrough may
   be used only as supplementary formatting, never instead of the token, because it cannot
@@ -130,15 +140,36 @@ historical templates no longer apply.
   not create or update a checkbox for every internal action in one session. An incomplete
   tracked step remains `[ ]`; the blocker and next action belong in the card, not the
   index.
-- Task statuses are `backlog`, `planned`, `in-progress`, `blocked`, `done`, and
-  `cancelled`. They represent actual state, not a rigid state machine: apart from leaving
-  `done`, meaningful transitions are allowed if the card preserves the reason and current
-  state. `blocked` requires a specific blocker; `cancelled` requires a cancellation reason
-  and, when applicable, a link to the replacement. A cancelled task may be resumed without
-  erasing the previous reason. `done` is terminal: a regression, new scope, or changed
-  outcome receives a new linked task, while the completed task's closure, checklist, and
-  evidence remain unchanged. A transition to `done`, including from `blocked`, is allowed
-  only after actual acceptance.
+- Task statuses are `backlog`, `planned`, `in-progress`, `need-info`, `blocked`,
+  `done`, and `cancelled`. They represent actual state rather than a rigid state
+  machine, but each token has one meaning. `backlog` contains unscheduled or not-yet-
+  groomed work. `planned` means the grooming contract is accepted and the task is in
+  an executable queue with no unmet blocking prerequisite. `in-progress` is set only
+  after a short execution brief and explicit user confirmation to start. A direct
+  `backlog → in-progress` transition is prohibited: even within one session, record
+  accepted grooming and `planned` first. The initial request may already confirm the
+  same brief, in which case no redundant question is required.
+- `need-info` means a specific question or conflict arose after `planned` and safe work
+  cannot continue without an external answer or decision. The card states the question,
+  why it blocks, the recommended option, realistic alternatives, and the answer owner.
+  A routine reversible implementation detail is not `need-info`. After an answer, the
+  task returns to `planned` or `in-progress`; a materially changed contract updates the
+  grooming evidence and `Decision changes` before work continues.
+- `blocked` means an unmet prerequisite, external artifact/event/environment result, or
+  another adjacent dependency—not a child relationship and not missing information.
+  The card must contain `- Blocker: <exact link/condition and reason>` and
+  `- Unblock condition: <observable result>`. PRD→task defines composition, while
+  task→task or PRD→PRD prerequisites define blocking relationships; a child does not
+  block automatically. Once unblocked, a task that never started returns to `planned`;
+  paused work returns to `in-progress`. A PRD becomes `blocked` only when the entire
+  remaining path to the user outcome is blocked, not because one independently
+  avoidable child is blocked.
+- `cancelled` requires a reason and, when applicable, a replacement link;
+  `backlog → cancelled` does not require full grooming. A cancelled task may resume
+  without erasing its previous reason. `done` is terminal: a regression, new scope, or
+  changed outcome receives a new linked task, while the completed task's closure,
+  checklist, and evidence remain unchanged. Transition to `done`, including from
+  `blocked`, is allowed only after actual acceptance.
   A routine `done` task needs only one closure statement: the observable result, the
   current canonical decision source, and the verification or manual path used. For an
   implemented or changed documented contract, first perform the
@@ -175,9 +206,12 @@ historical templates no longer apply.
 ## Baseline Format
 
 The baseline format uses one H1, `# <ID> <Title>`; a filename of `<ID>.md`; and separate
-`- Status: backlog` and `- Owner: <one accountable owner>` lines. Explicitly use
-`unassigned` for backlog items without an assigned owner. Task and decision statuses use
-the lowercase tokens listed above, not free-form text. Product dependencies are PRD→PRD,
+`- Status: backlog`, `- Owner: <one accountable owner>`, and
+`- Grooming: incomplete` lines. Explicitly use `unassigned` for backlog items without
+an assigned owner. After accepted grooming, replace the value with the completion date
+and exact source. `blocked` additionally requires `- Blocker:` and
+`- Unblock condition:`. Task and decision statuses use the lowercase tokens listed
+above, not free-form text. Product dependencies are PRD→PRD,
 technical prerequisites are task→task, and decision dependencies are decision→decision.
 `Replaces` is a historical relationship between a new PRD and its closed predecessor,
 not a prerequisite or a reason to change the old card. Decision links in tasks belong in

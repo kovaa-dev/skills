@@ -48,9 +48,12 @@ sufficient. Do not create a TD merely to authorize starting research.
 - A small investigation and its fix may live in one task. If the investigation is closed
   separately, every remaining fix receives an open card and a link; completing the
   investigation does not mean the problem has been resolved.
-- Before moving a task to planned, assign an owner and define a verifiable outcome,
-  dependencies, and priority. Triage the backlog regularly before selecting the next work
-  and before release; review old records rather than deleting them automatically.
+- Groom a backlog card before `planned`: assign an owner, accept a verifiable outcome,
+  dependencies, and priority, and record evidence. Only then may selected work become
+  `planned`; a missing answer becomes `need-info`, while an unmet adjacent prerequisite
+  becomes `blocked` with a reason and observable unblock condition. Triage the backlog
+  regularly before selecting the next work and before release; review old records rather
+  than deleting them automatically.
 
 ### Bug severity and execution order
 

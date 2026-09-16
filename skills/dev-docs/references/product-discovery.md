@@ -77,27 +77,33 @@ risk. Under the standard sequence, this means unblocking `Alpha`. Do not try to 
 future stages or make every task-level decision in advance: that is not a readiness
 criterion and would make grooming endless.
 
-Continue grooming incrementally. Resolve an open
-question as close to implementation as possible, but before its absence blocks the
-nearest stage or makes implementation risky. Later groups retain direction, material
-risks, dependencies, and open questions without premature detail.
+Continue grooming incrementally on the selected `backlog` task, as close as possible
+ to its execution queue. Resolve only questions for the current PRD/task and nearest
+ stage; later groups retain direction, material risks, dependencies, and open questions
+ without premature detail. A minimal backlog PRD containing an ID, source, hypothesis,
+ owner or `unassigned`, and open questions may be registered before grooming; until
+ grooming is sufficient, do not present it as an accepted product contract, invent
+ scope/acceptance, or begin implementation.
 
-Before implementing each PRD, conduct brief micro-grooming: reread the PRD, its sources,
-and applicable decisions; re-establish the user, problem, and expected outcome; account
-for the outcome and feedback from previous PRDs, new information, dependencies, and
-open questions. Resolve only the questions required for the current PRD and nearest
-stage. If new evidence invalidates an earlier choice, propose revisiting it and, after
-agreement, explicitly record the previous decision, the new accepted decision, the
-reason, the source, and the affected PRDs/TDs/ADRs; update the canonical contract before
-implementing the change.
+Grooming is complete when the user has accepted the current outcome and boundaries,
+ required product/cross-layer/risky decisions, verifiable acceptance, and the dependency
+ graph. The card records grooming evidence under the tracker rules. If the task is
+ selected for the executable queue and has neither unresolved information nor blocking
+ prerequisites, it moves `backlog → planned`; otherwise it remains `backlog` or receives
+ `need-info`, `blocked`, or `cancelled` according to the actual reason. Do not move a
+ task from `backlog` to `planned` or `in-progress` merely because an agent wants to code.
+ Routine reversible implementation details may be chosen just in time and do not need
+ to be accepted during grooming.
 
-Micro-grooming is complete when the current PRD is once again clear, verifiable, and
-safe to begin. It does not repeat full discovery, detail future PRDs, or require local,
-reversible decisions to be accepted in advance. Such decisions may be made just in time
-during development. A minimal backlog PRD containing an ID, source, hypothesis, owner
-or `unassigned`, and open questions may be registered before grooming; until grooming
-is sufficient, do not present it as an agreed product contract, invent scope/acceptance,
-or begin implementation.
+When taking a `planned` PRD or technical task, do not repeat grooming. Reread the card,
+ sources, previous task outcomes, and prerequisites, then give a short execution brief:
+ what will be done, the observable result, what remains unchanged, checks, and the
+ manual path. Explicit confirmation moves the selected PRD/task to `in-progress`; the
+ initial request may already contain that confirmation and does not require a second
+ question. If the freshness check reveals a new product/architecture/data/public-
+ boundary question or conflict, set `need-info`, update the canonical contract after the
+ decision, and only then continue. If another task result or external event is required,
+ set `blocked` with a reason and observable unblock condition.
 
 Discuss one small, cohesive group of questions at a time, starting with those that block
 the nearest outcome.
@@ -150,10 +156,12 @@ First identify and agree the actual layer responsibility boundaries required for
 nearest outcome. A layer evolves through a sequence of small technical tasks; its tasks,
 contracts, and documents are not named after phases.
 
-A PRD is a product task with a user outcome, not an executable assignment. A phase or
-product slice is assembled in the PRD from technical tasks across layers; those tasks
-are its executable children and contain local steps. The tracker defines composition
-rules. A phase does not require completing an entire layer.
+A PRD is a product task with a user outcome. An agent may take an entire `planned` PRD
+as one product workstream; a small single-owner PRD with no independently planned
+technical outcomes is not split artificially. When the slice requires independent tasks
+across layers, the PRD composes them through links and each retains its own status and
+acceptance. Taking the whole PRD does not bypass child tracking or permit `done` without
+end-to-end acceptance. A phase does not require completing an entire layer.
 Do not structure delivery as “the entire backend, then the entire frontend, then
 launch.” Every product slice provides a working
 scenario. Blocking technical research may precede it, but is not called a commercial
@@ -187,20 +195,23 @@ validated.
 
 ## 6. Transition to implementation and feedback
 
-Before implementing the nearest slice, verify that:
+Before moving the nearest slice to `planned`, verify that:
 
-- the user has explicitly agreed on the outcome, scope, and new product, cross-layer,
+- the user has explicitly accepted the outcome, scope, and new product, cross-layer,
   risky, or difficult-to-reverse decisions required to begin safely, including
   intentional changes to the existing Surface, Action, Visible result, and workflow;
 - all required parts of the end-to-end scenario are covered and optional parts do not
   block launch;
-- layer tasks are small enough for independent verification and correctly linked;
+- independently planned layer tasks are small enough and correctly linked;
+- blocking dependencies are either complete or recorded as `blocked` with a reason and
+  observable unblock condition; questions requiring an answer receive `need-info`;
 - documents can be read through a targeted route without loading the entire backlog or
   unrelated neighboring topics;
 - decision acceptance, product acceptance, technical verification, and release fact
   are not conflated.
 
-Begin implementation only within work authorized by the user. After delivery, compare
+Begin implementation only after the execution brief is confirmed and the selected
+PRD/task moves to `in-progress`, within work authorized by the user. After delivery, compare
 the outcome with feedback and propose the next minimum increment. Transitioning to
 maintenance does not require a separate PRD or a new product phase: all registered bugs,
 findings, and ideas remain visible in the roadmap and follow the rules for

@@ -95,12 +95,12 @@ without sample links.
 - Tracker schema: English baseline profile.
 - Task paths: docs/tasks/product and docs/tasks/<layer>; filename: <ID>.md.
 - Decision paths: docs/solutions/<layer> and docs/architecture/decisions.
-- Task status tokens: backlog, planned, in-progress, blocked, done, cancelled.
+- Task status tokens: backlog, planned, in-progress, need-info, blocked, done, cancelled.
 - Roadmap sequence: <chosen groups; for a new product default Alpha, Beta, RC, Release, Next>.
 - Historical task placement: <keep in last assigned delivery group, or move once to History>.
 - Task-index status projection: `Task | Status`; every registered task appears once and matches its canonical card.
 - Decision status tokens: proposed, accepted, superseded.
-- Metadata: one “- Status:” and one “- Owner:” per canonical card.
+- Metadata: one “- Status:”, one “- Owner:”, and one “- Grooming:” per canonical card; `blocked` additionally requires “- Blocker:” and “- Unblock condition:”.
 - Documentation history path: <chosen path; clearly marked *.history.md; not active governance>.
 - Findings: <task cards, or chosen register path>.
 - Temporary source mapping: <location only for an active full/large migration or policy-required traceability, otherwise none>.

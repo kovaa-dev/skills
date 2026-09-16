@@ -13,12 +13,13 @@ not a universal governance engine. The compatible profile uses:
 
 - the `docs/tasks`, `docs/solutions`, and `docs/architecture/decisions` directories;
 - exactly three-digit numbers and prefixes made of uppercase ASCII letters/digits;
-- `- Status:`, `- Dependencies:`, `- Product dependencies:`, and
+- `- Status:`, `- Grooming:`, `- Dependencies:`, `- Product dependencies:`, and
   `- Decision dependencies:`; dependencies are inline Markdown links or `none`;
 - the PRD section `## Technical tasks` for composition links;
-- `## Open questions` for backlog items without a decision, `## Closure` for PRDs and
-  technical tasks, `## Evidence` for bug/investigation result records, and `- Blocker:`
-  for the reason an item is blocked;
+- `## Open questions` for backlog items without a decision, `## Needs information` for
+  `need-info`, `## Closure` for PRDs and technical tasks, and `## Evidence` for bug/
+  investigation result records; `blocked` requires both `- Blocker:` and
+  `- Unblock condition:`;
 - `index.md` / `backlog.md` as navigation filenames; the entry point is `docs/tasks/index.md`.
 
 For the fully English `dev-docs` profile, use the English schema tokens listed above. Update
