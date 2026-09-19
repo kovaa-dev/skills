@@ -59,6 +59,15 @@ Before the first write:
 5. Run the project bootstrap/route/resume command if one exists, and read only the rules
    it names and their immediate owner sources.
 
+When a task needs a separate workspace, first use the current environment's workspace
+management (for example its UI, API, or CLI) if available. Reuse a suitable workspace
+for the same task. Switch the active workspace when the environment supports it;
+otherwise explicitly target its directory. Before writing, verify that the tool root,
+shell cwd, Git worktree, branch, and edited paths refer to the intended workspace.
+If the environment cannot manage workspaces, use a Git worktree at the project-defined
+location, or `<repo>/.worktrees/<task-slug>` with a local ignore when none is defined.
+Do not create worktrees under an arbitrary `/tmp` or another ad hoc location.
+
 Run bootstrap/shared-state commands (`agent:*`, install, prepare, codegen, migrations,
 Git config, and similar commands) sequentially. Run commands in parallel only when they
 are proven read-only and have no shared workspace/cache/Git side effects.
@@ -145,15 +154,15 @@ When independently choosing the next work, prioritize a user-visible vertical sl
 Choose an infrastructure/evidence-only task first only when it directly blocks that
 slice.
 
-## 4. Early manual usability gate
+## 4. User-owned manual usability gate
 
 A full manual usability gate is mandatory for a new capability, a changed primary
 Action/Surface/Visible result, or a new waiting/result state. For a localized copy,
-visual, or accessibility fix, focused UI inspection is sufficient.
+visual, or accessibility fix, focused UI inspection is sufficient. The user starts the
+app and performs all manual UI verification. The agent runs appropriate automated
+checks but does not open the app/browser for manual acceptance.
 
-Immediately after the minimum working path and before expanded fixtures, a fault
-harness, a corpus, or performance characterization, open the existing interface yourself
-and verify:
+After implementation, prepare concise test cases on the existing interface to verify:
 
 1. the user's Action is available on the accepted Surface;
 2. if the operation genuinely takes time and progress is part of the accepted contract,
@@ -161,10 +170,10 @@ and verify:
    progress UI;
 3. the successful Visible result matches the accepted brief and is usable.
 
-Verify failure states after the happy path is stable, based on actual risk. If the
-environment cannot be run, name the specific blocker and do not replace the manual gate
-with a large automation layer. Do not require user action when you can perform the gate
-yourself with available browser/desktop tooling.
+At the end of the work, put the test cases directly in the reply to the user: actions,
+expected visible results, and material failure states based on actual risk. Keep the
+manual gate pending until the user reports its result; do not present automated checks
+as manual acceptance.
 
 In the final response for a user-facing task, explain in plain language what is available,
 where it is, what to click, what will be visible, and what material limitation remains.
@@ -190,7 +199,7 @@ failure mode. Do not repeat the same corpus/invariant merely for evidence comple
 
 1. First run: one happy path and the minimum accepted contract assertions; no fault
    injection, corpus, resource acceptance metrics, or performance claims.
-2. After establishing a stable happy path and completing the manual gate, add one
+2. After establishing a stable automated happy path, add one
    critical failure mode at a time.
 3. Add corpus/performance characterization only for a separately accepted risk/claim
    after the minimum path is stable.
@@ -206,8 +215,9 @@ prohibited.
 ### Complexity boundaries
 
 Do not compare production and auxiliary code by line count or create a LOC gate. Before
-the first successful manual gate, only the production path and the minimum happy-path/original-reproduction check are allowed; do not add a new bespoke runner, fault
-framework, corpus, benchmark, or evidence system.
+the first successful manual gate, limit work to the production path and proportionate
+checks for current risks; do not add a new bespoke runner, fault framework, corpus,
+benchmark, or evidence system.
 
 After the gate, every new auxiliary entity must protect one named current risk/contract,
 use the nearest existing test level, and not duplicate another check. A second new
@@ -342,8 +352,9 @@ scope.
 ## 10. Completion
 
 A task is complete when the requested result exists, targeted checks have passed, the
-manual gate has been completed for user-facing behavior, scope has not been silently
-expanded, and actual blockers have been named. If the work implements or changes a
+user has confirmed the manual gate for user-facing behavior, scope has not been silently
+expanded, and actual blockers have been named. Keep manual acceptance pending until the
+user replies. If the work implements or changes a
 documented contract, perform the applicable project closure reconciliation before
 `done` and a ready PR; if no separate procedure is defined, compare the result directly
 with the canonical PRD/task/TD/ADR. Any unresolved discrepancy is a blocker.
@@ -351,7 +362,7 @@ Do not copy that documentation governance here. Do not require the entire produc
 to close for a single request.
 
 The final response briefly states the result, affected files/PR, checks performed,
-material limitations, and the exact manual verification path. For user-facing work,
-call out the grooming decisions that the user will see and should verify; this summary
-does not replace their canonical record. Do not list process for process's sake. If an obvious next step
+material limitations, and concrete manual test cases for user-facing work. Call out the
+grooming decisions that the user will see and should verify; this summary does not
+replace their canonical record. Do not list process for process's sake. If an obvious next step
 remains, offer it as a question; do not perform it without scope/authority.
