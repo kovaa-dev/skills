@@ -326,19 +326,27 @@ worktrees. Durable scope, task status, acceptance, decisions, and delivery state
 in the canonical task/PR/Git; the handoff does not copy them or become a second source.
 
 In a project that permits parallel work, a single tracked mutable pointer such as
-`current.md` is prohibited: there is no global "current" workstream. The default is a
-gitignored worktree-local file, for example `.agents/local/handoff.md`. It contains only
-the worktree/branch identity and, when available, task/PR; the last confirmed commit, a
-brief local dirty state, one next action, temporary blocker/tool state, and relevant
-files. Do not commit it or merge it into `main`. Before the first write, verify that the
-path is actually ignored; if it is not, configure a narrow ignore in an authorized
-`init`/`migrate` action or use an already excluded local path. Do not create an empty
-handoff during adoption merely to test the mechanism.
+`current.md` is prohibited: there is no global "current" workstream. For a transfer
+within one worktree, use exactly `<worktree-root>/.agents/local/handoff.md`, where
+`<worktree-root>` is `git rev-parse --show-toplevel` in the current workspace.
 
-On resume, select a handoff only by the exact current worktree + branch and matching
-task/PR, when specified; never select one by recency, the name `current`, or because it
-is the only file found. A mismatch means ignoring the handoff entirely; read the
-canonical task/PR separately. For transfer between machines or inaccessible worktrees,
+The sending agent writes the file at that path. Before writing, check `git check-ignore`
+for `.agents/local/handoff.md`; if it is not ignored, add only
+`/.agents/local/handoff.md` to the local Git `info/exclude` and check again. If the path
+cannot be ignored, report the blocker rather than create a tracked handoff. The file
+contains only the worktree/branch identity and, when available, task/PR; the last
+confirmed commit, a brief local dirty state, one next action, temporary blocker/tool
+state, and relevant files. Do not commit it or merge it into `main`. Include the
+workspace and file path in the handoff response; do not assume the environment injects
+file contents into another agent's context. Do not create an empty handoff merely to
+test the mechanism.
+
+When starting or resuming work in an existing worktree, the receiving agent checks
+exactly `<worktree-root>/.agents/local/handoff.md`. If it exists, read it and verify the
+exact current worktree + branch and matching task/PR, when specified; never select one
+by recency, the name `current`, or because it is the only file found. A mismatch means
+ignoring the handoff entirely; read the canonical task/PR separately. For transfer
+between machines or inaccessible worktrees,
 use an explicit reference to the task/PR/branch and, when necessary, one brief PR/task
 update rather than a shared repository handoff.
 
