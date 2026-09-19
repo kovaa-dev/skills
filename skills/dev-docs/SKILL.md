@@ -160,6 +160,13 @@ itself. When delegating, it supplies the canonical task, sources, dependencies, 
 docs scope; the project or an available execution workflow determines actual write scopes, agents,
 and integration review.
 
+For documentation work requiring an isolated workspace, follow the active project-work
+policy: use the environment's workspace creation/switching when available, and do not
+choose an ad hoc worktree location. The user starts the app and owns manual UI acceptance.
+Keep that acceptance pending until the user reports its result; when handing off
+user-facing work, put concrete manual test cases in the final reply rather than treating
+automated checks as the manual result.
+
 Do not delete sources without permission and verified recovery. Commits, pushes, and publication
 follow the active project-work policy, an explicit request, or stored project authority:
 `dev-docs` neither grants nor revokes these permissions. Do not modify the skill itself during
