@@ -5,7 +5,8 @@ description: >-
   worktree/branch safety, product-visible-first implementation, minimal complexity,
   tests and E2E without unnecessary harnesses, checks, subagents, Git, draft/ready PRs,
   and handoff. Use before changing code, configuration, CI, Git history, or delivery
-  state, and when applying init, audit, migrate, or update actions to project-work rules.
+  state, and when applying init, audit, migrate, or update actions to project-work rules, or
+  conducting engineering investigations and benchmarks.
 ---
 
 # dev-rules
@@ -231,10 +232,12 @@ function/type/adapter within one accepted path remains a routine detail when it 
 reversible and creates no new boundary. Remove an unjustified standalone entity or
 bring it forward for confirmation.
 
-Performance measurement is needed only for an accepted SLO/capacity/cost/support claim,
-a known hot path/constrained workload, a new resource-sensitive mechanism, or an
-observed budget regression. Start with a simple baseline and focused measurement; do not
-create benchmark infrastructure for a routine UI/correctness/refactor change.
+### Research artifacts
+
+Before planning or running a measurement, investigation, benchmark, capacity probe,
+or experimental comparison, read the
+[research artifact rules](references/research-artifacts.md). They govern measurement
+necessity and sufficiency, disk usage, reproducible inputs, and cleanup before completion.
 
 ## 6. Checks and CI
 

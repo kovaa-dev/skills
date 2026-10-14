@@ -118,13 +118,10 @@ For each decision, briefly assess:
 - basis: a requirement, fact, research finding, or unvalidated hypothesis;
 - trade-offs: resulting value relative to implementation time, maintenance complexity,
   risks, reversibility, and the cost of delay;
-- verification: an observable outcome; use measurements only when required to choose
-  or substantiate a material promise, not as mandatory metrics for everything.
+- verification: an observable outcome and verification method.
 
-Apply the “Necessity, sufficiency, and proportionality of a solution” section of the
-[documentation rules](documentation.md). Do not interpret a request for maximum
-efficiency as permission to build the most complex solution or measurement
-infrastructure.
+Apply the
+[“Necessity, sufficiency, and proportionality of a solution” section](documentation.md#necessity-sufficiency-and-proportionality-of-a-solution).
 
 Acceptance and recording of rationale follow the “Decision approval” section of the
 documentation rules. The outcome of a discussion is one of: accepted, requires research,

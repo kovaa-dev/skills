@@ -24,14 +24,10 @@ The rationale must be proportional to the choice: a few sentences
 are sufficient for an obvious local decision, while an expensive or risky one requires a comparison
 of options. Do not invent precise estimates of time or benefit without data.
 
-Verifiability does not mean that a numeric metric is always required. Measurements are needed when they
-affect the choice or substantiate a material claim: for example, performance,
-cost, load, or a claimed optimization effect. In that case, choose the minimum
-set of measurements and a meaningful criterion based on available data; agree on unknown
-thresholds rather than inventing them. In other cases, an observable
-scenario, test, or reasoned comparison is sufficient. Do not add KPIs, telemetry,
-benchmarks, numeric targets, or separate measurement infrastructure indiscriminately.
-This does not waive mandatory correctness and security checks.
+Verifiability does not mean that a numeric metric is always required. Select measurements
+under the [shared necessity and sufficiency criteria](https://github.com/kovaa-dev/skills/blob/c4243b4ecb17cc8db87762ee6c492bdf87ffe880/skills/dev-rules/references/research-artifacts.md#necessary-and-sufficient-measurements)
+in `dev-rules`. Record the choice or claim being checked, the method's rationale,
+result, and conclusion boundaries; do not copy the measurement execution rules.
 
 ## Decision approval
 
@@ -386,8 +382,7 @@ Numeric conclusions that affect a decision must be reproducible: preserve
 sources, inputs, assumptions, and calculation method. For a simple comparison,
 a formula and input values in the document are sufficient. Preserve a script with inputs
 for a complex, repeatable, or data-sensitive calculation.
-Do not create a script for arithmetic and do not require measurements without need
-under the proportionality principle above.
+Do not create a script for arithmetic.
 
 Maintain the code map at the path from project settings (for example,
 `docs/development/codebase-map.md`) as a navigation map of the actual
