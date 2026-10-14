@@ -5,11 +5,37 @@ Retain conclusions and the inputs needed for meaningful reproduction while bound
 working data. Follow the project's documentation settings; this reference does not
 create a tracker, evidence registry, archive service, or authority for external storage.
 
+## Necessary and sufficient measurements
+
+Every measurement must be necessary and sufficient for a specific accepted decision,
+current risk, or material claim. Necessary means it resolves a named uncertainty
+that affects the choice or verification; if existing evidence is sufficient, a new
+run is unnecessary. Sufficient means the smallest reliable scope that supports the
+stated conclusion, without extra metrics, scenarios, repeats, or infrastructure.
+
+- Before running, name the question, measurement rationale, comparison baseline,
+  material metrics, representative workload, and stopping criterion. Agree on unknown
+  thresholds instead of inventing them. A small smoke run does not establish production
+  capacity or an SLO.
+- Performance measurement is needed for an accepted SLO/capacity/cost/support claim,
+  a known hot path/constrained workload, a new resource-sensitive mechanism, or an
+  observed budget regression. Do not create benchmark infrastructure for a routine
+  UI/correctness/refactor change without such a reason.
+- Start with a simple baseline and the smallest set sufficient for the current
+  conclusion. Expand the corpus or repeats only for material variability, an uncovered
+  boundary, or a new hypothesis; justify the uncertainty the expansion will resolve.
+- Stop when the criterion is met. If evidence is insufficient, bound the conclusion
+  or report an inconclusive result; do not expand indefinitely for evidence completeness.
+  A successful repeat without a new reason does not require another repeat.
+- A numeric metric is not mandatory for every check: an observable scenario, test,
+  or reasoned comparison may be sufficient. This does not waive required correctness,
+  security, or recovery checks.
+
 ## Before running
 
-- Name the question and the smallest sufficient scenarios. Check existing generators,
-  reports, and corpora; reuse suitable inputs without copying them for each algorithm.
-  Start with a small corpus before a full or long-running study.
+- Check existing generators, reports, and corpora; reuse suitable inputs without
+  copying them for each algorithm. A small run before scaling also establishes
+  expected disk usage.
 - Use one gitignored working directory per run according to project settings;
   otherwise use `.evidence/research/<study-slug>/<run-id>/` in the current worktree
   with a local ignore. Separate inputs from regenerable outputs; parallel runs have
@@ -31,7 +57,7 @@ create a tracker, evidence registry, archive service, or authority for external 
   space. Summed content sizes omit the overhead of many small files and are not disk usage.
 - Process variants sequentially when concurrency is not needed by the measurement.
   Do not keep a full corpus at every step; delete verified derived data when no longer
-  needed. Justify repeats by the measurement's purpose.
+  needed.
 - Near the working limit, stop generation, remove unnecessary outputs, or reduce the
   set. Do not continue through unaccounted directories.
 - Use existing `finally`/`trap`/teardown for created processes and temporary resources.
