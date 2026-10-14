@@ -25,6 +25,19 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+
+      - name: Verify release policy
+        env:
+          RELEASE_POLICY_DEPS: ${{ runner.temp }}/release-policy
+        run: |
+          # Match the engine bundled in the pinned release-please-action.
+          npm install --prefix "$RELEASE_POLICY_DEPS" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund release-please@17.3.0
+          node --test scripts/release-policy.test.cjs
+
       - name: Validate repository
         run: python3 scripts/validate.py
 
