@@ -50,6 +50,14 @@ The validator checks frontmatter, names, descriptions, local Markdown links and 
 
 The repository uses [Conventional Commits](https://www.conventionalcommits.org/) and Release Please. After each push to `main`, the workflow creates or updates a release PR from releasable commits. It updates `CHANGELOG.md`, plugin manifests, and README version markers together. Merging the release PR creates the corresponding `vX.Y.Z` tag and GitHub Release.
 
+To rerun the same release pipeline manually, open Actions > Release Please > Run workflow and select `main`, or use GitHub CLI:
+
+```bash
+gh workflow run release-please.yml --repo kovaa-dev/skills --ref main
+```
+
+The manual entry point becomes available after this workflow is on `main`. Runs from other branches skip the release job. It uses the same release policy and accumulated commits as the automatic run, creating or updating a release PR when needed. If there are no unreleased changes, no new version is created. Merging a release PR still publishes the release through the normal workflow.
+
 Skill instructions are the product in this repository, so ordinary `docs:` changes are releasable by default. Use a Conventional Commit title for the squash merge:
 
 - `docs:`, `fix:`, `perf:`, and `revert:` create a patch release.
