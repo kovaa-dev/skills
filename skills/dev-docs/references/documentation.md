@@ -25,7 +25,7 @@ are sufficient for an obvious local decision, while an expensive or risky one re
 of options. Do not invent precise estimates of time or benefit without data.
 
 Verifiability does not mean that a numeric metric is always required. Select measurements
-under the [shared necessity and sufficiency criteria](../../dev-rules/references/research-artifacts.md#necessary-and-sufficient-measurements)
+under the [shared necessity and sufficiency criteria](https://github.com/kovaa-dev/skills/blob/d96c3c594f50fc3a4f91c048be1c6fee768e1b4c/skills/dev-rules/references/research-artifacts.md#necessary-and-sufficient-measurements)
 in `dev-rules`. Record the choice or claim being checked, the method's rationale,
 result, and conclusion boundaries; do not copy the measurement execution rules.
 
