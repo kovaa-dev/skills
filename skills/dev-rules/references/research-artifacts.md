@@ -7,8 +7,8 @@ create a tracker, evidence registry, archive service, or authority for external 
 
 ## Necessary and sufficient measurements
 
-Every measurement must be necessary and sufficient for a specific accepted decision,
-current risk, or material claim. Necessary means it resolves a named uncertainty
+Every measurement must be necessary and sufficient for a specific question in the
+current authorized task, current risk, or material claim. Necessary means it resolves a named uncertainty
 that affects the choice or verification; if existing evidence is sufficient, a new
 run is unnecessary. Sufficient means the smallest reliable scope that supports the
 stated conclusion, without extra metrics, scenarios, repeats, or infrastructure.
