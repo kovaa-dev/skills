@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 No unreleased changes.
 
+## [0.4.1](https://github.com/kovaa-dev/skills/compare/v0.4.0...v0.4.1) (2026-10-14)
+
+
+### Bug Fixes
+
+* release skill documentation changes by default ([#14](https://github.com/kovaa-dev/skills/issues/14)) ([4d297b3](https://github.com/kovaa-dev/skills/commit/4d297b31060d9a752e5c4c4ddcf359001deff841))
+
+
+### Documentation
+
+* centralize measurement criteria and research lifecycle ([#13](https://github.com/kovaa-dev/skills/issues/13)) ([7c2d85c](https://github.com/kovaa-dev/skills/commit/7c2d85cdc91a41d6e493111e826b92eef41465ef))
+* define deterministic worktree handoff ([#12](https://github.com/kovaa-dev/skills/issues/12)) ([3f942de](https://github.com/kovaa-dev/skills/commit/3f942de1a5fd9c4262b65e0894a3cb1898eef80e))
+* standardize manual acceptance and workspaces in dev-rules ([#11](https://github.com/kovaa-dev/skills/issues/11)) ([5d0893e](https://github.com/kovaa-dev/skills/commit/5d0893eb2063a34b531e94e69cfce848b8db5731))
+
 ## [0.4.0](https://github.com/kovaa-dev/skills/compare/v0.3.1...v0.4.0) (2026-09-16)
 
 
