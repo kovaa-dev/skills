@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 No unreleased changes.
 
+## [0.4.2](https://github.com/kovaa-dev/skills/compare/v0.4.1...v0.4.2) (2026-10-20)
+
+
+### Documentation
+
+* focus tests and explanations on meaningful behavior ([#16](https://github.com/kovaa-dev/skills/issues/16)) ([bad7e14](https://github.com/kovaa-dev/skills/commit/bad7e1454f1579b432bf6702d2e7e29dd04ccc88))
+
 ## [0.4.1](https://github.com/kovaa-dev/skills/compare/v0.4.0...v0.4.1) (2026-10-14)
 
 
