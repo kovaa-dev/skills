@@ -155,6 +155,18 @@ When independently choosing the next work, prioritize a user-visible vertical sl
 Choose an infrastructure/evidence-only task first only when it directly blocks that
 slice.
 
+### Code comments
+
+Add comments where they materially help a developer familiar with the project understand
+or safely change the code. Explain non-obvious meaning, a current constraint, or the
+reason for an unusual solution; do not routinely narrate operations already clear from
+the code. Write concisely and naturally, preserving necessary rationale without the
+history of discussions, intermediate attempts, or the order of work.
+
+When changing the affected code, update or remove stale and redundant comments. Keep
+useful explanations even when they describe what a complex algorithm does; comments
+need not be limited to "why."
+
 ## 4. User-owned manual usability gate
 
 A full manual usability gate is mandatory for a new capability, a changed primary
@@ -181,27 +193,56 @@ where it is, what to click, what will be visible, and what material limitation r
 
 ## 5. Tests, E2E, and auxiliary complexity boundaries
 
+### Useful tests and implementation order
+
+Test significant outcomes and concrete mechanisms that can break them in the current
+task, grounded in actual usage, the affected system, or known defects. Choose a small
+sufficient set of scenarios: each new test must detect a consequential error existing
+checks miss. Code structure, a list of requirements, more input combinations, and coverage
+numbers are not a test plan. Stop when another scenario adds no meaningful protection.
+
+Check the result at the boundary where the failure occurs, with expectations derived
+from accepted behavior independently of the implementation. Mocks must not bypass the
+failure mechanism. Tests must be reproducible and survive refactoring that preserves
+behavior; do not freeze implementation details. When an accepted behavior change
+supersedes an old expectation, update the test.
+
+Within the affected area, the agent may rewrite, consolidate, or remove redundant or
+implementation-bound tests without a separate cleanup task, preserving meaningful
+behavioral protection. Ask which significant failure would go unnoticed if a check were
+removed; an unclear answer is a reason to reconsider it. Do not weaken useful checks just
+to make code pass. No per-test report or risk register is required.
+
+Write the test before implementation for a small new function with narrow, well-defined
+behavior, or where a failing check first is genuinely necessary to guide the change.
+Otherwise, choose test timing to suit the task. Do not create a harness or freeze a
+design merely to enforce test-first. For a bugfix, whenever practical, verify that the
+test fails on the defective version because of the reported problem; failure merely
+because an API is missing does not establish useful protection.
+
 ### Regression protection
 
-An automated regression test is mandatory for security, privacy, authorization,
-ownership, data-loss, and recoverability risks. If such a test is technically impossible,
-record an explicit blocker: do not call manual evidence automated, and allow ready only
-under a user-owned exception that includes the reason and a follow-up task. In other
-cases, add a test when it protects a stable contract and is proportionate to the risk.
+Automated protection is mandatory for concrete security, privacy, authorization,
+ownership, data-loss, and recoverability failure scenarios in the affected scope;
+adequate existing tests satisfy this requirement. If such a test is technically
+impossible, record an explicit blocker: do not call manual evidence automated, and allow
+ready only under a user-owned exception that includes the reason and a follow-up task.
 For a typo/docs change, a one-off tooling/config error, external instability, or a
 harness more expensive than the fix, a targeted/manual check is acceptable with a brief
-reason for not adding a new test.
+reason for not adding a new test, subject to the mandatory protection above.
 
-Give each risk one primary cheapest reliable test level. An additional unit, contract,
-integration, E2E, or performance level is allowed only for a different boundary or
-failure mode. Do not repeat the same corpus/invariant merely for evidence completeness.
+Prefer existing tests at the simplest reliable level that exercises the failure
+mechanism. Another test level is justified only by a materially different failure missed
+by existing checks, not by evidence completeness.
 
 ### New E2E
 
-1. First run: one happy path and the minimum accepted contract assertions; no fault
+1. First run: one happy path and assertions of the usable result; no fault
    injection, corpus, resource acceptance metrics, or performance claims.
-2. After establishing a stable automated happy path, add one
-   critical failure mode at a time.
+2. After establishing a stable automated happy path, expand E2E
+   only for a concrete critical failure mode missed by existing checks, one at a time.
+   Where test-first is warranted above, use a focused test before the production change;
+   this does not require building E2E infrastructure first.
 3. Add corpus/performance characterization only for a separately accepted risk/claim
    after the minimum path is stable.
 4. When a test fails, first classify production failure versus harness assumption; do
@@ -217,11 +258,12 @@ prohibited.
 
 Do not compare production and auxiliary code by line count or create a LOC gate. Before
 the first successful manual gate, limit work to the production path and proportionate
-checks for current risks; do not add a new bespoke runner, fault framework, corpus,
-benchmark, or evidence system.
+checks for the concrete failure scenarios above; do not add a new bespoke runner, fault
+framework, corpus, benchmark, or evidence system.
 
-After the gate, every new auxiliary entity must protect one named current risk/contract,
-use the nearest existing test level, and not duplicate another check. A second new
+After the gate, every new auxiliary entity must address a concrete current failure
+scenario or a separately accepted measurement claim and not duplicate an existing check.
+For tests, use the simplest reliable existing test level. A second new
 runner/framework or an expanded corpus requires a separate accepted justification;
 "evidence completeness" and hypothetical future utility are insufficient.
 
@@ -290,6 +332,18 @@ or narrower project policy; project policy may restrict this default. Loading th
 a `planned` status without start confirmation, or grooming-only work does not grant
 this authority. Destructive reset/delete/force, merge, release, and deploy always
 require separate authority.
+
+Write PR descriptions as a concise explanation to a colleague familiar with the project
+but not necessarily the task discussion. Explain the specific problem or need, the
+resulting behavior, and how it was checked. Include details, limitations, and trade-offs
+only when they help assess the change. Use plain, natural language; light informality
+is welcome, and length should match the complexity of the change.
+
+Keep the description coherent and aligned with the final diff, understandable without
+the working conversation. Preserve necessary rationale for the current solution; omit
+the chronology of work, superseded approaches, a file-by-file retelling of the diff, and
+ceremonial sections with no useful content. Do not reintroduce the codebase to its own
+maintainers.
 
 - Commit a coherent, reviewable, revertible unit, not after every message or internal
   step. Do not mechanically split an atomic cross-layer vertical slice when intermediate
