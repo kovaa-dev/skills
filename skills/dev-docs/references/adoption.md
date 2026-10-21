@@ -5,7 +5,33 @@ This is the sole source of the requirements governing adoption of `dev-docs` in 
 [migration](governance-migration.md) addresses existing rules. Installing the skill alone does not
 change the project's active rules.
 
-## How a project uses the skill
+## Routine maintenance without adoption
+
+Routine documentation, task, and decision maintenance does not require `init`, migration, or
+adopting the skill as project governance. When the skill is selected explicitly or implicitly
+during project work, help maintain the affected documents within the current task's authority:
+
+- Keep the project's rules, structure, language, formats, IDs, statuses, and history conventions.
+  Use compatible skill guidance to improve the current work; its schemas and templates do not
+  override existing conventions. Differences from the skill are not migration defects or scoped
+  exceptions in a project that has not adopted it.
+- Update the existing canonical documents and directly related links, navigation, or task state
+  as implementation and accepted decisions change. Do not rewrite unrelated sections or scan the
+  whole documentation tree for a local task.
+- Create a document only when the actual work needs a durable source and no suitable one exists.
+  Follow existing conventions; if none exist, agree only the minimum missing placement/format.
+  Do not generate indexes, settings, layer registries, PRDs, or ADRs merely to satisfy the skill.
+- Keep adoption, rule consolidation, bulk cleanup, renaming, and restructuring outside routine
+  maintenance unless separately requested. Do not ask the user to choose an adoption method or
+  create a mode/profile before making an otherwise authorized edit.
+- If related accepted project sources contradict one another, surface the conflict and seek a
+  decision only for the affected part; continue independent work. A difference between the skill
+  and an existing project convention alone does not block maintenance under that convention.
+
+Read-only requests remain read-only. Availability of the skill supports ordinary agent selection;
+it does not install hooks, change agent entrypoints, or run an independent background process.
+
+## How a project adopts the skill as governance
 
 During `init`, the user explicitly chooses one of two clear methods:
 
@@ -31,11 +57,13 @@ during an explicitly invoked `migrate`/`update` when the user wants to change th
 operation affects adoption. Do not ask again during ordinary docs/tasks work.
 
 Until either method has been accepted and verified, the existing project rules remain in effect,
-and the skill is used only for proposals or a read-only audit. Temporary status and compact source
-mapping for a migration live in the migration task/PR itself. Create a separate working mapping file
-only for a full/large migration or explicitly required policy traceability; condense or delete it
-after verification. Preserve long-term mapping evidence only when explicitly required, and do not
-turn it into permanent governance state.
+and routine maintenance follows the contract above. Adoption verification gates the change of
+governance source, not authorized edits under existing rules.
+
+Temporary status and compact source mapping for a migration live in the migration task/PR itself.
+Create a separate working mapping file only for a full/large migration or explicitly required
+policy traceability; condense or delete it after verification. Preserve long-term mapping evidence
+only when explicitly required, and do not turn it into permanent governance state.
 
 ## Verification depth
 

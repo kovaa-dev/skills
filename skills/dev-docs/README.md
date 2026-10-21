@@ -8,6 +8,7 @@ It turns an idea or an existing product state into a sequence of usable incremen
 
 Use `dev-docs` for:
 
+- ongoing maintenance of existing project documentation without init or migration;
 - product discovery and staged grooming;
 - PRDs and user-visible product outcomes;
 - technical tasks organized by ownership layer;
@@ -24,7 +25,7 @@ Use `dev-docs` for:
 - **Just-in-time decisions:** grooms selected backlog work into `planned`, then uses a short confirmed execution brief—not repeated grooming—before `in-progress`.
 - **Context-efficient by design:** routes the agent through indexes, canonical links, and targeted references so unrelated product history, backlog, and technical documentation do not need to be loaded for the current question.
 - **Explicit ownership:** gives each requirement, decision, task, status, and piece of evidence one canonical owner while keeping indexes navigational.
-- **Existing-project support:** can establish the current product state, preserve shipped behavior, consolidate conflicting documentation, and build a forward roadmap without inventing historical stages.
+- **Existing-project support:** maintains affected documents in their existing structure and formats without requiring init or migration. It can also establish the current product state and build a forward roadmap without inventing historical stages; adoption and consolidation are separate requests.
 - **Tool independence:** works with Markdown files and project-defined paths, layers, checks, and issue trackers; it does not require a particular execution skill or runtime.
 
 ## Scope boundaries
@@ -36,6 +37,8 @@ It does not require strict TDD, a particular agent orchestration model, or an au
 ## Example prompts
 
 ```text
+While implementing this change, use dev-docs to keep the affected documentation and existing tasks current. Preserve the project's structure and formats; do not init or migrate its documentation system.
+
 Use dev-docs to shape this idea into the smallest usable Alpha. Start with overall grooming and do not write project files until we agree on the direction.
 
 Groom backlog PRD-012 using the results of completed PRDs, record the accepted result, and move it to planned. When it is selected for implementation, present a short execution brief before in-progress rather than repeating grooming.
