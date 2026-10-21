@@ -149,7 +149,7 @@ Each skill directory contains:
 
 ## Version
 
-The current repository and plugin version is `v0.4.2`. <!-- x-release-please-version -->
+The current repository and plugin version is `v0.4.3`. <!-- x-release-please-version -->
 
 ## License
 

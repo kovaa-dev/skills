@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 No unreleased changes.
 
+## [0.4.3](https://github.com/kovaa-dev/skills/compare/v0.4.2...v0.4.3) (2026-10-21)
+
+
+### Documentation
+
+* support existing projects and require MCP integrations ([#18](https://github.com/kovaa-dev/skills/issues/18)) ([0115c14](https://github.com/kovaa-dev/skills/commit/0115c1458f654187d31165294242c725fccfba3f))
+
 ## [0.4.2](https://github.com/kovaa-dev/skills/compare/v0.4.1...v0.4.2) (2026-10-20)
 
 
