@@ -164,11 +164,15 @@ decision, and link it to the superseded source.
 
 ## Rules source
 
-Apply the [adoption conditions](adoption.md). The user chooses either a complete copy of the skill
-in the repository or a pinned link to a public source; no separate mode/profile is
-stored. Existing project rules remain in effect until adoption is verified. After that,
-use the selected source, project settings, and explicit scoped exceptions. Installing
-a global copy alone does not change project rules.
+For routine work without adoption, follow the existing project rules and the
+[maintenance contract](adoption.md#routine-maintenance-without-adoption). Apply relevant guidance
+within those conventions; the schemas, statuses, and settings below do not require converting
+existing documents or creating a new documentation system.
+
+When adopting the skill as project governance, apply the [adoption conditions](adoption.md).
+The user chooses either a complete copy in the repository or a pinned link to a public source;
+no separate mode/profile is stored. After verification, use the selected source, project settings,
+and explicit scoped exceptions. Installing a global copy alone does not change project rules.
 
 ## Project settings
 

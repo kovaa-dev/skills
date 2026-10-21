@@ -5,6 +5,10 @@ The canonical rules are the [documentation governance](documentation.md) and
 the [forms](documentation-registers-template.md) provide starter cards, not a second
 set of rules. Historical `*.history.md` files are not part of the package.
 
+Use this guide for requested adoption or migration. Ordinary
+[maintenance of existing documentation](adoption.md#routine-maintenance-without-adoption)
+does not require this bootstrap, its settings, or its initial structure.
+
 After adoption, use the [product discovery process](product-discovery.md):
 for a new product, it establishes the nearest minimum outcome and sequence;
 for an existing product, it determines the actual state and future feature delivery without

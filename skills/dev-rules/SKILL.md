@@ -5,7 +5,8 @@ description: >-
   worktree/branch safety, product-visible-first implementation, minimal complexity,
   tests and E2E without unnecessary harnesses, checks, subagents, Git, draft/ready PRs,
   and handoff. Use before changing code, configuration, CI, Git history, or delivery
-  state, and when applying init, audit, migrate, or update actions to project-work rules, or
+  state, when accessing external project systems, and when applying init, audit, migrate,
+  or update actions to project-work rules, or
   conducting engineering investigations and benchmarks.
 ---
 
@@ -25,6 +26,19 @@ repository or an explicit pinned reference to the published skill. An unnamed se
 duplicate is a migration defect, while a project-specific rule is valid only as a
 setting or an explicitly accepted scoped exception. This skill does not grant authority
 for destructive operations, merge, release, or deploy.
+
+## MCP for external project systems
+
+For remote operations in project systems such as source hosting, issue trackers, and
+knowledge bases, use the configured MCP tools whenever they support the requested
+operation. Discover the available tools before concluding that an integration is missing.
+Do not replace a supported MCP operation with ad hoc HTTP requests, CLI wrappers, or
+browser automation unless the user or project explicitly selects another interface.
+
+If MCP is unavailable or does not support the operation, briefly state the limitation
+and use an existing authorized API, CLI, or browser workflow when available. Tool choice
+does not expand the task or grant permission for external writes. Local filesystem and
+Git operations continue to use the appropriate local tools.
 
 ## Lifecycle and automatic application
 

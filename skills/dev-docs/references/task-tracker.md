@@ -5,6 +5,11 @@ General requirements and project settings are defined in the [documentation poli
 The [card forms](documentation-registers-template.md) follow these rules;
 historical templates no longer apply.
 
+These schemas and status names govern an adopted tracker. For
+[maintenance without adoption](adoption.md#routine-maintenance-without-adoption), preserve the
+existing tracker, IDs, formats, and lifecycle; use the relevant guidance without converting cards
+or introducing a parallel tracker.
+
 - Each file contains exactly one product task, `PRD-NNN`, or one technical task,
   `<LAYER>-NNN`. The number is stable, does not encode a release or phase, and is never
   reused. Technical prefixes come only from the project's explicit layer registry

@@ -1,7 +1,8 @@
 ---
 name: dev-docs
 description: >-
-  Maintain documentation and a file-based task tracker without duplicating requirements.
+  Maintain existing project documentation in place without requiring init or migration,
+  and manage a file-based task tracker without duplicating requirements.
   Use for shaping a new product through grooming and decision agreement,
   supporting a minimum commercial launch, creating and updating PRDs, layer tasks, and
   TDs/ADRs, registering and prioritizing bugs by severity, technical findings, and product
@@ -21,11 +22,11 @@ description: >-
 2. Determine the action and request boundaries. Installing or invoking the skill does not by
    itself authorize restructuring the project. If the goal is undefined, propose an option
    or perform a read-only audit; do not begin a broad migration.
-3. Determine the actual rule source according to the [adoption requirements](references/adoption.md):
-   either a complete project-local copy or a pinned public link. Do not look for a separate
-   mode/profile. Until an adoption method has been selected and verified, the existing rules
-   remain in effect. If there is a conflict, propose resolving it; do not silently switch the
-   rule source.
+3. For routine work, follow the existing project rules and the
+   [maintenance without adoption contract](references/adoption.md#routine-maintenance-without-adoption).
+   If the project has adopted the skill as its governance, load its complete project-local copy
+   or pinned public source. Adoption and migration require a separate request; do not make them
+   prerequisites for maintenance or create a mode/profile.
 4. Do not invent requirements, owners, accepted decisions, deadlines, a stack, or constraints.
    Record unknowns as open questions. Do not create sample tasks from templates.
 
@@ -58,9 +59,16 @@ Read only the references you need; the paths below are relative to the skill dir
 - Integrating an existing limited parser: [optional compatibility](references/validator-compatibility.md).
   Do not load this reference during ordinary work that does not use such a tool.
 
-If the skill has not yet been adopted, read the applicable project rules and use the skill to
-manage an agreed transition. After adoption, read either the project-local copy or the pinned
-public canonical source, not stale policy duplicates. Do not load the entire backlog for one card.
+For maintenance without adoption, use relevant guidance within the existing project conventions;
+the skill's tracker schema and forms do not require converting existing documents. After adoption,
+read either the project-local copy or the pinned public canonical source, not stale policy
+duplicates. Do not load the entire backlog for one card.
+
+Routine documentation maintenance is the default when helping with existing project work,
+including keeping affected docs consistent with implementation and accepted decisions. It needs
+neither a separate action nor prior init: follow the
+[maintenance contract](references/adoption.md#routine-maintenance-without-adoption), within the
+current task's write authority. Use the actions below only when their outcomes are requested.
 
 ## Actions
 
@@ -130,18 +138,18 @@ public canonical source, not stale policy duplicates. Do not load the entire bac
   active project-work policy. A weakened or removed rule must not remain locally in effect without
   an explicitly accepted scoped exception. Update the revision only after verifying the result.
 
-Routine documentation maintenance is not a separate skill action. After verified adoption, the
-project-local copy or pinned project instruction loads the skill during ordinary work; the user
-does not need to invoke it manually. Until adoption is complete, the previous project rules remain
-in effect. Changing the source skill requires a separate request; project exceptions do not
-silently override it.
+An available skill can be selected during ordinary work without adopting it as project governance
+or requiring a manual invocation for each edit. Verified adoption additionally provides a
+reproducible project entrypoint and makes the selected source canonical. Changing the source skill
+requires a separate request; project exceptions do not silently override it.
 
 ## Execution checks
 
-Run only the affected checks from the selected references and the local project. Verify links,
-IDs, and dependencies for affected cards; ensure the task index matches the agreed roadmap, each
-registered task is visible exactly once, status projections match canonical cards, and indexes do
-not contain a second plan or contract. A full graph scan is required only for an explicitly full
+Run only the affected checks from the selected references and the local project, under the
+applicable project conventions. Do not create a tracker or index just to run these checks.
+For an adopted tracker, verify links, IDs, and dependencies for affected cards; ensure the task
+index matches the agreed roadmap, each registered task is visible exactly once, status projections
+match canonical cards, and indexes do not contain a second plan or contract. A full graph scan is required only for an explicitly full
 migration/audit scope. Check semantic completeness against the sources separately: successful lint
 does not prove it. Do not call proposed work accepted or a task done without completed acceptance,
 evidence, and the applicable implementation reconciliation with canonical decisions under the
@@ -171,7 +179,8 @@ These are natural language, not CLI or typed arguments:
 `action`, `scope`, `mode: proposal/read-only/apply`, `language`,
 `batch size`, `constraints` (for example, no deletion or commits).
 When parameters are absent, follow the explicit request and project settings; do not ask for all
-of them again. Store persistent settings in the project index.
+of them again. Store persistent settings in the project's existing settings source, or the
+documentation index when adopting the skill; maintenance does not require a new settings file.
 
 ## Package boundaries
 
@@ -180,7 +189,8 @@ explicitly describe manual verification. Automation helps catch mechanical error
 replace semantic review and must not be installed implicitly. Adapt example paths and metadata to
 the project; do not let a nonexistent tool dictate them.
 
-A project uses either a complete project-local copy of the skill or an explicitly selected pinned
-link to a public source. The method is evident from the project structure and is not duplicated in
-a state field. Do not assume that a personal absolute path is available to the team/CI; the
-adoption requirements define reproducible access and behavior when the source is unavailable.
+When adopting the skill as project governance, use either a complete project-local copy or an
+explicitly selected pinned link to a public source. The method is evident from the project
+structure and is not duplicated in a state field. Do not assume that a personal absolute path is
+available to the team/CI; the adoption requirements define reproducible access and behavior when
+the source is unavailable. Routine maintenance does not require adopting either method.
