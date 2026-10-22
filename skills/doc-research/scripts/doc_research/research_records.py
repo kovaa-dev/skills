@@ -33,6 +33,7 @@ from .common import (
 
 from .research_store import (
     clip_research_record,
+    decode_catalog_scope,
     normalized_id_array,
     require_facet,
     require_research_database,
@@ -113,17 +114,25 @@ def write_research_record(
             if state_values["binding_kind"] == "catalog":
                 if corpus_id is None:
                     raise ValueError("--corpus-id is required for catalog-bound evidence")
+                scoped_ids, scoped_boundaries, _ = decode_catalog_scope(
+                    state_values["catalog_scope_json"]
+                )
+                if corpus_id not in scoped_ids:
+                    raise ValueError("Evidence corpus is outside the research catalog scope")
                 catalog_path = require_catalog_database(
                     Path(str(state_values["catalog_path"]))
                 )
                 with database(catalog_path, readonly=True) as catalog:
-                    if catalog.execute(
-                        "SELECT 1 FROM corpora WHERE corpus_id = ? AND enabled = 1",
+                    corpus = catalog.execute(
+                        "SELECT access_boundary FROM corpora WHERE corpus_id = ? AND enabled = 1",
                         (corpus_id,),
-                    ).fetchone() is None:
+                    ).fetchone()
+                    if corpus is None:
                         raise ValueError(
                             f"Catalog has no enabled corpus with ID: {corpus_id}"
                         )
+                    if scoped_boundaries and corpus["access_boundary"] not in scoped_boundaries:
+                        raise ValueError("Evidence corpus is outside the research catalog scope")
             elif corpus_id is not None:
                 raise ValueError("--corpus-id is only valid for catalog-bound evidence")
         finding = required_research_text(

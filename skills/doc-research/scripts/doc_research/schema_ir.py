@@ -14,7 +14,7 @@ from xml.parsers import expat
 XSD_NAMESPACE = "http://www.w3.org/2001/XMLSchema"
 SCHEMATRON_NAMESPACE = "http://purl.oclc.org/dsdl/schematron"
 # Bump whenever persisted records or model-facing fact semantics change.
-SCHEMA_IR_VERSION = 1
+SCHEMA_IR_VERSION = 2
 MAX_SCHEMA_BLOCKS = 64
 MAX_SCHEMA_CHARS = 16 * 1024 * 1024
 MAX_SCHEMA_NODES = 200_000
@@ -76,6 +76,7 @@ class NormalizedSchemaSource:
     blocks: tuple[SchemaBlock, ...]
     parsed_blocks: int = 0
     reused_blocks: int = 0
+    warnings: tuple[str, ...] = ()
 
 
 def split_qname(value: str) -> tuple[str, str]:
@@ -201,11 +202,10 @@ def presence_for(node: XmlNode) -> str:
     _namespace, kind = split_qname(node.qname)
     if kind == "attribute":
         use = node.attrs.get("use", "optional")
-        if use == "required":
-            return "required"
         if use == "prohibited":
             return "prohibited"
-        return "optional"
+        if use != "required":
+            return "optional"
     minimum, _maximum = occurrence(node)
     if minimum == "0":
         return "optional"
@@ -253,6 +253,7 @@ def fact_for(
         parts.extend((f"minOccurs={minimum}", f"maxOccurs={maximum}"))
     if kind in {"element", "attribute"}:
         parts.append(f"presence={presence_for(node)}")
+        parts.append("presence_scope=local-parent-and-type-use")
     for key in (
         "type",
         "base",
@@ -379,6 +380,8 @@ def normalize_markdown(
     blocks: list[SchemaBlock] = []
     parsed_blocks = 0
     reused_blocks = 0
+    warnings: list[str] = []
+    encountered_blocks = 0
     latest_heading: str | None = None
     index = 0
 
@@ -409,9 +412,10 @@ def normalize_markdown(
             output.extend(lines[index : end + 1])
             index = end + 1
             continue
-        if len(blocks) >= MAX_SCHEMA_BLOCKS:
+        if encountered_blocks >= MAX_SCHEMA_BLOCKS:
             raise ValueError(f"{source_name}: more than {MAX_SCHEMA_BLOCKS} XSD blocks")
-        block_index = len(blocks) + 1
+        encountered_blocks += 1
+        block_index = encountered_blocks
         schema_name = schema_name_from_heading(latest_heading, block_index)
         block_hash = hashlib.sha256(xml_text.encode("utf-8")).hexdigest()
         cached = (cached_blocks or {}).get(block_hash)
@@ -425,24 +429,37 @@ def normalize_markdown(
             )
             reused_blocks += 1
         else:
-            block = normalize_block(
-                xml_text,
-                block_index=block_index,
-                schema_name=schema_name,
-                markdown_start_line=index + 2,
-                markdown_end_line=end,
-                location=f"{source_name}:XSD block {block_index}",
-            )
+            try:
+                block = normalize_block(
+                    xml_text,
+                    block_index=block_index,
+                    schema_name=schema_name,
+                    markdown_start_line=index + 2,
+                    markdown_end_line=end,
+                    location=f"{source_name}:XSD block {block_index}",
+                )
+            except ValueError as error:
+                # A broken/untrusted embedded schema must not suppress independent
+                # prose. Do not parse it again as XML or call its absence coverage.
+                warning = f"{source_name}: skipped XSD block {block_index} at lines {index + 2}-{end}: {error}"
+                warnings.append(warning[:1000])
+                output.append(f"[Schema coverage incomplete: block {block_index} could not be normalized.]\n")
+                output.extend("\n" for _ in range(end - index))
+                index = end + 1
+                continue
             parsed_blocks += 1
         blocks.append(block)
         output.append(
             f"XSD schema {schema_name} normalized into {len(block.records)} semantic records "
             f"(Markdown lines {block.markdown_start_line}-{block.markdown_end_line}).\n"
         )
+        # Keep later narrative locators aligned with the original Markdown after
+        # replacing the fenced schema with one compact searchable line.
+        output.extend("\n" for _ in range(end - index))
         index = end + 1
 
     return NormalizedSchemaSource(
-        "".join(output), tuple(blocks), parsed_blocks, reused_blocks
+        "".join(output), tuple(blocks), parsed_blocks, reused_blocks, tuple(warnings)
     )
 
 

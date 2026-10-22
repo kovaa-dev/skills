@@ -86,7 +86,7 @@ def parser() -> argparse.ArgumentParser:
 
     schema_query = subparsers.add_parser(
         "schema-query",
-        help="Run a bounded diagnostic query over persisted schema records",
+        help="Search persisted schema records with bounded output and continuation",
     )
     schema_query.add_argument("db", type=Path, help="SQLite index path")
     schema_query.add_argument("query", help="Name, path, documentation, or fact substring")
@@ -98,11 +98,10 @@ def parser() -> argparse.ArgumentParser:
     schema_query.add_argument("--max-total-chars", type=int, default=12000)
     schema_query.add_argument(
         "--purpose",
-        choices=("adapter-debugging", "custom-adapter"),
-        required=True,
-        help="Explicit diagnostic use; ordinary retrieval must use evidence-pack",
+        choices=("scoped-search", "adapter-debugging", "custom-adapter"),
+        default="scoped-search",
     )
-    schema_query.add_argument("--purpose-reason", required=True)
+    schema_query.add_argument("--purpose-reason")
     schema_query.add_argument("--pretty", action="store_true")
     schema_query.set_defaults(handler=("index", "command_schema_query"))
 
@@ -292,6 +291,8 @@ def parser() -> argparse.ArgumentParser:
     )
     catalog_get.add_argument("db", type=Path, help="Catalog SQLite database path")
     catalog_get.add_argument("locators", nargs="+")
+    catalog_get.add_argument("--offset", type=int, default=0)
+    catalog_get.add_argument("--start-char", type=int, default=0)
     catalog_get.add_argument("--max-chars", type=int, default=6000)
     catalog_get.add_argument("--max-total-chars", type=int, default=20000)
     catalog_get.add_argument("--pretty", action="store_true", help="Pretty-print JSON output")
@@ -520,9 +521,9 @@ def parser() -> argparse.ArgumentParser:
     search.add_argument("query", help="Search text or FTS5 expression")
     search.add_argument(
         "--purpose",
-        choices=("named-gap", "adapter-debugging", "custom-adapter"),
-        required=True,
-        help="Explicit lower-level use; ordinary Retrieval must use evidence-pack",
+        choices=("scoped-search", "named-gap", "adapter-debugging", "custom-adapter"),
+        default="scoped-search",
+        help="Optional retrieval purpose; a task receipt is not required for normal search",
     )
     search.add_argument("--task-receipt", type=Path)
     search.add_argument("--gap-facet")
@@ -596,9 +597,8 @@ def parser() -> argparse.ArgumentParser:
     search_many.add_argument("input", type=Path, help="JSON array or object with queries")
     search_many.add_argument(
         "--purpose",
-        choices=("named-gap", "adapter-debugging", "custom-adapter"),
-        required=True,
-        help="Explicit lower-level use; ordinary Retrieval must use evidence-pack",
+        choices=("scoped-search", "named-gap", "adapter-debugging", "custom-adapter"),
+        default="scoped-search",
     )
     search_many.add_argument("--task-receipt", type=Path)
     search_many.add_argument("--gap-facet")
@@ -650,8 +650,8 @@ def parser() -> argparse.ArgumentParser:
     evidence_pack.add_argument(
         "--execution-route",
         choices=EVIDENCE_EXECUTION_ROUTES,
-        required=True,
-        help="Executor route; auto performs deterministic cost routing",
+        default="coordinator-direct",
+        help="Executor route; defaults to inline interpretation",
     )
     evidence_pack.add_argument(
         "--executor",
@@ -670,12 +670,27 @@ def parser() -> argparse.ArgumentParser:
     evidence_pack.add_argument(
         "--pack-output",
         type=Path,
-        help="Write a worker-selected evidence pack here; required for --execution-route auto",
+        help="Write a worker-selected evidence pack here when delegation is selected",
     )
     evidence_pack.add_argument(
         "--routing-profile",
         type=Path,
         help="Optional measured cost profile for deterministic auto routing",
+    )
+    evidence_pack.add_argument(
+        "--parent-context-tokens",
+        type=int,
+        help="Measured parent-context tokens used by deterministic route costing",
+    )
+    evidence_pack.add_argument(
+        "--expected-direct-turns",
+        type=float,
+        help="Expected remaining parent model turns without isolation",
+    )
+    evidence_pack.add_argument(
+        "--expected-delegated-parent-turns",
+        type=float,
+        help="Expected remaining parent turns when a no-history worker is used",
     )
     evidence_pack.add_argument("--chunk-chars", type=int, default=3500)
     evidence_pack.add_argument(
@@ -707,7 +722,7 @@ def parser() -> argparse.ArgumentParser:
     findings_save.add_argument(
         "--execution-route",
         choices=("coordinator-direct", "low-overhead-worker", "coordinator-fallback"),
-        required=True,
+        default="coordinator-direct",
         help="Actual model route that produced the findings",
     )
     findings_save.add_argument("--executor")
@@ -723,13 +738,13 @@ def parser() -> argparse.ArgumentParser:
     get.add_argument("passage_ids", type=int, nargs="+", help="Passage IDs from search results")
     get.add_argument(
         "--purpose",
-        choices=("named-gap", "adapter-debugging", "custom-adapter", "locator-verification"),
-        required=True,
-        help="Explicit lower-level use; ordinary Retrieval must use evidence-pack",
+        choices=("scoped-search", "named-gap", "adapter-debugging", "custom-adapter", "locator-verification"),
+        default="scoped-search",
     )
     get.add_argument("--task-receipt", type=Path)
     get.add_argument("--gap-facet")
     get.add_argument("--purpose-reason")
+    get.add_argument("--around", help="Open the context of matching terms; omit when continuing with --start-char")
     get.add_argument("--limit", type=int, default=12)
     get.add_argument("--offset", type=int, default=0, help="Continue at this passage offset")
     get.add_argument(

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+from collections.abc import Iterator
 from pathlib import Path
 
 from .catalog_store import (
@@ -16,6 +17,7 @@ from .common import (
     MAX_CATALOG_CORPORA,
     MAX_FILTER_TEXT,
     MAX_QUERY_TEXT,
+    clip_text,
     database,
     emit_json,
     harden_database_permissions,
@@ -27,9 +29,76 @@ from .common import (
     utc_now,
     validate_record_id,
 )
-from .index import get_payload, source_hash
+from .index import get_payload, literal_query, prefix_query, require_current_schema, result_item, source_hash
 from .research_links import link_catalog_receipt_to_research
-from .search import search_payload
+from .search import resolved_query_mode, search_payload
+
+
+def hydrate_federated_references(
+    references: list[dict[str, object]],
+    entries: list[dict[str, object]],
+    args: argparse.Namespace,
+    raw_query: str,
+) -> list[dict[str, object]]:
+    """Reconstruct snippets from current indexes without repeating candidate selection."""
+    mode = resolved_query_mode(raw_query, args.mode)
+    query = literal_query(raw_query) if mode == "literal" else (
+        prefix_query(raw_query) if mode == "prefix" else raw_query
+    )
+    by_corpus = {str(entry["corpus_id"]): entry for entry in entries}
+    found: dict[tuple[str, int], dict[str, object]] = {}
+    requested: dict[str, list[int]] = {}
+    for reference in references:
+        corpus_id, passage_id = reference.get("corpus_id"), reference.get("passage_id")
+        if corpus_id not in by_corpus or not isinstance(passage_id, int):
+            raise ValueError("Cached federated reference is outside the selected catalog scope")
+        requested.setdefault(str(corpus_id), []).append(passage_id)
+    for corpus_id, passage_ids in requested.items():
+        with database(Path(str(by_corpus[corpus_id]["index_path"])), readonly=True) as connection:
+            require_current_schema(connection)
+            rows = connection.execute(
+                f"""SELECT rowid AS passage_id,
+                       bm25(chunks, 0.0, 3.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 2.0, 1.0) AS score,
+                       source_path, source, source_hash, page, section, version, date,
+                       line_start, line_end,
+                       snippet(chunks, 10, '', '', ' … ', {args.snippet_tokens}) AS text
+                FROM chunks WHERE chunks MATCH ? AND rowid IN (
+                    {','.join('?' for _ in passage_ids)})""",
+                [query, *passage_ids],
+            ).fetchall()
+            for row in rows:
+                text = str(row["text"] or "")
+                visible, truncated = clip_text(text, args.max_chars)
+                found[(corpus_id, row["passage_id"])] = {
+                    "corpus_id": corpus_id,
+                    **result_item(row, visible, text_truncated=truncated),
+                }
+    results = []
+    for reference in references:
+        key = (str(reference["corpus_id"]), int(reference["passage_id"]))
+        result = found.get(key)
+        if result is None or result.get("source_hash") != reference.get("source_hash"):
+            raise ValueError("Cached federated reference is stale for its index")
+        if isinstance(reference.get("also_in"), list):
+            result["also_in"] = reference["also_in"]
+        results.append(result)
+    return results
+
+
+def bound_federated_results(
+    results: list[dict[str, object]], max_total_chars: int
+) -> tuple[list[dict[str, object]], int, bool]:
+    bounded = []
+    characters = 0
+    for result in results:
+        size = len(json.dumps(result, ensure_ascii=False, separators=(",", ":")))
+        if characters + size > max_total_chars:
+            if not bounded:
+                raise ValueError("--max-total-chars is too small for one federated result")
+            return bounded, characters, True
+        bounded.append(result)
+        characters += size
+    return bounded, characters, False
 
 def federated_receipt_id(
     query: str,
@@ -186,8 +255,8 @@ def command_catalog_search(args: argparse.Namespace) -> int:
         raise ValueError("--read-only cannot link a receipt to writable research state")
     if not 1 <= args.limit <= 12:
         raise ValueError("--limit must be between 1 and 12")
-    if args.offset < 0 or args.offset + args.limit > 50:
-        raise ValueError("--offset plus --limit must be between 1 and 50")
+    if args.offset < 0:
+        raise ValueError("--offset must be zero or greater")
     if not 100 <= args.max_chars <= 8000:
         raise ValueError("--max-chars must be between 100 and 8000")
     if not 100 <= args.max_total_chars <= 100_000:
@@ -285,23 +354,32 @@ def command_catalog_search(args: argparse.Namespace) -> int:
                 references = cached["result_refs"]
                 if not isinstance(references, list):
                     raise ValueError("Cached federated references are not a list")
+                results, characters, output_truncated = bound_federated_results(
+                    hydrate_federated_references(references, entries, args, raw_query),
+                    args.max_total_chars,
+                )
+                next_offset = (
+                    args.offset + len(results) if output_truncated else cached["next_offset"]
+                )
                 payload: dict[str, object] = {
                     "query": raw_query,
                     "mode": args.mode,
                     "project_ids": list(dict.fromkeys(project_ids)),
                     "corpus_ids": selected_ids,
                     "offset": args.offset,
-                    "result_count": len(references),
-                    "characters": 0,
-                    "has_more": cached["next_offset"] is not None,
+                    "result_count": len(results),
+                    "characters": characters,
+                    "has_more": next_offset is not None,
                     "coverage_complete": not unavailable,
-                    "results": references,
+                    "results": results,
                     "unsearched_corpora": unavailable,
                     "receipt_hit": True,
                     "receipt_id": receipt_id,
                 }
-                if cached["next_offset"] is not None:
-                    payload["next_offset"] = cached["next_offset"]
+                if next_offset is not None:
+                    payload["next_offset"] = next_offset
+                if output_truncated:
+                    payload["text_truncated"] = True
                 if args.research_db is not None:
                     link_catalog_receipt_to_research(
                         args.research_db,
@@ -317,10 +395,10 @@ def command_catalog_search(args: argparse.Namespace) -> int:
         for item in entries
         if item["adapter"] == "local-index" and item.get("available")
     ]
-    candidate_limit = min(50, args.offset + args.limit)
-    member_payloads: list[tuple[str, dict[str, object]]] = []
+    candidate_limit = min(50, args.offset + args.limit + 1)
     member_receipts: list[dict[str, object]] = []
-    for item in local_entries:
+
+    def member_results(item: dict[str, object]) -> Iterator[dict[str, object]]:
         namespace = argparse.Namespace(
             db=Path(str(item["index_path"])),
             query=raw_query,
@@ -333,7 +411,7 @@ def command_catalog_search(args: argparse.Namespace) -> int:
             limit=candidate_limit,
             offset=0,
             max_chars=args.max_chars,
-            max_total_chars=args.max_total_chars,
+            max_total_chars=min(args.max_total_chars, 40_000),
             snippet_tokens=args.snippet_tokens,
             receipts_db=Path(str(item["receipts_path"])),
             research_db=None,
@@ -345,63 +423,59 @@ def command_catalog_search(args: argparse.Namespace) -> int:
             max_per_source=args.max_per_source,
             pretty=False,
         )
-        payload = search_payload(namespace)
-        if not isinstance(payload, dict):
-            raise RuntimeError("Internal search returned an invalid payload")
-        member_payloads.append((str(item["corpus_id"]), payload))
-        member_receipts.append(
-            {
-                "corpus_id": item["corpus_id"],
-                "receipt_id": payload.get("receipt_id"),
-                "generation": item.get("current_generation"),
-                "has_more": bool(payload.get("has_more")),
-                "next_offset": payload.get("next_offset"),
-            }
-        )
+        member_receipt: dict[str, object] = {}
+        member_receipts.append(member_receipt)
+        while True:
+            payload = search_payload(namespace)
+            member_receipt.update(
+                {
+                    "corpus_id": item["corpus_id"],
+                    "receipt_id": payload.get("receipt_id"),
+                    "generation": item.get("current_generation"),
+                    "has_more": bool(payload.get("has_more")),
+                    "next_offset": payload.get("next_offset"),
+                }
+            )
+            for result in payload.get("results", []):
+                if isinstance(result, dict):
+                    yield {"corpus_id": str(item["corpus_id"]), **result}
+            if not payload.get("has_more"):
+                return
+            next_offset = payload.get("next_offset")
+            if not isinstance(next_offset, int) or next_offset <= namespace.offset:
+                raise ValueError("Member search returned a non-advancing continuation")
+            namespace.offset = next_offset
 
-    interleaved: list[dict[str, object]] = []
-    max_members = max(
-        (len(payload.get("results", [])) for _, payload in member_payloads), default=0
-    )
-    seen: dict[str, int] = {}
-    for rank in range(max_members):
-        for corpus_id, payload in member_payloads:
-            results = payload.get("results", [])
-            if not isinstance(results, list) or rank >= len(results):
+    page: list[dict[str, object]] = []
+    seen: dict[str, dict[str, object] | None] = {}
+    streams = [member_results(item) for item in local_entries]
+    position = 0
+    while streams and len(page) <= args.limit:
+        active = []
+        for stream in streams:
+            result = next(stream, None)
+            if result is None:
                 continue
-            raw = results[rank]
-            if not isinstance(raw, dict):
-                continue
-            result = {"corpus_id": corpus_id, **raw}
+            active.append(stream)
             key = federated_dedupe_key(result)
             if args.dedupe_exact and key in seen:
-                existing = interleaved[seen[key]]
-                aliases = existing.setdefault("also_in", [])
-                if isinstance(aliases, list) and len(aliases) < 5:
-                    aliases.append(federated_reference(result))
+                existing = seen[key]
+                if existing is not None:
+                    aliases = existing.setdefault("also_in", [])
+                    if isinstance(aliases, list) and len(aliases) < 5:
+                        aliases.append(federated_reference(result))
                 continue
-            seen[key] = len(interleaved)
-            interleaved.append(result)
+            if args.dedupe_exact:
+                seen[key] = result if position >= args.offset else None
+            if position >= args.offset:
+                page.append(result)
+            position += 1
+        streams = active
 
-    page = interleaved[args.offset : args.offset + args.limit]
-    bounded: list[dict[str, object]] = []
-    characters = 0
-    output_truncated = False
-    for result in page:
-        encoded = json.dumps(result, ensure_ascii=False, separators=(",", ":"))
-        if bounded and characters + len(encoded) > args.max_total_chars:
-            output_truncated = True
-            break
-        if not bounded and len(encoded) > args.max_total_chars:
-            raise ValueError("--max-total-chars is too small for one federated result")
-        bounded.append(result)
-        characters += len(encoded)
-    any_member_more = any(bool(payload.get("has_more")) for _, payload in member_payloads)
-    has_more = (
-        args.offset + len(bounded) < len(interleaved)
-        or any_member_more
-        or output_truncated
-    )
+    more_results = len(page) > args.limit
+    page = page[:args.limit]
+    bounded, characters, output_truncated = bound_federated_results(page, args.max_total_chars)
+    has_more = more_results or output_truncated
     coverage_complete = not unavailable
     references = [federated_reference(result) for result in bounded]
     outcome = (
@@ -460,6 +534,14 @@ def command_catalog_search(args: argparse.Namespace) -> int:
     return 0
 def command_catalog_get(args: argparse.Namespace) -> int:
     db_path = require_catalog_database(args.db)
+    offset = getattr(args, "offset", 0)
+    start_char = getattr(args, "start_char", 0)
+    if offset < 0 or start_char < 0:
+        raise ValueError("--offset and --start-char must be zero or greater")
+    if not 100 <= args.max_chars <= 8000:
+        raise ValueError("--max-chars must be between 100 and 8000")
+    if not 100 <= args.max_total_chars <= 100_000:
+        raise ValueError("--max-total-chars must be between 100 and 100000")
     if len(args.locators) > 50:
         raise ValueError("At most 50 federated locators may be requested")
     parsed: list[tuple[str, int]] = []
@@ -491,61 +573,60 @@ def command_catalog_get(args: argparse.Namespace) -> int:
     missing = [corpus_id for corpus_id in requested if corpus_id not in entries]
     if missing:
         raise ValueError(f"Unknown or disabled corpus IDs: {', '.join(missing)}")
-    by_corpus: dict[str, list[int]] = {}
     for corpus_id, passage_id in parsed:
         item = entries[corpus_id]
         if item["adapter"] != "local-index" or not item.get("available"):
             raise ValueError(
                 f"Corpus {corpus_id} requires its external adapter; catalog-get is local only"
             )
-        by_corpus.setdefault(corpus_id, []).append(passage_id)
-    found: dict[tuple[str, int], dict[str, object]] = {}
-    for corpus_id, passage_ids in by_corpus.items():
+
+    results: list[dict[str, object]] = []
+    not_found: list[str] = []
+    characters = 0
+    next_offset: int | None = None
+    next_start_char = 0
+    for position in range(offset, len(parsed)):
+        corpus_id, passage_id = parsed[position]
         namespace = argparse.Namespace(
             db=Path(str(entries[corpus_id]["index_path"])),
-            passage_ids=passage_ids,
-            limit=len(passage_ids),
+            passage_ids=[passage_id],
+            limit=1,
             offset=0,
-            start_char=0,
+            start_char=start_char if position == offset else 0,
             max_chars=args.max_chars,
-            max_total_chars=args.max_total_chars,
+            max_total_chars=min(args.max_total_chars, 40_000),
             pretty=False,
         )
         payload = get_payload(namespace)
-        for result in payload.get("results", []):
-            if isinstance(result, dict) and isinstance(result.get("passage_id"), int):
-                found[(corpus_id, result["passage_id"])] = {
-                    "corpus_id": corpus_id,
-                    **result,
-                }
-    results: list[dict[str, object]] = []
-    characters = 0
-    output_truncated = False
-    for key in parsed:
-        result = found.get(key)
-        if result is None:
+        if passage_id in payload.get("not_found", []):
+            not_found.append(f"{corpus_id}={passage_id}")
             continue
+        result = {"corpus_id": corpus_id, **payload["results"][0]}
         encoded = json.dumps(result, ensure_ascii=False, separators=(",", ":"))
         if results and characters + len(encoded) > args.max_total_chars:
-            output_truncated = True
+            next_offset = position
+            next_start_char = namespace.start_char
             break
         if not results and len(encoded) > args.max_total_chars:
             raise ValueError("--max-total-chars is too small for one federated passage")
         results.append(result)
         characters += len(encoded)
-    emit_json(
-        {
-            "requested_count": len(parsed),
-            "result_count": len(results),
-            "characters": characters,
-            "has_more": output_truncated,
-            "not_found": [
-                f"{corpus_id}={passage_id}"
-                for corpus_id, passage_id in parsed
-                if (corpus_id, passage_id) not in found
-            ],
-            "results": results,
-        },
-        args.pretty,
-    )
+        if payload.get("has_more"):
+            next_offset = position
+            next_start_char = int(payload["next_start_char"])
+            break
+    response: dict[str, object] = {
+        "requested_count": len(parsed),
+        "offset": offset,
+        "start_char": start_char,
+        "result_count": len(results),
+        "characters": characters,
+        "has_more": next_offset is not None,
+        "not_found": not_found,
+        "results": results,
+    }
+    if next_offset is not None:
+        response["next_offset"] = next_offset
+        response["next_start_char"] = next_start_char
+    emit_json(response, args.pretty)
     return 0

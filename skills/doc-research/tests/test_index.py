@@ -36,6 +36,8 @@ class IndexCliTest(CorpusCliTestCase):
             self.assertEqual(refresh_payload["files_indexed"], 1)
             found = json.loads(run_corpus("search", database, "changed marker").stdout)
             self.assertEqual(found["result_count"], 1)
+            self.assertEqual(found["results"][0]["line_start"], 7)
+            self.assertEqual(found["results"][0]["line_end"], 9)
 
     def test_info_reports_bounded_index_inventory(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -53,7 +55,7 @@ class IndexCliTest(CorpusCliTestCase):
             first = run_corpus("info", database, "--source-limit", 1)
             self.assertEqual(first.returncode, 0, first.stderr)
             payload = json.loads(first.stdout)
-            self.assertEqual(payload["schema_version"], 2)
+            self.assertEqual(payload["schema_version"], 3)
             self.assertEqual(payload["corpus"], str(corpus.resolve()))
             self.assertEqual(payload["source_count"], 2)
             self.assertEqual(payload["chunk_count"], 2)

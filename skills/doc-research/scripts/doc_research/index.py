@@ -4,6 +4,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+from collections import Counter
 import shutil
 import tempfile
 from dataclasses import dataclass
@@ -52,6 +53,8 @@ class Chunk:
     section: str | None
     version: str | None
     date: str | None
+    line_start: int | None
+    line_end: int | None
     context: str | None
     text: str
 
@@ -81,25 +84,36 @@ def split_long(text: str, max_chars: int, overlap: int = 200) -> Iterator[str]:
             break
         start = max(end - overlap, start + 1)
 
-def paragraphs_from_text(raw: str) -> Iterator[tuple[str | None, str | None, str]]:
+def paragraphs_from_text(
+    raw: str,
+) -> Iterator[tuple[str | None, str | None, int, int, str]]:
     pages = raw.split("\f")
     has_page_breaks = len(pages) > 1
     current_section: str | None = None
+    source_line = 0
 
     for page_index, page_text in enumerate(pages, start=1):
         current_page: str | None = str(page_index) if has_page_breaks else None
         buffer: list[str] = []
+        buffer_start: int | None = None
+        buffer_end: int | None = None
 
-        def flush() -> tuple[str | None, str | None, str] | None:
+        def flush() -> tuple[str | None, str | None, int, int, str] | None:
+            nonlocal buffer_start, buffer_end
             if not buffer:
                 return None
             value = "\n".join(part.rstrip() for part in buffer if part.strip()).strip()
             buffer.clear()
-            if not value:
+            start = buffer_start
+            end = buffer_end
+            buffer_start = None
+            buffer_end = None
+            if not value or start is None or end is None:
                 return None
-            return current_page, current_section, value
+            return current_page, current_section, start, end, value
 
         for line in page_text.splitlines():
+            source_line += 1
             page_match = PAGE_MARKER.match(line)
             if page_match:
                 item = flush()
@@ -122,6 +136,9 @@ def paragraphs_from_text(raw: str) -> Iterator[tuple[str | None, str | None, str
                     yield item
                 continue
 
+            if buffer_start is None:
+                buffer_start = source_line
+            buffer_end = source_line
             buffer.append(line)
 
         item = flush()
@@ -141,14 +158,20 @@ def chunks_from_text(
     pending_length = 0
     pending_page: str | None = None
     pending_section: str | None = None
+    pending_start: int | None = None
+    pending_end: int | None = None
 
     def flush_pending() -> Chunk | None:
-        nonlocal pending_length
+        nonlocal pending_length, pending_start, pending_end
         if not pending:
             return None
         value = "\n\n".join(pending).strip()
         pending.clear()
         pending_length = 0
+        line_start = pending_start
+        line_end = pending_end
+        pending_start = None
+        pending_end = None
         if not value:
             return None
         return Chunk(
@@ -158,11 +181,13 @@ def chunks_from_text(
             pending_section,
             None,
             None,
+            line_start,
+            line_end,
             None,
             value,
         )
 
-    for page, section, paragraph in paragraphs_from_text(raw):
+    for page, section, line_start, line_end, paragraph in paragraphs_from_text(raw):
         if (page, section) != (pending_page, pending_section):
             item = flush_pending()
             if item:
@@ -174,7 +199,18 @@ def chunks_from_text(
             if item:
                 yield item
             for piece in split_long(paragraph, max_chars):
-                yield Chunk(relative_path, source_hash, page, section, None, None, None, piece)
+                yield Chunk(
+                    relative_path,
+                    source_hash,
+                    page,
+                    section,
+                    None,
+                    None,
+                    line_start,
+                    line_end,
+                    None,
+                    piece,
+                )
             continue
 
         projected = pending_length + len(paragraph) + (2 if pending else 0)
@@ -183,6 +219,9 @@ def chunks_from_text(
             if item:
                 yield item
         pending.append(paragraph)
+        if pending_start is None:
+            pending_start = line_start
+        pending_end = line_end
         pending_length += len(paragraph) + (2 if len(pending) > 1 else 0)
 
     item = flush_pending()
@@ -198,6 +237,8 @@ def chunks_from_text(
                 f"XSD schema {block.schema_name}",
                 None,
                 None,
+                block.markdown_start_line,
+                block.markdown_end_line,
                 f"schema-ir-v{SCHEMA_IR_VERSION}; block={block.block_index}",
                 fact_group,
             )
@@ -257,6 +298,8 @@ def chunks_from_jsonl(
                     section,
                     version,
                     date,
+                    line_number,
+                    line_number,
                     context,
                     piece,
                 )
@@ -332,6 +375,8 @@ def create_schema(connection: sqlite3.Connection) -> None:
             section,
             version UNINDEXED,
             date UNINDEXED,
+            line_start UNINDEXED,
+            line_end UNINDEXED,
             context,
             text,
             tokenize = 'unicode61'
@@ -497,6 +542,7 @@ def calculate_index_fingerprint(connection: sqlite3.Connection) -> str:
         "SELECT value FROM metadata WHERE key = 'corpus_root'"
     ).fetchone()
     digest.update(f"schema:{SCHEMA_VERSION}\n".encode())
+    digest.update(f"normalizer:{SCHEMA_IR_VERSION}\n".encode())
     digest.update(f"corpus:{corpus['value'] if corpus else ''}\n".encode())
     for row in connection.execute(
         "SELECT path, sha256, chunk_count FROM sources ORDER BY path"
@@ -665,6 +711,35 @@ def resolve_index_binding(index_path: Path, corpus_root: Path) -> tuple[Path, st
         fingerprint = index_fingerprint(connection)
     return resolved, fingerprint
 
+def validate_output_paths(
+    corpus: Path, outputs: Iterable[Path | None], inputs: Iterable[Path | None] = (),
+    *, index_path: Path | None = None,
+) -> None:
+    """Reject source/input aliases before any index or receipt write occurs."""
+    destinations = [path.resolve() for path in outputs if path is not None]
+    protected = [path.resolve() for path in inputs if path is not None]
+    corpus = corpus.resolve()
+    index_path = index_path.resolve() if index_path is not None else None
+    if index_path is not None and index_path.exists():
+        with database(index_path, readonly=True) as connection:
+            require_index_owner(connection)
+    if corpus.is_file():
+        protected.append(corpus)
+    elif corpus.is_dir():
+        protected.extend(path.resolve() for path in iter_source_files(corpus) if path.resolve() != index_path)
+
+    def aliases(left: Path, right: Path) -> bool:
+        return left == right or (
+            left.exists() and right.exists() and left.samefile(right)
+        )
+
+    for index, path in enumerate(destinations):
+        if any(aliases(path, other) for other in protected + destinations[:index]):
+            raise ValueError(f"Output path collides with a source, input, or another output: {path}")
+        if path != index_path and corpus.is_dir() and path.is_relative_to(corpus) and path.suffix.lower() in SUPPORTED_SUFFIXES:
+            raise ValueError("Derived text/JSON outputs must be outside the indexed corpus")
+
+
 def index_payload(args: argparse.Namespace) -> dict[str, object]:
     corpus = args.corpus.resolve()
     db_path = args.db.resolve()
@@ -680,6 +755,7 @@ def index_payload(args: argparse.Namespace) -> dict[str, object]:
     if args.max_chars < 500:
         raise ValueError("--max-chars must be at least 500")
 
+    validate_output_paths(corpus, [db_path], index_path=db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
     sources, corpus_bytes = inventory_sources(
         corpus,
@@ -696,6 +772,7 @@ def index_payload(args: argparse.Namespace) -> dict[str, object]:
     total_schema_records = 0
     schema_blocks_parsed = 0
     schema_blocks_reused = 0
+    schema_warnings: dict[str, list[str]] = {}
     existing: dict[str, sqlite3.Row] = {}
     existing_connection: sqlite3.Connection | None = None
     database_existed = db_path.exists()
@@ -711,6 +788,9 @@ def index_payload(args: argparse.Namespace) -> dict[str, object]:
                 row["path"]: row
                 for row in existing_connection.execute("SELECT * FROM sources")
             }
+            warning_row = existing_connection.execute("SELECT value FROM metadata WHERE key = 'schema_warnings'").fetchone()
+            if warning_row:
+                schema_warnings = json.loads(warning_row["value"])
 
         if not sources and existing:
             raise ValueError(
@@ -762,6 +842,7 @@ def index_payload(args: argparse.Namespace) -> dict[str, object]:
                 "database_rebuilt": False,
                 "update_strategy": "none",
                 "permissions_hardened": permissions_hardened,
+                "schema_warnings": schema_warnings,
             }
 
         changed_sources = [
@@ -890,6 +971,10 @@ def index_payload(args: argparse.Namespace) -> dict[str, object]:
                         normalized = normalize_schema_source(
                             source.path, source.relative_path, cached_blocks
                         )
+                        if normalized.warnings:
+                            schema_warnings[source.relative_path] = list(normalized.warnings)
+                        else:
+                            schema_warnings.pop(source.relative_path, None)
                         schema_blocks_parsed += normalized.parsed_blocks
                         schema_blocks_reused += normalized.reused_blocks
                         chunks = chunks_from_text(
@@ -913,6 +998,8 @@ def index_payload(args: argparse.Namespace) -> dict[str, object]:
                                 chunk.section,
                                 chunk.version,
                                 chunk.date,
+                                chunk.line_start,
+                                chunk.line_end,
                                 chunk.context,
                                 chunk.text,
                             )
@@ -921,9 +1008,9 @@ def index_payload(args: argparse.Namespace) -> dict[str, object]:
                         """
                         INSERT INTO chunks(
                             source_path, source, source_hash, page, section,
-                            version, date, context, text
+                            version, date, line_start, line_end, context, text
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         parsed_rows(),
                     )
@@ -948,6 +1035,8 @@ def index_payload(args: argparse.Namespace) -> dict[str, object]:
                     indexed += 1
 
                 verify_source_inventory(sources)
+                schema_warnings = {path: warnings for path, warnings in schema_warnings.items() if path in current_paths}
+                new_connection.execute("INSERT OR REPLACE INTO metadata(key, value) VALUES ('schema_warnings', ?)", (json.dumps(schema_warnings, ensure_ascii=False),))
                 total_chunks = int(
                     new_connection.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
                 )
@@ -999,6 +1088,7 @@ def index_payload(args: argparse.Namespace) -> dict[str, object]:
         "database_rebuilt": True,
         "update_strategy": update_strategy,
         "permissions_hardened": permissions_hardened,
+        "schema_warnings": schema_warnings,
     }
 
 
@@ -1181,6 +1271,7 @@ def bounded_schema_record(
 
     item: dict[str, object] = {
         "schema_name": block.schema_name,
+        "block_hash": block.block_hash,
         "block_index": block.block_index,
         "record_order": record.record_order,
         "parent_order": record.parent_order,
@@ -1254,6 +1345,7 @@ def normalize_xml_schema_payload(args: argparse.Namespace) -> dict[str, object]:
         "has_more": args.include_records and args.offset + len(selected) < len(records),
         "blocks": block_summaries,
         "records": selected,
+        "warnings": list(normalized.warnings),
     }
 
 
@@ -1268,8 +1360,8 @@ def schema_query_payload(args: argparse.Namespace) -> dict[str, object]:
         raise ValueError("--limit must be between 1 and 50")
     if args.offset < 0:
         raise ValueError("--offset must be zero or greater")
-    if not 100 <= args.max_total_chars <= 40_000:
-        raise ValueError("--max-total-chars must be between 100 and 40000")
+    if not 100 <= args.max_total_chars <= 200_000:
+        raise ValueError("--max-total-chars must be between 100 and 200000")
     query = args.query.strip()
     if not query:
         raise ValueError("Schema query must not be empty")
@@ -1309,6 +1401,8 @@ def schema_query_payload(args: argparse.Namespace) -> dict[str, object]:
     with database(db_path, readonly=True) as connection:
         require_current_schema(connection)
         rows = connection.execute(sql, parameters).fetchall()
+        warning_row = connection.execute("SELECT value FROM metadata WHERE key = 'schema_warnings'").fetchone()
+        schema_warnings = json.loads(warning_row["value"]) if warning_row else {}
 
     selected = rows[: args.limit]
     results: list[dict[str, object]] = []
@@ -1361,6 +1455,7 @@ def schema_query_payload(args: argparse.Namespace) -> dict[str, object]:
         "has_more": has_more,
         "next_offset": args.offset + len(results) if has_more else None,
         "results": results,
+        "schema_warnings": schema_warnings,
     }
 
 
@@ -1404,7 +1499,14 @@ def result_item(
         item["source_path"] = row["source_path"]
     if score is not None:
         item["score"] = score
-    for key in ("page", "section", "version", "date"):
+    for key in (
+        "page",
+        "section",
+        "version",
+        "date",
+        "line_start",
+        "line_end",
+    ):
         if row[key] is not None:
             item[key] = row[key]
     if text_start_char:
@@ -1444,6 +1546,8 @@ def search_row_locator(row: sqlite3.Row) -> dict[str, object]:
             "section",
             "version",
             "date",
+            "line_start",
+            "line_end",
         )
         if row[key] is not None
     }
@@ -1512,6 +1616,40 @@ def require_database(path: Path) -> Path:
         raise ValueError(f"Index database does not exist: {resolved}")
     return resolved
 
+def context_start(text: str, query: str, budget: int) -> int:
+    """Find a dense match window, retaining the beginning of its paragraph if it fits."""
+    if len(text) <= budget or not query:
+        return 0
+    terms = {term.casefold() for term in TOKEN.findall(query) if term.upper() not in {"AND", "OR", "NOT", "NEAR"}}
+    matches = [(match.start(), match.group().casefold()) for match in TOKEN.finditer(text)
+               if any(match.group().casefold().startswith(term) for term in terms)]
+    if not matches:
+        return 0
+    # Bound work on repeated terms; prefer a window with distinct query terms.
+    matches = matches[:2000]
+    counts: Counter[str] = Counter()
+    left = right = 0
+    best = matches[0]
+    best_score = 0
+    for item in matches:
+        while right < len(matches) and matches[right][0] < item[0] + budget * 2 // 3:
+            counts[matches[right][1]] += 1
+            right += 1
+        while left < right and matches[left][0] < item[0] - budget // 3:
+            counts[matches[left][1]] -= 1
+            if not counts[matches[left][1]]:
+                del counts[matches[left][1]]
+            left += 1
+        if len(counts) > best_score:
+            best, best_score = item, len(counts)
+    start = max(0, min(best[0] - budget // 3, len(text) - budget))
+    boundary = text.rfind("\n\n", 0, best[0])
+    paragraph = boundary + 2 if boundary >= 0 else 0
+    if 0 <= paragraph <= best[0] and best[0] - paragraph < budget * 2 // 3:
+        start = paragraph
+    return start
+
+
 def get_payload(args: argparse.Namespace) -> dict[str, object]:
     db_path = require_database(args.db)
     unique_ids = list(dict.fromkeys(args.passage_ids))
@@ -1523,15 +1661,15 @@ def get_payload(args: argparse.Namespace) -> dict[str, object]:
         raise ValueError("--offset must be zero or greater")
     if args.start_char < 0:
         raise ValueError("--start-char must be zero or greater")
-    if not 100 <= args.max_chars <= 8000:
-        raise ValueError("--max-chars must be between 100 and 8000")
-    if not 100 <= args.max_total_chars <= 40_000:
-        raise ValueError("--max-total-chars must be between 100 and 40000")
+    if not 100 <= args.max_chars <= 100_000:
+        raise ValueError("--max-chars must be between 100 and 100000")
+    if not 100 <= args.max_total_chars <= 200_000:
+        raise ValueError("--max-total-chars must be between 100 and 200000")
 
     placeholders = ",".join("?" for _ in unique_ids)
     sql = f"""
         SELECT rowid AS passage_id, source_path, source, source_hash,
-               page, section, version, date, text
+               page, section, version, date, line_start, line_end, text
         FROM chunks
         WHERE rowid IN ({placeholders})
     """
@@ -1549,6 +1687,7 @@ def get_payload(args: argparse.Namespace) -> dict[str, object]:
     current_start = args.start_char
     next_offset: int | None = None
     next_start_char = 0
+    prefix_continuations: list[dict[str, int]] = []
 
     while current_offset < len(ordered) and len(results) < args.limit:
         remaining_budget = args.max_total_chars - characters
@@ -1559,6 +1698,10 @@ def get_payload(args: argparse.Namespace) -> dict[str, object]:
 
         row = ordered[current_offset]
         full_text = str(row["text"] or "")
+        if getattr(args, "around", None) and current_start == 0:
+            current_start = context_start(full_text, args.around, min(args.max_chars, remaining_budget))
+            if current_start:
+                prefix_continuations.append({"offset": current_offset, "start_char": 0, "end_char": current_start})
         remaining_text = full_text[current_start:]
         allowed = min(args.max_chars, remaining_budget)
         text_truncated = len(remaining_text) > allowed
@@ -1588,6 +1731,9 @@ def get_payload(args: argparse.Namespace) -> dict[str, object]:
 
     if next_offset is None and current_offset < len(ordered):
         next_offset = current_offset
+    if next_offset is None and prefix_continuations:
+        next_offset = prefix_continuations[0]["offset"]
+        next_start_char = 0
     has_more = next_offset is not None
     payload: dict[str, object] = {
         "offset": args.offset,
@@ -1596,6 +1742,7 @@ def get_payload(args: argparse.Namespace) -> dict[str, object]:
         "characters": characters,
         "has_more": has_more,
         "not_found": [passage_id for passage_id in unique_ids if passage_id not in by_id],
+        "prefix_continuations": prefix_continuations,
         "results": results,
     }
     if has_more:
@@ -1604,8 +1751,10 @@ def get_payload(args: argparse.Namespace) -> dict[str, object]:
     return payload
 
 def command_get(args: argparse.Namespace) -> int:
+    from .search import register_task_results
     purpose = lower_level_purpose_record(args, args.passage_ids)
     payload = get_payload(args)
+    register_task_results(args, payload)
     payload["purpose"] = purpose
     emit_json(payload, args.pretty)
     return 0

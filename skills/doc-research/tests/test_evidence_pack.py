@@ -203,8 +203,8 @@ class EvidencePackCliTest(CorpusCliTestCase):
             self.assertEqual(payload["optimization"]["query_batch"], "bounded")
             self.assertEqual(payload["optimization"]["search_receipts"], "created")
             self.assertEqual(saved["optimization"], payload["optimization"])
-            self.assertNotIn("Which exchange files", json.dumps(saved))
-            self.assertNotIn("Who signs", json.dumps(saved))
+            self.assertEqual(saved["facets"][0]["question"], "Which exchange files and exceptions exist?")
+            self.assertEqual(saved["facets"][1]["question"], "Who signs the exchange?")
             self.assertNotIn("File exchange", json.dumps(saved))
 
     def test_warm_pack_reopens_task_receipt_without_searching(self) -> None:
@@ -267,10 +267,8 @@ class EvidencePackCliTest(CorpusCliTestCase):
             self.assertEqual(first.returncode, 0, first.stderr)
             first_payload = json.loads(first.stdout)
             redundant_worker = run_corpus(*cold_command)
-            self.assertEqual(redundant_worker.returncode, 2)
-            self.assertIn(
-                "do not launch a cold worker", redundant_worker.stderr
-            )
+            self.assertEqual(redundant_worker.returncode, 0, redundant_worker.stderr)
+            self.assertEqual(json.loads(redundant_worker.stdout)["search_count"], 0)
             repeated = run_corpus(*warm_command)
             self.assertEqual(repeated.returncode, 0, repeated.stderr)
             payload = json.loads(repeated.stdout)
@@ -405,7 +403,7 @@ class EvidencePackCliTest(CorpusCliTestCase):
             )
             self.assertEqual(saved["next_mode"], "retrieval")
 
-    def test_explicit_queries_require_support_and_check_roles(self) -> None:
+    def test_exact_lookup_does_not_require_a_control_query(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = root / "source.md"
@@ -443,8 +441,83 @@ class EvidencePackCliTest(CorpusCliTestCase):
                 "--worker-context",
                 "capsule-no-parent-history-v1",
             )
-            self.assertEqual(result.returncode, 2)
-            self.assertIn("must include support and check roles", result.stderr)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["search_count"], 1)
+            self.assertEqual(payload["facets"][0]["verification"], "exact")
+            self.assertEqual(payload["facets"][0]["coverage"], "support-only")
+            findings = root / "findings.json"
+            findings.write_text(
+                json.dumps(
+                    {
+                        "findings": [
+                            {
+                                "facet_id": "rule",
+                                "status": "verified",
+                                "claims": [
+                                    {
+                                        "text": "The primary rule is present.",
+                                        "passage_ids": payload["facets"][0][
+                                            "support_passage_ids"
+                                        ],
+                                    }
+                                ],
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            saved = run_corpus(
+                "findings-save",
+                root / "task-receipt.json",
+                findings,
+            )
+            self.assertEqual(saved.returncode, 0, saved.stderr)
+            self.assertEqual(
+                json.loads(saved.stdout)["execution"]["last"]["route"],
+                "coordinator-direct",
+            )
+
+    def test_control_verification_allows_followup_instead_of_forcing_a_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.md"
+            source.write_text("Only the primary rule.", encoding="utf-8")
+            questions = root / "questions.json"
+            questions.write_text(
+                json.dumps(
+                    {
+                        "questions": [
+                            {
+                                "id": "rule",
+                                "question": "Does every case use the primary rule?",
+                                "verification": "control",
+                                "queries": [
+                                    {"query": "primary rule", "role": "support"}
+                                ],
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            result = run_corpus(
+                "evidence-pack",
+                source,
+                questions,
+                "--db",
+                root / "index.sqlite",
+                "--task-receipt",
+                root / "task-receipt.json",
+                "--execution-route",
+                "auto",
+                "--pack-output",
+                root / "pack.json",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)["facets"][0]["evidence_status"], "unverified-candidates")
+            self.assertTrue(json.loads(result.stdout)["gaps"])
 
     def test_cold_coordinator_fallback_requires_a_reason(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -734,7 +807,7 @@ class EvidencePackCliTest(CorpusCliTestCase):
                         "questions": [
                             {
                                 "id": "alpha",
-                                "question": "Tell me about alpha using new wording.",
+                                "question": "Alpha?",
                                 "queries": [
                                     {"query": "alpha rule", "role": "support"},
                                     {"query": "alpha exception", "role": "check"},
@@ -847,3 +920,185 @@ class EvidencePackCliTest(CorpusCliTestCase):
             self.assertTrue(pack.is_file())
             stored_pack = json.loads(pack.read_text(encoding="utf-8"))
             self.assertTrue(stored_pack["passages"])
+            self.assertEqual(stored_pack["facets"][0]["question"], "Rule?")
+
+    def test_enumeration_selects_more_than_lookup_passage_cap(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.md"
+            source.write_text(
+                "\n\n".join(
+                    f"# Variant {index}\n\nVariant signer {index}."
+                    for index in range(1, 7)
+                ),
+                encoding="utf-8",
+            )
+            questions = root / "questions.json"
+            questions.write_text(
+                json.dumps(
+                    {
+                        "questions": [
+                            {
+                                "id": "variants",
+                                "question": "List every variant signer.",
+                                "kind": "enumeration",
+                                "group_by": "section",
+                                "max_items": 6,
+                                "queries": [
+                                    {"query": "variant signer", "role": "support"},
+                                    {"query": "variant signer", "role": "check"},
+                                ],
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            result = run_corpus(
+                "evidence-pack",
+                source,
+                questions,
+                "--db",
+                root / "index.sqlite",
+                "--task-receipt",
+                root / "task-receipt.json",
+                "--execution-route",
+                "auto",
+                "--pack-output",
+                root / "pack.json",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(len(payload["facets"][0]["passage_ids"]), 6)
+            self.assertEqual(
+                {passage["section"] for passage in payload["passages"]},
+                {f"Variant {index}" for index in range(1, 7)},
+            )
+
+    def test_schema_facet_returns_exact_schema_locators_in_same_pack(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "schema.md"
+            source.write_text(
+                "# `cargo.xsd`\n\n"
+                "```xsd\n"
+                '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">\n'
+                '  <xs:element name="CargoMass" type="xs:decimal">\n'
+                "    <xs:annotation><xs:documentation>Gross mass in kilograms"
+                "</xs:documentation></xs:annotation>\n"
+                "  </xs:element>\n"
+                "</xs:schema>\n"
+                "```\n",
+                encoding="utf-8",
+            )
+            questions = root / "questions.json"
+            questions.write_text(
+                json.dumps(
+                    {
+                        "questions": [
+                            {
+                                "id": "mass",
+                                "question": "What is CargoMass?",
+                                "kind": "schema",
+                                "verification": "exact",
+                                "queries": [
+                                    {
+                                        "query": "CargoMass",
+                                        "mode": "literal",
+                                        "role": "support",
+                                    }
+                                ],
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            receipt = root / "task-receipt.json"
+            result = run_corpus(
+                "evidence-pack",
+                source,
+                questions,
+                "--db",
+                root / "index.sqlite",
+                "--task-receipt",
+                receipt,
+                "--execution-route",
+                "auto",
+                "--pack-output",
+                root / "pack.json",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertGreaterEqual(payload["schema_query_count"], 1)
+            fact = next(
+                item for item in payload["schema_facts"] if item["name"] == "CargoMass"
+            )
+            self.assertEqual(fact["markdown_line"], 5)
+            self.assertEqual(fact["roles"], ["support"])
+            self.assertEqual(len(fact["block_hash"]), 64)
+            self.assertLessEqual(payload["characters"], 20_000)
+            saved = json.loads(receipt.read_text(encoding="utf-8"))
+            self.assertEqual(
+                saved["facets"][0]["schema_locators"][0]["markdown_line"], 5
+            )
+            self.assertEqual(
+                saved["facets"][0]["schema_locators"][0]["block_hash"],
+                fact["block_hash"],
+            )
+            findings = root / "findings.json"
+            findings.write_text(
+                json.dumps(
+                    {
+                        "findings": [
+                            {
+                                "facet_id": "mass",
+                                "status": "verified",
+                                "claims": [
+                                    {
+                                        "text": "CargoMass is a decimal schema element.",
+                                        "evidence_ids": [fact["evidence_id"]],
+                                    }
+                                ],
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            saved_findings = run_corpus("findings-save", receipt, findings)
+            self.assertEqual(saved_findings.returncode, 0, saved_findings.stderr)
+
+    def test_parent_context_cost_can_select_isolated_worker_without_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.md"
+            source.write_text("Rule evidence.", encoding="utf-8")
+            questions = root / "questions.json"
+            questions.write_text(json.dumps(["Rule evidence?"]), encoding="utf-8")
+            pack = root / "pack.json"
+            result = run_corpus(
+                "evidence-pack",
+                source,
+                questions,
+                "--db",
+                root / "index.sqlite",
+                "--task-receipt",
+                root / "task-receipt.json",
+                "--execution-route",
+                "auto",
+                "--pack-output",
+                pack,
+                "--parent-context-tokens",
+                "165000",
+                "--expected-direct-turns",
+                "2",
+                "--expected-delegated-parent-turns",
+                "1",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(
+                payload["routing"]["recommendation"], "low-overhead-worker"
+            )
+            self.assertEqual(payload["routing"]["parent_context_tokens"], 165000)

@@ -488,7 +488,7 @@ def normalized_comparison_units(
         return units
 
     raw = path.read_text(encoding="utf-8")
-    for page, section, text in paragraphs_from_text(raw):
+    for page, section, _line_start, _line_end, text in paragraphs_from_text(raw):
         metadata = {
             key: value
             for key, value in {"page": page, "section": section}.items()

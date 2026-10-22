@@ -27,7 +27,7 @@ MIN_PYTHON = (3, 10)
 
 APPLICATION_ID = 0x44524348  # "DRCH"
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 RESEARCH_APPLICATION_ID = 0x44525348  # "DRSH"
 
@@ -37,7 +37,7 @@ RECEIPT_APPLICATION_ID = 0x44524350  # "DRCP"
 
 RECEIPT_SCHEMA_VERSION = 1
 
-TASK_RECEIPT_VERSION = 2
+TASK_RECEIPT_VERSION = 3
 
 CATALOG_APPLICATION_ID = 0x44524354  # "DRCT"
 
@@ -93,6 +93,8 @@ CHUNK_COLUMNS = (
     "section",
     "version",
     "date",
+    "line_start",
+    "line_end",
     "context",
     "text",
 )
@@ -145,7 +147,7 @@ PROJECT_ANCHOR_KINDS = {"connector", "filesystem", "manual"}
 def lower_level_purpose_record(
     args: object, passage_ids: Iterable[int] | None = None
 ) -> dict[str, object]:
-    purpose = getattr(args, "purpose", None)
+    purpose = getattr(args, "purpose", None) or "scoped-search"
     reason = getattr(args, "purpose_reason", None)
     task_receipt_path = getattr(args, "task_receipt", None)
     gap_facet = getattr(args, "gap_facet", None)
@@ -162,53 +164,54 @@ def lower_level_purpose_record(
 
     if reason is not None:
         raise ValueError("--purpose-reason is only valid for diagnostic purposes")
-    if task_receipt_path is None:
-        raise ValueError(f"--task-receipt is required for --purpose {purpose}")
-    receipt = load_bounded_json(Path(task_receipt_path), "Task receipt")
-    if not isinstance(receipt, dict) or receipt.get("version") != TASK_RECEIPT_VERSION:
-        raise ValueError("Task receipt is invalid or unsupported")
-
-    facets = receipt.get("facets")
-    if not isinstance(facets, list):
-        raise ValueError("Task receipt facets must be an array")
+    receipt = lower_level_task_receipt(args)
+    facet_id = None
+    if gap_facet is not None or purpose == "named-gap":
+        facet_id = required_record_id(gap_facet, "--gap-facet")
+        if receipt is not None:
+            target = next((facet for facet in receipt["facets"] if facet.get("id") == facet_id), None)
+            if target is None:
+                raise ValueError(f"Task receipt has no facet {facet_id}")
+            if target.get("stale"):
+                raise ValueError(f"Facet {facet_id} has stale evidence; retrieve it again before extending")
 
     if purpose == "named-gap":
-        facet_id = required_record_id(gap_facet, "--gap-facet")
-        if not any(
-            isinstance(facet, dict) and facet.get("id") == facet_id for facet in facets
-        ):
-            raise ValueError(f"Task receipt has no facet {facet_id}")
-        gaps = receipt.get("gaps")
-        if not isinstance(gaps, list) or not any(
-            isinstance(gap, dict) and gap.get("facet_id") == facet_id for gap in gaps
-        ):
-            raise ValueError(f"Task receipt has no named gap for facet {facet_id}")
         return {"kind": purpose, "facet_id": facet_id}
 
     if purpose == "locator-verification":
-        if gap_facet is not None:
-            raise ValueError("--gap-facet is only valid for --purpose named-gap")
-        allowed: set[int] = set()
-        for facet in facets:
-            if not isinstance(facet, dict):
-                continue
-            values = facet.get("passage_ids")
-            if isinstance(values, list):
-                allowed.update(
-                    value
-                    for value in values
-                    if isinstance(value, int) and not isinstance(value, bool)
-                )
         requested = set(passage_ids or ())
-        missing = sorted(requested - allowed)
-        if missing:
-            raise ValueError(
-                "Passage IDs are outside the task receipt: "
-                + ", ".join(str(value) for value in missing)
-            )
         return {"kind": purpose, "passage_ids": sorted(requested)}
 
+    if purpose == "scoped-search":
+        return {"kind": purpose, **({"facet_id": facet_id} if facet_id else {})}
+
     raise ValueError("Unsupported lower-level purpose")
+
+
+def lower_level_task_receipt(args: object) -> dict[str, object] | None:
+    path = getattr(args, "task_receipt", None)
+    if path is None:
+        return None
+    # Import lazily: evidence-pack also uses the lower-level retrieval commands.
+    from .evidence_pack import _load_task_receipt
+    from .index import index_fingerprint, require_current_schema, require_database, validate_output_paths
+
+    with database(require_database(args.db), readonly=True) as connection:
+        require_current_schema(connection)
+        fingerprint = index_fingerprint(connection)
+        if getattr(args, "gap_facet", None) is not None:
+            corpus = connection.execute("SELECT value FROM metadata WHERE key = 'corpus_root'").fetchone()
+            if corpus is None:
+                raise ValueError("Index database has no corpus binding")
+            validate_output_paths(
+                Path(corpus["value"]), [Path(path)],
+                [args.db, getattr(args, "input", None), getattr(args, "receipts_db", None),
+                 getattr(args, "research_db", None)],
+            )
+    receipt = _load_task_receipt(Path(path), fingerprint)
+    if receipt is None:
+        raise ValueError("Task receipt is missing or stale for this index")
+    return receipt
 
 if sqlite3 is None:
     SQLITE_OPERATIONAL_ERROR = RuntimeError

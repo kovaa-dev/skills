@@ -20,7 +20,7 @@ A project is a retrieval view, not a source container, permission boundary, or s
 
 Keep identity separate from presentation. When the positional ID is omitted, `catalog-put` derives `corpus-<hash>` from the access boundary, adapter, and canonical source locator; `catalog-project-put` and `catalog-project-resolve --create` derive `project-<hash>` from the access boundary, anchor kind, and normalized anchor. They independently infer a short label from the directory or final locator component. `--label` overrides that presentation without changing identity, and later calls without `--label` preserve the stored label. Equal labels never merge records. Source generations, query text, and generated summaries never enter an ID. Use an explicit ID when identity must survive a source move or locator change that the catalog cannot recognize as the same source.
 
-Routing precedence is: an active research binding; an explicit project/corpus selection; one unambiguous stable context-anchor match; then a projectless explicitly bounded corpus search. Never select a project by recency alone. A term associated with another project is a reason to propose or perform a named-gap expansion, not permission to broaden the initial search.
+Routing precedence is: an active research binding; an explicit project/corpus selection; one unambiguous stable context-anchor match; then a projectless explicitly bounded corpus search. Never select a project by recency alone. A term associated with another project may justify investigating its relevance, but does not authorize a broader source boundary.
 
 Resolve an unnamed project from an authorized stable anchor:
 
@@ -45,7 +45,7 @@ Use `catalog-project-put` for an explicit project or additional anchor. Repeated
 
 | Source | Default route | Durable reuse |
 | --- | --- | --- |
-| Existing local `.md`, `.txt`, or normalized `.jsonl` | Corpus index | Keep its index and receipt store beside authorized derived state |
+| Existing local `.md`, `.txt`, or normalized `.jsonl` | Scoped search/reading; corpus index when reuse or complexity justifies it | Keep any reusable index and receipts beside authorized derived state |
 | ZIP archive | Explicit safe extraction, then classify/index supported members | Keep the extraction manifest and archive hash; never recurse automatically |
 | PDF, office file, scan, table | Use the conditional ingestion path, then index normalized output | Preserve the original locator and extraction lineage |
 | Chat attachment | Use task-local access for one-off work | Copy to an authorized persistent corpus only when durable writes and retention are explicitly allowed |
@@ -87,6 +87,8 @@ scripts/corpus catalog-get catalog.sqlite CORPUS_A_ID=12 CORPUS_B_ID=7
 
 Skip `catalog-info --live` on routine searches when no source changed; `catalog-search` validates selected local bindings and checks its deterministic composite receipt. A hit returns locators without passage text. Without durable-write authority, add `--read-only`: current catalog/member receipts may be reused, but misses are not persisted and research state cannot be linked. Continue the same query only when `next_offset` is returned. `has_more` means another local page is available; `coverage_complete: false` and `unsearched_corpora` describe an external or unavailable-source gap, not a continuation. Use `--allow-partial` only when that gap is acceptable for the current claim; an incomplete search cannot support a corpus-wide absence claim.
 
+For `catalog-get`, resume with returned `--offset` and `--start-char` positions. A deferred item is not missing, and a truncated passage is not complete evidence. Preserve the same selected IDs/order and source generation when continuing; changed generations require fresh locators.
+
 After a local source changes, update its index, sync its receipt store, and run `catalog-sync`. Prior-generation corpus and composite receipts remain history but are not current. Registering, disabling, or changing any selected corpus also changes the catalog fingerprint.
 
 ## Catalog-bound research
@@ -106,16 +108,16 @@ Catalog research records the originating project IDs for explanation but freezes
 
 - Store source content only in its corpus index. Project views, catalog receipts, and research rows reference lower levels instead of copying chunks or summaries.
 - Re-register a changed source under the same stable corpus identity and update its generation; do not create a new corpus for every export or session. A transformation remains lineage under the original source unless it has an independent permission/version lifecycle.
-- When the same source appears in several project-specific databases, prefer one shared corpus only if identity, permissions, retention, and version lifecycle are truly the same. Otherwise keep the physical copies separate and preserve alternate locators when exact results deduplicate.
+- When the same source appears in several project-specific databases, prefer one shared corpus only if identity, permissions, retention, and version lifecycle are truly the same. Otherwise keep the physical copies separate and preserve aliases and alternate locators when exact results deduplicate; warm cached results must retain those locations too.
 - Project membership changes are explicit metadata updates. Use exact anchors and corpus IDs; semantic similarity can suggest a candidate but cannot create or merge membership.
 - Equivalent searches reuse per-corpus and composite receipts. Shared corpora in overlapping projects are expanded once, and exact returned passages are deduplicated before model context.
-- Route first with local SQLite metadata, then search the smallest resolved project or explicit corpus set. Expand to related projects only for a named gap. Do not load the project inventory, live-check every corpus, or fan out to all projects before each query.
+- Route first with relevant local metadata, then search the smallest resolved project or explicit corpus set. Refine within the authorized scope as evidence requires; expanding to related projects still requires source authority. Do not load the entire inventory, live-check every corpus, or fan out to all projects before each query.
 - A receipt is current only for the selected corpus generations. Research keeps only selected evidence, conflicts, gaps, and locators; query variants, snippets, and project summaries do not become research memory.
 - Do not delete by age or rely on lifecycle labels to define truth. Stale generations are excluded by fingerprints, while deliberate `--replace-corpora` changes the active project view. Remove derived databases only under explicit retention/cleanup authority.
 
 ## External adapter contract
 
-Use an existing project tool or MCP/connector as an adapter only if it can provide:
+For an answer, an authorized project tool or connector must provide identifiable source material and enough location/version context to verify decisive evidence. Missing cache machinery does not make otherwise verifiable evidence unusable. To reuse cached results or negative-search coverage, additionally require:
 
 - a stable corpus/source identity and explicit authorization boundary;
 - a source generation, revision, ETag, hash, or timestamp with documented semantics that changes whenever searchable content, filtering metadata, or locator resolution can materially change;
@@ -124,7 +126,7 @@ Use an existing project tool or MCP/connector as an adapter only if it can provi
 - a stable locator containing enough record, version/generation, and location identity to reopen the same item in the same access context or fail closed;
 - enough version and location metadata to verify decisive evidence against the original.
 
-A **verified locator** has been reopened successfully and matched to the intended record, version/generation, location, and authorization context. Two remote searches are **receipt-equivalent** only when every field in the equivalence key matches; a continuation cursor extends that receipt rather than defining a different query. A remote receipt is **current** only while the adapter confirms the same generation and equivalence semantics; elapsed time alone neither proves nor disproves freshness, and a timestamp counts only when the source documents it as the generation token. If the adapter cannot meet this contract, use its output as a lead, not durable evidence or reusable negative-search proof.
+A **verified locator** has been reopened successfully and matched to the intended record, version/generation, location, and authorization context. Two remote searches are **receipt-equivalent** only when every field in the equivalence key matches; a continuation cursor extends that receipt rather than defining a different query. A remote receipt is **current** only while the adapter confirms the same generation and equivalence semantics; elapsed time alone neither proves nor disproves freshness, and a timestamp counts only when the source documents it as the generation token. Missing generation/equivalence guarantees prohibit cached reuse and negative-search proof; missing verifiable source identity or locators limits output to leads until checked against originals.
 
 Probe only the connector selected for the active sources. If an authorized connection already exists, use it in the current retrieval instead of merely recommending it. If the runtime provides a scoped connector/plugin installation action and the user has already authorized that connector and data scope, perform the installation, verify identity/generation/locator behavior, and continue retrieval. Otherwise request authorization with the exact connector, affected sources, expected gain, installation or connection action, permission/data scopes, external-transfer implications, verification step, and local-export fallback with its limitation. Connecting an account, granting new scopes, accepting terms, or uploading source data always requires explicit authority. Do not silently fall back before offering a materially better connector, and do not repeat the proposal in an unchanged environment.
 

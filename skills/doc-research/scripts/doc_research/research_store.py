@@ -450,7 +450,7 @@ def research_resume_payload(
                 ORDER BY linked_at DESC, receipt_id
                 LIMIT ?
                 """,
-                (limit,),
+                (limit + 1,),
             )
         ]
         facets = [
@@ -468,7 +468,7 @@ def research_resume_payload(
                 ORDER BY f.facet_id
                 LIMIT ?
                 """,
-                (limit,),
+                (limit + 1,),
             )
         ]
         gaps = [
@@ -479,7 +479,7 @@ def research_resume_payload(
                 FROM gaps WHERE status = 'open'
                 ORDER BY gap_id LIMIT ?
                 """,
-                (limit,),
+                (limit + 1,),
             )
         ]
         conflicts = [
@@ -490,11 +490,18 @@ def research_resume_payload(
                 FROM conflicts WHERE status = 'open'
                 ORDER BY conflict_id LIMIT ?
                 """,
-                (limit,),
+                (limit + 1,),
             )
         ]
         values = dict(state)
 
+    output_truncated = any(
+        len(items) > limit for items in (receipt_links, facets, gaps, conflicts)
+    ) or any(
+        item.get("truncated_fields") for items in (facets, gaps, conflicts) for item in items
+    )
+    receipt_links = receipt_links[:limit]
+    facets, gaps, conflicts = facets[:limit], gaps[:limit], conflicts[:limit]
     recent_receipts: list[dict[str, object]] = []
     local_fingerprint_cache: dict[str, str | None] = {}
     catalog_fingerprint_cache: dict[tuple[str, tuple[str, ...]], tuple[str, bool]] = {}
@@ -596,7 +603,7 @@ def research_resume_payload(
         "open_gaps": gaps,
         "open_conflicts": conflicts,
         "recent_receipts": recent_receipts,
-        "output_truncated": False,
+        "output_truncated": output_truncated,
     }
     payload.update(current_binding_status(values))
     return fit_payload_lists(

@@ -59,8 +59,8 @@ class SchemaIrCliTest(CorpusCliTestCase):
             self.assertGreater(payload["schema_records"], 10)
 
             info = json.loads(run_corpus("info", database).stdout)
-            self.assertEqual(info["schema_version"], 2)
-            self.assertEqual(info["schema_ir_version"], 1)
+            self.assertEqual(info["schema_version"], 3)
+            self.assertEqual(info["schema_ir_version"], 2)
             self.assertEqual(info["schema_block_count"], 1)
 
             found = json.loads(run_corpus("search", database, "ROAD").stdout)
@@ -171,7 +171,7 @@ class SchemaIrCliTest(CorpusCliTestCase):
                 1,
             )
 
-    def test_doctype_is_rejected_without_replacing_published_index(self) -> None:
+    def test_embedded_doctype_is_isolated_without_parsing_entities(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = root / "format.md"
@@ -187,11 +187,17 @@ class SchemaIrCliTest(CorpusCliTestCase):
                 encoding="utf-8",
             )
             refused = run_corpus("index", source, "--db", database)
-            self.assertEqual(refused.returncode, 2)
-            self.assertIn("DTD declarations are not allowed", refused.stderr)
+            self.assertEqual(refused.returncode, 0, refused.stderr)
+            self.assertIn("DTD declarations are not allowed", refused.stdout)
+            self.assertEqual(json.loads(refused.stdout)["schema_records"], 0)
 
             retained = json.loads(run_corpus("search", database, "ROAD").stdout)
-            self.assertEqual(retained["result_count"], 1)
+            self.assertEqual(retained["result_count"], 0)
+            standalone = root / "unsafe.xsd"
+            standalone.write_text('<!DOCTYPE schema [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">&xxe;</xs:schema>', encoding="utf-8")
+            blocked = run_corpus("index", standalone, "--db", root / "unsafe.sqlite")
+            self.assertEqual(blocked.returncode, 2)
+            self.assertIn("DTD declarations are not allowed", blocked.stderr)
 
     def test_normalize_command_is_bounded_and_reports_optional_tools(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

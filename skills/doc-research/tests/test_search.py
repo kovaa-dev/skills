@@ -4,7 +4,7 @@ from test_support import *
 
 
 class SearchCliTest(CorpusCliTestCase):
-    def test_lower_level_search_requires_an_explicit_purpose(self) -> None:
+    def test_scoped_search_and_get_need_no_purpose_or_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = root / "source.md"
@@ -25,8 +25,8 @@ class SearchCliTest(CorpusCliTestCase):
             for command in commands:
                 with self.subTest(command=command[0]):
                     result = run_corpus_raw(*command)
-                    self.assertEqual(result.returncode, 2)
-                    self.assertIn("--purpose", result.stderr)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(json.loads(result.stdout)["purpose"]["kind"], "scoped-search")
                     declared = run_corpus(*command)
                     self.assertEqual(declared.returncode, 0, declared.stderr)
                     self.assertEqual(
@@ -34,7 +34,7 @@ class SearchCliTest(CorpusCliTestCase):
                         {"kind": "adapter-debugging", "reason": "test-suite"},
                     )
 
-    def test_lower_level_purposes_require_receipt_evidence_or_a_reason(self) -> None:
+    def test_named_gap_can_be_declared_without_a_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = root / "source.md"
@@ -42,51 +42,8 @@ class SearchCliTest(CorpusCliTestCase):
             index = root / "index.sqlite"
             indexed = run_corpus("index", source, "--db", index)
             self.assertEqual(indexed.returncode, 0, indexed.stderr)
-            receipt = root / "task-receipt.json"
-            receipt.write_text(
-                json.dumps(
-                    {
-                        "version": COMMON_MODULE.TASK_RECEIPT_VERSION,
-                        "facets": [
-                            {"id": "F1", "passage_ids": [1]},
-                            {"id": "F2", "passage_ids": [1]},
-                        ],
-                        "gaps": [{"facet_id": "F1", "reason": "control-not-found"}],
-                    }
-                ),
-                encoding="utf-8",
-            )
-
-            missing_receipt = run_corpus_raw(
-                "search", index, "needle", "--purpose", "named-gap", "--gap-facet", "F1"
-            )
-            self.assertEqual(missing_receipt.returncode, 2)
-            self.assertIn("--task-receipt is required", missing_receipt.stderr)
-
-            unknown_gap = run_corpus_raw(
-                "search",
-                index,
-                "needle",
-                "--purpose",
-                "named-gap",
-                "--task-receipt",
-                receipt,
-                "--gap-facet",
-                "F2",
-            )
-            self.assertEqual(unknown_gap.returncode, 2)
-            self.assertIn("no named gap for facet F2", unknown_gap.stderr)
-
             named_gap = run_corpus_raw(
-                "search",
-                index,
-                "needle",
-                "--purpose",
-                "named-gap",
-                "--task-receipt",
-                receipt,
-                "--gap-facet",
-                "F1",
+                "search", index, "needle", "--purpose", "named-gap", "--gap-facet", "F1"
             )
             self.assertEqual(named_gap.returncode, 0, named_gap.stderr)
             self.assertEqual(
@@ -94,26 +51,12 @@ class SearchCliTest(CorpusCliTestCase):
                 {"kind": "named-gap", "facet_id": "F1"},
             )
 
-            outside_locator = run_corpus_raw(
-                "get",
-                index,
-                2,
-                "--purpose",
-                "locator-verification",
-                "--task-receipt",
-                receipt,
-            )
-            self.assertEqual(outside_locator.returncode, 2)
-            self.assertIn("outside the task receipt: 2", outside_locator.stderr)
-
             verified_locator = run_corpus_raw(
                 "get",
                 index,
                 1,
                 "--purpose",
                 "locator-verification",
-                "--task-receipt",
-                receipt,
             )
             self.assertEqual(verified_locator.returncode, 0, verified_locator.stderr)
             self.assertEqual(
@@ -141,9 +84,9 @@ class SearchCliTest(CorpusCliTestCase):
             self.assertEqual(search.returncode, 2)
             self.assertIn("between 100 and 40000", search.stderr)
 
-            get = run_corpus("get", index, 1, "--max-total-chars", 40001)
+            get = run_corpus("get", index, 1, "--max-total-chars", 200001)
             self.assertEqual(get.returncode, 2)
-            self.assertIn("between 100 and 40000", get.stderr)
+            self.assertIn("between 100 and 200000", get.stderr)
 
     def test_search_many_fits_multi_facet_and_exception_probes(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -612,7 +555,8 @@ class SearchCliTest(CorpusCliTestCase):
             )
             self.assertTrue(repeated["receipt_hit"])
             self.assertEqual(repeated["receipt_id"], first["receipt_id"])
-            self.assertNotIn("text", repeated["results"][0])
+            self.assertEqual(repeated["results"], first["results"])
+            self.assertEqual(repeated["characters"], first["characters"])
             self.assertEqual(
                 run_corpus("search", index, "clause", "--receipts-db", receipts).returncode,
                 0,
