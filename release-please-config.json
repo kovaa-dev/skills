@@ -38,6 +38,7 @@
           "jsonpath": "$.plugins[0].version"
         },
         "README.md",
+        "skills/doc-research/README.md",
         "skills/dev-docs/README.md",
         "skills/dev-rules/README.md"
       ]

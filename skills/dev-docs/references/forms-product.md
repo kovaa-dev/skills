@@ -9,7 +9,7 @@ Adapt paths and field language to the project settings and the checks actually s
 An assigned product hypothesis may be recorded as a short PRD with `backlog` status:
 ID, source, hypothesis/problem, owner or `unassigned`, open questions, and a link from
 the roadmap. Do not fill in an invented contract, acceptance, or technical scope.
-Grooming expands the same card, records evidence, and permits `planned` only after
+Grooming expands the same card, records the accepted scope and acceptance source, and permits `planned` only after
 acceptance; do not create a duplicate merely to change status.
 
 ## PRD — `docs/tasks/product/PRD-001.md`
@@ -59,7 +59,7 @@ acceptance; do not create a duplicate merely to change status.
 Pending; for ordinary work record one observable result, consistency with the current
 user-visible contract and the end-to-end verification/manual path. If this PRD replaces
 an earlier result, confirm the `Replaces` relation. Add date/version/artifacts only when
-the tracker requires durable evidence for this risk.
+the tracker requires a durable verification record for this risk.
 ```
 
 When a product slice/phase is needed, its composition is defined here and only through

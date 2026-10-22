@@ -1,0 +1,4 @@
+interface:
+  display_name: "Orchestra"
+  short_description: "Routes material tool and subagent choices"
+  default_prompt: "Use $orchestra to choose and adapt the smallest capable route, discovering or safely acquiring a useful tool when justified, and delegate only bounded independent work."

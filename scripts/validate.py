@@ -298,6 +298,7 @@ def validate_manifests(skill_names: list[str], errors: list[str]) -> None:
             errors.append("release-please-config.json: managed JSON version files are incomplete")
         expected_readme_files = {
             "README.md",
+            "skills/doc-research/README.md",
             "skills/dev-docs/README.md",
             "skills/dev-rules/README.md",
         }
@@ -309,6 +310,7 @@ def validate_manifests(skill_names: list[str], errors: list[str]) -> None:
 
     for readme_path in (
         ROOT / "README.md",
+        ROOT / "skills" / "doc-research" / "README.md",
         ROOT / "skills" / "dev-docs" / "README.md",
         ROOT / "skills" / "dev-rules" / "README.md",
     ):

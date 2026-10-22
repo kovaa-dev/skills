@@ -45,7 +45,7 @@ The linked proposal must be accepted before implementing it as a contract.
 
 Pending; for ordinary work, record one observable result, the current canonical source for the
 contract/decision when applicable, the closure reconciliation result, and the
-verification/manual path. Add environment/date/version/artifacts only for durable evidence required by the
+verification/manual path. Add environment/date/version/artifacts only for a durable verification record required by the
 tracker. Explicitly state any mandatory checks not run, unresolved documentation differences, and
 remaining limitations.
 ```

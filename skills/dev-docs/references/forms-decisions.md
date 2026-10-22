@@ -38,7 +38,7 @@ and date. Document date and validation results do not replace user approval.
 
 ## Validation
 
-<Evidence needed to choose and approve this decision, if any; numeric thresholds
+<Research support needed to choose and approve this decision, if any; numeric thresholds
 only when justified. Separately state how the implemented contract must be verified;
 implementation steps, acceptance and results belong in technical task cards.>
 User approval accepts the decision, not its implementation. Do not require a finished
@@ -87,10 +87,10 @@ and date. Document date and validation results do not replace user approval.
 
 ## Validation
 
-<Evidence needed to choose and approve this architecture, if any. Separately state
+<Research support needed to choose and approve this architecture, if any. Separately state
 required verification of the resulting system; execution and results belong in tasks.>
 User approval and implementation acceptance are distinct. Do not block approval on
-evidence that can only exist after implementing the approved choice.
+a verification record that can only exist after implementing the approved choice.
 
 ## Migration and rollback
 

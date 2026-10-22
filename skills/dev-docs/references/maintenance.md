@@ -38,18 +38,19 @@ sufficient. Do not create a TD merely to authorize starting research.
   preserve the item. Choose a preliminary placement according to the currently affected
   delivery boundary and refine it after triage; do not create a separate queue alongside
   the roadmap.
-- Check for duplicates before creating a card. When merging, preserve useful sources and
-  evidence; close the duplicate as cancelled with a link to the canonical card.
+- Check for duplicates before creating a card. When merging, preserve useful sources,
+  research support, acceptance sources, and verification records in their proper roles;
+  close the duplicate as cancelled with a link to the canonical card.
 - If the technical layer is unknown, an explicitly project-registered `TRIAGE` prefix is
   permitted. Preserve the ID after triage and state the current layer in the card. Do not
   create `TRIAGE` automatically when the owning layer is known.
 - An observation, a causal hypothesis, and a confirmed cause are distinct. Preserve
-  reproduction steps and evidence; do not present a guess as an established defect.
+  reproduction steps and research support; do not present a guess as an established defect.
 - A small investigation and its fix may live in one task. If the investigation is closed
   separately, every remaining fix receives an open card and a link; completing the
   investigation does not mean the problem has been resolved.
 - Groom a backlog card before `planned`: assign an owner, accept a verifiable outcome,
-  dependencies, and priority, and record evidence. Only then may selected work become
+  dependencies, and priority, and record the acceptance source. Only then may selected work become
   `planned`; a missing answer becomes `need-info`, while an unmet adjacent prerequisite
   becomes `blocked` with a reason and observable unblock condition. Triage the backlog
   regularly before selecting the next work and before release; review old records rather
@@ -92,14 +93,14 @@ the blocker.
 Close a bug by verifying the original reproduction and applying the project's current
 regression/validation policy. `dev-docs` records the selected method, result, and any open
 blocker/exception, but does not duplicate test categories, test levels, or harness rules.
-Do not present manual evidence as an automated test.
+Do not present a manual verification record as an automated test.
 
 A fixed and verified bug is `done`; this status is terminal. A duplicate, confirmed absence
 of a defect, or agreed rejection is `cancelled`, with a reason and replacement when one
 exists; a cancelled task may be reopened while preserving the previous reason and the
 basis for resuming work. “Not reproduced” does not mean “no defect”: keep the task open
 with conditions for the next verification. A new regression after `done` receives a new,
-linked task; do not rewrite the closure history or evidence.
+linked task; do not rewrite the closure history or verification record.
 
 ### Completion and release
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Cost Audit"
+  short_description: "Evidence-based audit of agent token and workflow overhead"
+  default_prompt: "Use $cost-audit to measure recent session and instruction overhead, adaptively inspect heavy and anomalous sessions, and return a minimal evidence-backed apply plan without changing the audited project."

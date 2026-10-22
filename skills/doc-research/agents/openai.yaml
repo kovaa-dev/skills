@@ -1,0 +1,4 @@
+interface:
+  display_name: "Document Research"
+  short_description: "Evidence-grounded research across large, mixed document sets"
+  default_prompt: "Use $doc-research with deterministic cost-aware evidence-pack routing, facet-level and verified-finding reuse, a no-parent-history low-overhead worker only after measured break-even, reusable SQLite state, and auditable receipts, then return a concise, cited answer."

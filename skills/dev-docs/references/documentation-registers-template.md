@@ -7,7 +7,8 @@ Choose one required form; do not load every example. The rules are in the
 - [Technical task](forms-technical.md).
 - [Technical and architectural decisions](forms-decisions.md).
 - [Navigation and settings](forms-navigation.md).
-- [Source coverage and findings](forms-evidence.md).
+- [Migration coverage](forms-migration.md).
+- [Engineering findings](forms-findings.md).
 - [Incoming bugs, findings, and ideas](forms-intake.md).
 
 ## Granularity check before creating a file
@@ -36,9 +37,9 @@ mandatory invariants? This also applies to free-form documents outside these for
 - Each task's status projection matches its canonical card;
   owner/acceptance/progress are not replicated across indexes and assignments.
 - In audit/migration decomposition, parallel-ready tasks have explicit prerequisites and independent outcomes; hidden shared boundaries become an integration task only when they have their own acceptance.
-- Accepted decisions were actually accepted; done has verified evidence and applicable
+- Accepted decisions were actually accepted; done has a verification record and applicable
   closure reconciliation with the current canonical contract.
-- For a full/large move, temporary source mapping and a checkpoint make coverage verifiable;
+- For a full/large move, temporary migration coverage and a checkpoint make coverage verifiable;
   a routine card and small migration do not require a separate map. After
-  completion, mapping is collapsed or retained only as explicitly required historical evidence.
+  completion, mapping is collapsed or retained only as an explicitly required historical migration record.
 - Checks from the bootstrap guide have been adapted; lint does not replace semantic review.

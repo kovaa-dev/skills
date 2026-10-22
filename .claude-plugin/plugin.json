@@ -1,6 +1,6 @@
 {
   "name": "kovaa-agent-skills",
-  "description": "Independent skills for product documentation governance and reliable software delivery workflows.",
+  "description": "Independent skills for cost audits, task orchestration, document research, documentation governance, and reliable software delivery.",
   "version": "0.4.3",
   "author": {
     "name": "kovaa",
@@ -11,6 +11,10 @@
   "license": "MIT",
   "keywords": [
     "agent-skills",
+    "document-research",
+    "retrieval",
+    "task-orchestration",
+    "multi-agent",
     "product-discovery",
     "documentation",
     "roadmap",

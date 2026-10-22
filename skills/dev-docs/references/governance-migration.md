@@ -14,7 +14,7 @@ that were explicitly agreed.
 First find instructions and reading routes, then inventory every document in the agreed
 scope: root and nested AGENTS/RULES, README/CONTRIBUTING,
 product/marketing/backend/frontend/operations docs, PRD/tasks/TD/ADR, specs, runbooks,
-research/evidence, indexes, templates, TODO/backlog, agent instructions, and check
+research/verification records, indexes, templates, TODO/backlog, agent instructions, and check
 settings. A full audit/migrate covers every document in the repository; an
 affected-scope audit covers every related type, without excluding a directory because of
 its name. Do
@@ -40,17 +40,17 @@ and scope.
 ## 2. Map meaning and scope
 
 Maintain a compact mapping from each source to its canonical destination in the existing
-migration task. Create a separate source mapping only for an explicitly full/large
+migration task. Create separate migration coverage only for an explicitly full/large
 migration, compliance, or required traceability. Keep `Relation to canonical`—unique rule,
 exact duplicate, semantic duplicate, supplement, conflict, historical/inapplicable
 record—separate from `Disposition`—accepted, open, rejected, unmapped—and store the
 reason separately. Do not copy complete rule text or task statuses: the mapping is
-temporary migration evidence, not a policy or roadmap.
+temporary migration control data, not research support, a verification record, policy, or roadmap.
 
 After completion, every open/unmapped item must be resolved or explicitly left as
 remaining migration scope. Collapse a separate mapping into a compact closure summary in
 the migration task/PR and delete it after a checkpoint and user permission. Preserve it as
-historical evidence only when required by an external audit, compliance, repository policy,
+historical migration record only when required by an external audit, compliance, repository policy,
 or explicitly accepted long-term traceability; ordinary work neither reads nor updates it.
 
 Compare semantic duplicates by their conditions, exceptions, and normative strength.
@@ -69,7 +69,7 @@ show a proposed task map, and when migration writes are authorized, create or up
 canonical cards. Do not split a small sequential migration or create tasks merely to
 increase the number of workers.
 
-Shared indexes, cross-layer contracts, source mapping, and final conflict resolution remain
+Shared indexes, cross-layer contracts, migration coverage, and final conflict resolution remain
 a separate shared boundary. Create an integration task only when reconciling them has its
 own verifiable outcome and does not fit in a single incoming task. It depends on all
 required tracks, owns only the shared boundary, verifies the combined result, and does not
@@ -136,22 +136,22 @@ Renaming changes representation, not historical facts:
 - update the filename, H1, structural IDs, and prefixes of local subtasks consistently;
   do not combine an identifier change with a new task or new technical decision;
 - preserve owners, dates, historical statuses, checkbox states, the meaning of scope and
-  acceptance, results, and evidence of completion; do not reopen closed tasks;
+  acceptance, results, and verification records; do not reopen closed tasks;
 - do not change commit hashes, commit messages, PR numbers/URLs, or their remote history;
-- do not rewrite IDs inside quotations, logs, command output, or other primary evidence:
+- do not rewrite IDs inside quotations, logs, command output, or other original source material:
   they are source facts. Link them to the new record through the old→new mapping;
 - update current inbound links, dependencies, indexes, and anchors. List external links
   that cannot be fixed and provide an agreed way to resolve old names through the
   mapping/preserved revision instead of leaving a second active document;
 - verify uniqueness of new IDs, non-reuse of old IDs, absence of cycles and lost records,
-  preservation of evidence, and consistency of the dependency graph.
+  preservation of acceptance sources and verification records, and consistency of the dependency graph.
 
 Do not mechanically give an old stage a PRD ID when its meaning does not correspond to a
 product outcome. For an incompatible type, ambiguous split, or historical status, propose
 a transformation or explicit exception to the user. Do not present merging/splitting
-multiple outcomes as a simple rename. The transformation map lives in the temporary source
-mapping until hard migration is complete; afterward, it is collapsed or preserved as
-historical evidence under the rules above and never becomes a second task tracker.
+multiple outcomes as a simple rename. The transformation map lives in temporary migration
+coverage until hard migration is complete; afterward, it is collapsed or preserved as a
+historical migration record under the rules above and never becomes a second task tracker.
 A historical decision with `accepted` status may remain active: exclude obsolete rules
 from reading routes, not every document with an old date.
 
@@ -167,7 +167,7 @@ without separate permission; preserve other rules and user changes.
 Update docs/task templates and parser rules so they do not generate old rules. Make
 changes to agent instructions, hooks/CI/handoff under the active project-work policy; do
 not silently disable checks for the migration.
-Do not rewrite historical meaning or primary evidence. Perform renaming according to the
+Do not rewrite historical meaning or original source material. Perform renaming according to the
 section above; exclude only obsolete rules from the current-rule route while preserving
 accessible history and links to decisions that remain active.
 

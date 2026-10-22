@@ -1,6 +1,6 @@
 # kovaa Agent Skills
 
-A collection of independent Agent Skills for product documentation and reliable software delivery workflows.
+A collection of independent Agent Skills for cost auditing, adaptive task orchestration, document research, product documentation, and reliable software delivery workflows.
 
 [![Validate](https://github.com/kovaa-dev/skills/actions/workflows/validate.yml/badge.svg)](https://github.com/kovaa-dev/skills/actions/workflows/validate.yml)
 [![skills.sh](https://skills.sh/b/kovaa-dev/skills)](https://skills.sh/kovaa-dev/skills)
@@ -9,14 +9,17 @@ A collection of independent Agent Skills for product documentation and reliable 
 
 | Skill | Purpose | Source |
 | --- | --- | --- |
+| `cost-audit` | Evidence-based audit of agent session and instruction overhead with a minimal remediation plan. | [`skills/cost-audit/`](skills/cost-audit/) |
+| `orchestra` | Cost-aware routing that discovers or safely acquires useful tools and delegates bounded work. | [`skills/orchestra/`](skills/orchestra/) |
+| `doc-research` | Evidence-grounded research across large document collections with bounded retrieval and traceable citations. | [`skills/doc-research/`](skills/doc-research/) |
 | `dev-docs` | Product discovery, PRDs, technical tasks, decisions, roadmaps, maintenance, and documentation governance. | [`skills/dev-docs/`](skills/dev-docs/) |
 | `dev-rules` | Engineering execution covering scope, implementation, validation, Git, pull requests, agents, and handoffs. | [`skills/dev-rules/`](skills/dev-rules/) |
 
-The skills are independent and can be installed separately. Their scopes are complementary, but neither requires the other: each integrates through the canonical sources and policies already selected by the target project.
+The skills are independent and can be installed separately. None requires another: each integrates through the sources, policies, and tools already selected by the target project.
 
 ## Install with `npx skills`
 
-The open-source [`skills`](https://github.com/vercel-labs/skills) CLI discovers both skills directly from this public repository. Node.js and `npx` are required; no global CLI installation is necessary.
+The open-source [`skills`](https://github.com/vercel-labs/skills) CLI discovers all skills directly from this public repository. Node.js and `npx` are required; no global CLI installation is necessary.
 
 List the available skills without installing them:
 
@@ -27,11 +30,14 @@ npx skills add kovaa-dev/skills --list
 Install one skill into the current project:
 
 ```bash
+npx skills add kovaa-dev/skills --skill cost-audit
+npx skills add kovaa-dev/skills --skill orchestra
+npx skills add kovaa-dev/skills --skill doc-research
 npx skills add kovaa-dev/skills --skill dev-docs
 npx skills add kovaa-dev/skills --skill dev-rules
 ```
 
-Install both skills into the current project:
+Install all skills into the current project:
 
 ```bash
 npx skills add kovaa-dev/skills --skill '*'
@@ -47,7 +53,7 @@ Install one skill globally:
 npx skills add kovaa-dev/skills --skill dev-docs --global
 ```
 
-Install both skills globally and choose from the detected global-capable agents:
+Install all skills globally and choose from the detected global-capable agents:
 
 ```bash
 npx skills add kovaa-dev/skills --skill '*' --global
@@ -66,6 +72,9 @@ Without `--agent`, the CLI detects installed agents and prompts for a selection.
 Generate a prompt for a skill without keeping an installed copy:
 
 ```bash
+npx skills use kovaa-dev/skills --skill cost-audit
+npx skills use kovaa-dev/skills --skill orchestra
+npx skills use kovaa-dev/skills --skill doc-research
 npx skills use kovaa-dev/skills --skill dev-docs
 npx skills use kovaa-dev/skills --skill dev-rules
 ```
@@ -73,8 +82,8 @@ npx skills use kovaa-dev/skills --skill dev-rules
 ### Update or remove
 
 ```bash
-npx skills update dev-docs dev-rules
-npx skills remove dev-docs dev-rules
+npx skills update cost-audit orchestra doc-research dev-docs dev-rules
+npx skills remove cost-audit orchestra doc-research dev-docs dev-rules
 ```
 
 Use `--global` with update or remove when managing a global installation.
@@ -108,7 +117,7 @@ codex plugin marketplace add kovaa-dev/skills
 codex plugin add kovaa-agent-skills@kovaa
 ```
 
-The plugin installs both independent skills. Restart the active Codex conversation after installation or update so newly installed instructions can be discovered.
+The plugin installs all bundled independent skills. Restart the active Codex conversation after installation or update so newly installed instructions can be discovered.
 
 The self-hosted marketplace works independently of inclusion in the curated [`openai/plugins`](https://github.com/openai/plugins) marketplace. Curated inclusion requires a separate upstream review and cannot be guaranteed by this repository.
 
@@ -121,12 +130,15 @@ This repository is also a self-hosted Claude Code plugin marketplace. In Claude 
 /plugin install kovaa-agent-skills@kovaa
 ```
 
-The plugin installs both independent skills. Restart the active Claude Code conversation after installation or update so the skills can be rediscovered.
+The plugin installs all bundled independent skills. Restart the active Claude Code conversation after installation or update so the skills can be rediscovered.
 
 A public listing on [claude.com/plugins](https://claude.com/plugins) requires a separate submission to Anthropic's `claude-community` marketplace and their validation and safety review. The self-hosted installation above does not depend on directory acceptance.
 
 ## Repository contents
 
+- `skills/cost-audit/` — source files and read-only local analyzer for the `cost-audit` skill;
+- `skills/orchestra/` — source files for the adaptive `orchestra` skill;
+- `skills/doc-research/` — source files and optional local helper for the `doc-research` skill;
 - `skills/dev-docs/` — source files for the `dev-docs` skill;
 - `skills/dev-rules/` — source files for the `dev-rules` skill;
 - `.codex-plugin/plugin.json` — Codex plugin manifest;
@@ -145,6 +157,7 @@ Each skill directory contains:
 
 - `SKILL.md` — the agent-facing entry point and routing instructions;
 - `references/` — detailed rules, procedures, and templates;
+- `scripts/` — optional deterministic local helpers when the skill benefits from them;
 - `README.md` — a short human-facing overview.
 
 ## Version

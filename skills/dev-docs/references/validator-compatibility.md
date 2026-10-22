@@ -17,8 +17,8 @@ not a universal governance engine. The compatible profile uses:
   `- Decision dependencies:`; dependencies are inline Markdown links or `none`;
 - the PRD section `## Technical tasks` for composition links;
 - `## Open questions` for backlog items without a decision, `## Needs information` for
-  `need-info`, `## Closure` for PRDs and technical tasks, and `## Evidence` for bug/
-  investigation result records; `blocked` requires both `- Blocker:` and
+  `need-info`, `## Closure` for PRDs and technical tasks, `## Verification` for bugs,
+  and `## Investigation result` for investigation records; `blocked` requires both `- Blocker:` and
   `- Unblock condition:`;
 - `index.md` / `backlog.md` as navigation filenames; the entry point is `docs/tasks/index.md`.
 
@@ -28,7 +28,7 @@ cards atomically; replace the legacy dependency sentinel with `none`. Until thos
 complete, a parser configured for legacy tokens is not compatible with the English profile.
 Example prose and non-schema headings may vary. Other paths and number lengths require adapting
 the check; the normative rules remain unchanged. The check
-does not prove that evidence is genuine, requirements are complete, the owner is correct, or an
+does not prove that research support is genuine, requirements are complete, the owner is correct, or an
 accepted decision exists.
 
 

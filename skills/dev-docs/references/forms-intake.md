@@ -10,7 +10,7 @@ This is a minimal registration, not an implementation-ready specification. See t
 [maintenance rules](maintenance.md) for triage, severity, and planning rules. Replace
 example IDs with available IDs from actual layers. Grooming before `planned` assigns
 an owner, accepts the nearest task's verifiable outcome, dependencies, and priority,
-and records evidence. For an
+and records the acceptance source. For an
 investigation, the outcome may be an answer to a specific question rather than a
 finished product solution. Full design is unnecessary for registration. If an
 applicable contract exists, link to it; a TD/ADR is needed only for a genuine technical
@@ -27,7 +27,7 @@ choice.
 - Grooming: incomplete
 - Source: <report/source and date>
 - Dependencies: none
-- Severity: <critical/high/medium/low/unknown + impact evidence>
+- Severity: <critical/high/medium/low/unknown + research support for impact>
 - Priority: <project priority or pending triage + rationale>
 
 ## Reproduction
@@ -50,7 +50,7 @@ choice.
 - [ ] WEB-001.2 Regression/validation result follows the active project-work policy;
       record the chosen check and any explicit blocker/exception without copying that policy.
 
-## Evidence
+## Verification
 
 Pending; record actual checks and any manual-only validation limitation.
 ```
@@ -69,7 +69,7 @@ Pending; record actual checks and any manual-only validation limitation.
 
 ## Observation and impact
 
-<Observed evidence, affected boundary and known impact.>
+<Observed facts and research support, affected boundary and known impact.>
 <Hypothesis, separately labeled; for known maintenance work use type maintenance.>
 
 ## Open questions
@@ -82,10 +82,10 @@ Pending; record actual checks and any manual-only validation limitation.
 
 ## Acceptance
 
-- [ ] WEB-002.1 Investigation conclusion has reproducible evidence.
+- [ ] WEB-002.1 Investigation conclusion has reproducible support.
 - [ ] WEB-002.2 Remaining fixes have linked open tasks, or no action is justified.
 
-## Evidence
+## Investigation result
 
 Pending; investigation completion does not mean remediation completion.
 ```
@@ -117,6 +117,6 @@ Not decomposed; technical scope follows validation of the product choice.
 
 This minimal backlog PRD may be registered before product grooming; it is not an
 accepted product contract. Grooming refines the same card into a feature/improvement
-with verifiable acceptance and evidence, after which selected work may become
+with verifiable acceptance and an acceptance source, after which selected work may become
 `planned`; do not create a duplicate merely because its type changes. A product phase is optional, but the roadmap
 must link to the task.

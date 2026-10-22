@@ -103,7 +103,7 @@ without sample links.
 - Metadata: one “- Status:”, one “- Owner:”, and one “- Grooming:” per canonical card; `blocked` additionally requires “- Blocker:” and “- Unblock condition:”.
 - Documentation history path: <chosen path; clearly marked *.history.md; not active governance>.
 - Findings: <task cards, or chosen register path>.
-- Temporary source mapping: <location only for an active full/large migration or policy-required traceability, otherwise none>.
+- Temporary migration coverage: <location only for an active full/large migration or policy-required traceability, otherwise none>.
 - Code map: <chosen location when code structure is stable>.
 - Documentation checks: <explicitly selected docs/parser checks and compatible runtime, or manual review>.
 - Constraints: <links to accepted project sources; unknowns remain open questions>.
