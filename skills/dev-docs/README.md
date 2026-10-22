@@ -15,7 +15,7 @@ Use `dev-docs` for:
 - technical and architecture decisions;
 - roadmap and backlog maintenance;
 - bug, engineering finding, and product idea intake;
-- documentation audits and controlled migrations;
+- documentation-consistency audits and controlled migrations;
 - adopting or updating documentation rules in a repository.
 
 ## Why use it
@@ -24,13 +24,13 @@ Use `dev-docs` for:
 - **Vertical Slice Development:** starts with the smallest end-to-end product slice that can be used and evaluated, then expands the same working product through independently useful features instead of completing isolated technical layers up front.
 - **Just-in-time decisions:** grooms selected backlog work into `planned`, then uses a short confirmed execution brief—not repeated grooming—before `in-progress`.
 - **Context-efficient by design:** routes the agent through indexes, canonical links, and targeted references so unrelated product history, backlog, and technical documentation do not need to be loaded for the current question.
-- **Explicit ownership:** gives each requirement, decision, task, status, and piece of evidence one canonical owner while keeping indexes navigational.
+- **Explicit ownership:** keeps research support, acceptance sources, verification records, requirements, decisions, tasks, and statuses in their distinct canonical roles while keeping indexes navigational.
 - **Existing-project support:** maintains affected documents in their existing structure and formats without requiring init or migration. It can also establish the current product state and build a forward roadmap without inventing historical stages; adoption and consolidation are separate requests.
 - **Tool independence:** works with Markdown files and project-defined paths, layers, checks, and issue trackers; it does not require a particular execution skill or runtime.
 
 ## Scope boundaries
 
-`dev-docs` governs product and documentation continuity; it is not a code-execution framework. It prepares durable product contracts, technical work, decisions, and roadmap state for the execution workflow already used by the project.
+`dev-docs` governs product and documentation continuity; it is neither a code-execution framework nor a general-purpose corpus research engine. It prepares durable product contracts, technical work, decisions, and roadmap state, and can exchange bounded research request/result packets with any available authorized research process.
 
 It does not require strict TDD, a particular agent orchestration model, or an autonomous report-to-PR loop. It also does not bundle executable validators: optional parser compatibility is documented separately and applies only when a project explicitly adopts compatible tooling.
 
@@ -43,7 +43,7 @@ Use dev-docs to shape this idea into the smallest usable Alpha. Start with overa
 
 Groom backlog PRD-012 using the results of completed PRDs, record the accepted result, and move it to planned. When it is selected for implementation, present a short execution brief before in-progress rather than repeating grooming.
 
-Audit the current documentation and task tracker. Report conflicting sources, duplicated rules, missing roadmap entries, and independent remediation tracks. Keep the audit read-only.
+Audit documentation consistency and the task tracker. Report conflicting formulations, duplicated rules, broken canonical ownership, missing roadmap entries, and independent remediation tracks. Keep the audit read-only; do not treat it as factual corpus research or product/code certification.
 ```
 
 ## Contents
@@ -51,6 +51,7 @@ Audit the current documentation and task tracker. Report conflicting sources, du
 - `SKILL.md` — the agent-facing entry point, action routing, and safety boundaries.
 - `references/documentation.md` — documentation ownership, decision approval, consistency, and granularity.
 - `references/product-discovery.md` — staged product discovery and just-in-time grooming.
+- `references/research-handoff.md` — tool-neutral request/result contract for source-heavy questions.
 - `references/task-tracker.md` — PRDs, technical tasks, statuses, dependencies, and roadmap rules.
 - `references/maintenance.md` — bugs, findings, ideas, support work, and releases.
 - `references/adoption.md` and `references/governance-migration.md` — adoption, audit, migration, and update workflows.

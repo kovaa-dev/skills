@@ -24,10 +24,27 @@ The rationale must be proportional to the choice: a few sentences
 are sufficient for an obvious local decision, while an expensive or risky one requires a comparison
 of options. Do not invent precise estimates of time or benefit without data.
 
-Verifiability does not mean that a numeric metric is always required. Select measurements
-under the [shared necessity and sufficiency criteria](https://github.com/kovaa-dev/skills/blob/c4243b4ecb17cc8db87762ee6c492bdf87ffe880/skills/dev-rules/references/research-artifacts.md#necessary-and-sufficient-measurements)
-in `dev-rules`. Record the choice or claim being checked, the method's rationale,
-result, and conclusion boundaries; do not copy the measurement execution rules.
+Verifiability does not mean that a numeric metric is always required. Use a measurement
+only when it can materially change a choice, acceptance result, or risk assessment and its
+cost is proportionate to that value. Record the claim being checked, why the method is
+sufficient, the result, and the conclusion boundaries. Do not invent a benchmark or metric
+solely to make a document appear rigorous.
+
+## Evidence vocabulary
+
+Do not use `evidence` as one undifferentiated field. Classify it by purpose:
+
+| Purpose | Preferred term | What it establishes | Canonical owner |
+| --- | --- | --- | --- |
+| Support for a factual or research claim | **research support** | What identified sources say, with version, locator, conflicts, and coverage limits | The original source plus a bounded research result or research artifact |
+| Basis for accepting a requirement, decision, scope, or grooming outcome | **acceptance source** | Who accepted what, when, and the rationale/input used for that choice | The owning PRD, task, TD/ADR, or settings source |
+| Proof that acceptance or a completed result was actually checked | **verification record** | Method, observed result, relevant environment/version, limitations, and artifact locator when needed | The owning task, PRD closure, release record, or finding record |
+
+Research support does not approve a choice. An acceptance source does not prove implementation.
+A verification record does not establish market value or the truth of unrelated source claims.
+Migration coverage is a temporary control record for moved material, not a fourth kind of evidence.
+When maintaining an existing project that uses a generic `Evidence` heading, classify each item
+by these meanings instead of silently mixing them or forcing a format migration.
 
 ## Decision approval
 
@@ -102,10 +119,18 @@ For `audit`, `migrate`, and `update`, first compare project documents with one a
 the agreed scope, and only then compare them with the skill rules. Neither the directory nor the filename
 excludes a document from review: include product/marketing/backend/frontend/operations docs,
 README/CONTRIBUTING, PRDs, technical tasks, TDs/ADRs, settings, specs, runbooks, research,
-evidence, indexes, templates, and any other documents if they are within the selected
+verification records, indexes, templates, and any other documents if they are within the selected
 scope. A full audit/migrate covers all project documents; an affected-scope check
 covers every document type related to the affected result/contract, but does not
 read unrelated parts of the repository without need.
+
+This check establishes documentation consistency only: canonical ownership, status and
+acceptance, links, duplication, contradictions, declared source relationships, and
+task/decision graph integrity. It may compare a documented statement with a directly
+available implementation fact to expose a mismatch, but it does not perform evidence-heavy
+source discovery, prove the underlying claim true, certify corpus coverage, or audit
+product/code/security behavior. If a conclusion depends on unresolved facts across several
+sources, keep it open and use the bounded research handoff defined by the active workflow.
 
 First classify the actual type and purpose of each document, then apply
 the same baseline rules regardless of directory: one coherent question/contract, one canonical
@@ -123,7 +148,7 @@ active versus historical/superseded, directly contradictory, or ambiguous.
 For a contradiction, show both exact formulations, paths/sections, status/source,
 the practical difference, a recommendation, and an alternative. Two incompatible accepted
 sources block the affected migration and implementation until the user decides;
-`proposed` does not override `accepted`, and code serves as implementation evidence but does not
+`proposed` does not override `accepted`, and code is an implementation observation but does not
 determine the correct requirement.
 
 After approval, retain one canonical contract, update links and acceptance, and
@@ -187,7 +212,7 @@ project document (for example, the documentation index):
 - a register of independent layers: unique ID prefix, responsibility, and, when decisions
   already exist, the path to their index; actual owners are assigned in canonical cards;
 - prose language, exact metadata/heading format, and selected checks;
-- where findings, code maps, and temporary source mapping are registered, the latter only for
+- where findings, code maps, and temporary migration coverage are registered, the latter only for
   a full/large migration or required traceability;
 - applicable product/engineering constraints and the source of their acceptance.
 
@@ -215,10 +240,10 @@ Do not split mechanically by line count, and do not create a file for every sent
 | ADR | One architectural choice with alternatives and consequences | Another independent choice; do not turn an ADR into a full system description |
 | Bug, finding, idea | One problem, hypothesis, or opportunity | Independent causes/fixes/user outcomes; related manifestations of one defect may remain together |
 | Spec, UX, guide, runbook | One scenario, contract, or operational procedure | Different readers, preconditions, lifecycle, or an independently usable scenario |
-| Research | One decision question with sources and a conclusion | Independent research questions; substantial primary materials become separate evidence links |
+| Research | One decision question with sources and a conclusion | Independent research questions; substantial primary materials become separate research-support links |
 | Code/architecture map | Concise system navigation; details of one module/boundary | The detail requires reading modules unrelated to the question |
 | Index, backlog, register | A route to canonical documents by purpose/layer | Groups become difficult to search; add child indexes without copying cards |
-| Report, evidence, source mapping | One check, audit scope, or migration batch | Independent checks/batches and large logs; the summary links to artifacts rather than copying them |
+| Report, verification record, migration coverage | One check, audit scope, or migration batch | Independent checks/batches and large logs; the summary links to artifacts rather than copying them |
 | Release note/changelog | One release or bounded period of changes | History obstructs reading the current state; a version index points to separate records |
 | Governance/reference/template | One operational question or family of related forms | Applying one rule requires reading unrelated procedures; use named sections or separate references |
 
@@ -230,7 +255,8 @@ other documents use a stable path and named sections.
 
 At the start of a substantive document, briefly state its question/purpose, boundaries,
 and required input links when they are not obvious from the standard form.
-Label links by purpose: contract, prerequisite, evidence, reference.
+Label links by purpose: contract, prerequisite, research support, acceptance source,
+verification record, or reference.
 Do not add a universally mandatory header with dozens of empty fields.
 Headings must make it possible to read the required section independently; do not hide current rules
 in a historical report or an adjacent task.
@@ -248,15 +274,15 @@ in a historical report or an adjacent task.
    related invariants or mandatory security/reliability constraints.
 5. Use headings/search and targeted ranges first; do not reread
    unchanged text that has already been loaded. Store long logs as artifacts,
-   leaving the result and exact path to evidence in the card.
+   leaving the result and exact path to the verification record in the card.
 6. In the final response, briefly state the changes, checks performed, and remaining
    blockers. Do not repeat document contents or the entire work process.
 
 When splitting, preserve record identities, inbound links, and existing
-traceability to sources. Create separate source mapping only at the threshold defined by
+traceability to sources. Create separate migration coverage only at the threshold defined by
 the [migration process](governance-migration.md). IDs remain stable except for an explicitly
 accepted rename during migration under the
-[migration process](governance-migration.md). Do not split closed evidence again. For current materials,
+[migration process](governance-migration.md). Do not split closed verification records again. For current materials,
 retain one canonical source; an overview contains only its own aspect and links.
 Check not only links but also whether a typical task can be performed by reading
 its route without adjacent independent topics.
@@ -347,20 +373,20 @@ receive cards. Do not present hypotheses as confirmed facts. For
 an independent audit trail, the project may choose a separate findings register; when it
 appears, add a navigation link to the index. The following requirements apply
 only to such a register.
-Each entry has an ID, status, severity, code evidence, owner, a link to the remediation
+Each entry has an ID, status, severity, research support for the observation, owner, a link to the remediation
 task, and expected closure. Record a new finding before completing the
-review/audit; after code changes, update its status/evidence, and do not delete closed
+review/audit; after code changes, update its status and closure verification, and do not delete closed
 entries. OPEN/PARTIAL findings must have a technical task owned by the responsible party;
 inclusion in a PRD is not mandatory and, when needed, is determined only in the PRD. Remediation
 priority and queue position are defined by the tracker rules, not by a second plan in the register.
 A finding's status describes the observation and does not duplicate the implementation task's status.
 The register does not replace the owner's canonical decision.
 
-Tasks marked `done`, their closure, and their evidence are semantically immutable historical records.
+Tasks marked `done`, their closure, and their verification records are semantically immutable historical records.
 An accepted rename of a file, heading, or structural ID during migration is permitted
 under the [migration process](governance-migration.md); it does not change the fact of completion,
 acceptance, or verification results. A later audit, regression, or new scope does not
-reopen `done` or rewrite status, checklist, evidence, or acceptance: create
+reopen `done` or rewrite status, checklist, verification record, or acceptance: create
 a new task with a stable ID and a link to the previous one for follow-up. `Cancelled` does not
 prove an implemented result and may be returned to active work while preserving
 the previous cancellation reason and the new basis. Update current normative documents

@@ -60,9 +60,9 @@ Until either method has been accepted and verified, the existing project rules r
 and routine maintenance follows the contract above. Adoption verification gates the change of
 governance source, not authorized edits under existing rules.
 
-Temporary status and compact source mapping for a migration live in the migration task/PR itself.
+Temporary status and compact migration coverage live in the migration task/PR itself.
 Create a separate working mapping file only for a full/large migration or explicitly required
-policy traceability; condense or delete it after verification. Preserve long-term mapping evidence
+policy traceability; condense or delete it after verification. Preserve a long-term migration record
 only when explicitly required, and do not turn it into permanent governance state.
 
 ## Verification depth
@@ -83,7 +83,7 @@ Do not store a separate adoption profile. By default, perform the normal affecte
 A full check is required only when explicitly requested or when repository/org/compliance policy
 requires it. It additionally covers the entire agreed source scope, a temporary old→new mapping,
 requirements and history, docs parser/validator enforcement, source availability to every
-necessary executor, and reproducible evidence. Every applicable criterion must be met; this checks
+necessary executor, and a reproducible verification record. Every applicable criterion must be met; this checks
 the documentation system, not the product, code, or security.
 
 ## Safe adoption
@@ -105,7 +105,7 @@ the documentation system, not the product, code, or security.
    in the migration task/PR. Do not create a permanent `migrating` mode.
 
 An empty new project follows the same path without artificial history, a backlog, or code. Missing
-materials do not require fictitious evidence.
+materials do not require fictitious research support or verification records.
 
 ## What remains in the project
 
@@ -141,7 +141,7 @@ itself; it does not require a separate preliminary audit run.
    is a blocker, leave the previous working source in place and list the remaining work.
 
 In read-only mode, keep the result and migration plan in the response. Update does not authorize
-silently changing product decisions or deleting historical evidence.
+silently changing product decisions or deleting historical verification records.
 
 ## Coordinated update with project-work governance
 

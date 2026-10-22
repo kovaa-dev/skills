@@ -1,0 +1,4 @@
+interface:
+  display_name: "Document Research"
+  short_description: "Evidence-grounded research across large, mixed document sets"
+  default_prompt: "Use $doc-research to investigate this question across the available documents and return a concise, cited answer."

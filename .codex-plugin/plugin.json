@@ -1,7 +1,7 @@
 {
   "name": "kovaa-agent-skills",
   "version": "0.4.3",
-  "description": "Independent agent skills for product documentation governance and reliable software delivery workflows.",
+  "description": "Independent agent skills for document research, product documentation governance, and reliable software delivery workflows.",
   "author": {
     "name": "kovaa",
     "email": "alex@kovaa.me",
@@ -12,6 +12,8 @@
   "license": "MIT",
   "keywords": [
     "agent-skills",
+    "document-research",
+    "retrieval",
     "product-discovery",
     "documentation",
     "roadmap",
@@ -21,8 +23,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "kovaa Agent Skills",
-    "shortDescription": "Product documentation and software delivery workflows",
-    "longDescription": "Use dev-docs to guide product discovery, PRDs, roadmaps, decisions, maintenance, and documentation governance. Use dev-rules independently to execute engineering work with explicit scope, proportional validation, Git safety, pull-request readiness, and recoverable handoffs.",
+    "shortDescription": "Document research, product, and delivery workflows",
+    "longDescription": "Use doc-research for bounded, traceable analysis across large document collections. Use dev-docs to guide product discovery, PRDs, roadmaps, decisions, maintenance, and documentation governance. Use dev-rules independently to execute engineering work with explicit scope, proportional validation, Git safety, pull-request readiness, and recoverable handoffs.",
     "developerName": "kovaa",
     "category": "Developer Tools",
     "capabilities": [
@@ -34,6 +36,7 @@
     "privacyPolicyURL": "https://github.com/kovaa-dev/skills/blob/main/PRIVACY.md",
     "termsOfServiceURL": "https://github.com/kovaa-dev/skills/blob/main/LICENSE",
     "defaultPrompt": [
+      "Research this question across the available documents and support the answer with traceable citations.",
       "Help me shape a product idea into the smallest usable release path.",
       "Implement this engineering task with explicit scope and proportional validation."
     ],

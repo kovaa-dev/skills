@@ -14,14 +14,15 @@ for a new product, it establishes the nearest minimum outcome and sequence;
 for an existing product, it determines the actual state and future feature delivery without
 retrospectively renaming history. Grooming moves a selected backlog PRD/task to
 `planned`, while a confirmed execution brief moves it to `in-progress`; empty templates
-replace neither the accepted contract nor its evidence.
+replace neither the accepted contract nor its acceptance source or verification record.
 
 ## Adopting the rules
 
 The user chooses one of two methods under the [adoption workflow](adoption.md): a complete
 copy of `dev-docs` in the repository or a pinned link to the public skill. No separate mode/
 profile is stored; the method is visible from the project-local directory or entrypoint. In either
-case, the project stores product documentation, tasks, decisions, settings, and evidence. Existing
+case, the project stores product documentation, tasks, decisions, settings, acceptance sources,
+and verification records. Existing
 rules and accepted migration changes remain in effect until adoption is verified.
 
 ## Init without product grooming
@@ -75,7 +76,7 @@ provides the section format. Approve:
   when the layer has decisions;
 - prose language and the format of metadata fields/statuses;
 - applicable constraints and their acceptance sources;
-- selected docs/parser checks and a temporary source mapping location only for a full/
+- selected docs/parser checks and a temporary migration-coverage location only for a full/
   large migration or required traceability;
 - reading routes for working questions and document boundaries under the governance section
   “Granularity of any document”;
@@ -116,7 +117,7 @@ actually requires after checking the tool's requirements. Do not generate hundre
 tasks, mandatory marketing registers, or a second delivery plan.
 An explicitly assigned product hypothesis that requires tracking may be registered as a minimal
 backlog PRD before grooming; fill in the product contract, acceptance, and grooming
-evidence before `planned`. Before implementing a `planned` PRD/task, provide only a
+completion source before `planned`. Before implementing a `planned` PRD/task, provide only a
 short confirmed execution brief and move it to `in-progress`. Create a technical task for
 independently planned/tracked work; a local fix/refactor within an existing
 contract does not automatically receive a card. Every created task is immediately visible in the
@@ -143,9 +144,9 @@ The following steps do not replace this reconciliation with simple template copy
    migration task/PR; a separate temporary file is needed only for a full/large migration
    or policy-required traceability.
 5. Move the selected section, update inbound links, and retain one current
-   version. Mark history explicitly; do not rewrite closed acceptance/evidence.
+   version. Mark history explicitly; do not rewrite closed acceptance or verification records.
    List the remainder with sources and continuation tasks.
-6. Check links, unique IDs, the dependency graph, acceptance/evidence,
+6. Check links, unique IDs, the dependency graph, acceptance sources and verification records,
    a single owner/status, visibility of all cards in the roadmap, and the absence of a second
    plan. An independent
    review is possible but does not require a particular tool or model.

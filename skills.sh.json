@@ -3,9 +3,10 @@
   "notGrouped": "bottom",
   "groupings": [
     {
-      "title": "Product and engineering workflows",
-      "description": "Skills for product documentation, task governance, and reliable software delivery.",
+      "title": "Research, product, and engineering workflows",
+      "description": "Skills for evidence-grounded document research, product documentation, task governance, and reliable software delivery.",
       "skills": [
+        "doc-research",
         "dev-docs",
         "dev-rules"
       ]

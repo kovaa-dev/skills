@@ -6,7 +6,7 @@ description: >-
   Use for shaping a new product through grooming and decision agreement,
   supporting a minimum commercial launch, creating and updating PRDs, layer tasks, and
   TDs/ADRs, registering and prioritizing bugs by severity, technical findings, and product
-  ideas, post-release maintenance and development, auditing all types of project documents,
+  ideas, post-release maintenance and development, auditing documentation consistency,
   migrating and updating documentation rules while removing stale local duplicates,
   and preparing independent task tracks.
 ---
@@ -52,6 +52,8 @@ Read only the references you need; the paths below are relative to the skill dir
   defect or irrelevant idea.
 - New or existing products, backlog grooming, start briefs, and incremental delivery:
   [product formation](references/product-discovery.md).
+- A factual question requiring multi-source/version/conflict research, or consuming its result:
+  [bounded research handoff](references/research-handoff.md).
 - Adoption or migration: [bootstrap](references/documentation-system-template.md), then the
   required normative sections linked from it.
 - Creating a card/index: select one file from the
@@ -78,7 +80,7 @@ current task's write authority. Use the actions below only when their outcomes a
   `Alpha/Beta/RC/Release/Next`, but agree or adapt the stages; do not impose retrospective
   labeling on an existing product. Overall grooming sets direction and unblocks the nearest minimally usable result.
   Perform focused grooming for a selected `backlog` PRD/task and move it to `planned`
-  only after the result is accepted; the tracker defines required evidence, `need-info`,
+  only after the result is accepted; the tracker defines the required acceptance source, `need-info`,
   and dependency `blocked`. When starting `planned` work, do not repeat grooming:
   restore context, present a short execution brief, and after confirmation move the
   selected PRD/task to `in-progress`. Make local and distant decisions closer to
@@ -93,11 +95,12 @@ current task's write authority. Use the actions below only when their outcomes a
   grooming and migration, layers may still be undefined; cards and decision indexes appear only
   as they become necessary.
 
-- **audit** — a useful standalone read-only action before deciding whether to migrate. Without
-  making changes, inspect the selected scope and report issues with paths, evidence,
-  consequences, and a proposed fix. Within the scope, classify and inspect every document type
+- **audit** — a useful standalone read-only documentation-consistency action before deciding
+  whether to migrate. Without making changes, inspect the selected scope and report issues with
+  paths, conflicting formulations, consequences, and a proposed fix. Within the scope, classify
+  and inspect every document type
   regardless of directory: product/marketing/backend/frontend,
-  README/runbook/spec/research/evidence, PRD/tasks/TD/ADR, indexes, and templates. A full audit
+  README/runbook/spec/research/verification records, PRD/tasks/TD/ADR, indexes, and templates. A full audit
   covers every document in the repository; an affected-scope audit covers every related document
   type, not only technical sources. First check project documentation for internal contradictions
   according to the "Project documentation consistency check" section, then compare the
@@ -105,6 +108,11 @@ current task's write authority. Use the actions below only when their outcomes a
   recommendation, and alternative; discuss the choice with the user rather than resolving the
   conflict yourself. Refine existing TODO/backlog findings into a proposed dependency-ready task
   map: show non-blocking tracks, prerequisites, and the required integration boundary separately.
+  Audit canonical ownership, document status, links, duplication, contradictions, and task/decision
+  consistency; do not use this action to establish the truth or completeness of underlying factual
+  claims, perform corpus-wide research, or certify product/code/security behavior. When such a
+  conclusion is required, use the [bounded research handoff](references/research-handoff.md)
+  and keep the documentation conclusion open until a source-grounded result is available.
   An audit does not create cards or launch agents without write permission/project-work authority.
   For adoption, verify the normal affected-scope criteria or, when explicitly required, the full
   depth described in the adoption reference. An ordinary audit of one area does not certify the
@@ -124,12 +132,12 @@ current task's write authority. Use the actions below only when their outcomes a
   not create integration ceremony for trivial assembly, and do not treat the task map as authority
   to launch agents automatically—orchestration belongs to the active project-work policy. By
   default, reconcile only active changed rules/cards and keep a compact mapping in the
-  PR/task/settings; a separate complete source/evidence mapping is required only for a full/large
+  PR/task/settings; a separate complete migration-coverage mapping is required only for a full/large
   migration or explicitly required policy traceability. Do not claim a partial migration is
   complete. When explicitly requested, **migrate hard** may rename the ID/path/title of already
   closed tasks and product phases according to
   [hard migration](references/governance-migration.md#hard-migration-names-and-ids-of-historical-documents),
-  preserving their status/checklist/evidence; commit hashes/messages and PR numbers/URLs do not
+  preserving their status/checklist/verification records; commit hashes/messages and PR numbers/URLs do not
   change.
 - **update** — when the verified skill revision changes, perform an affected-scope audit + migrate
   according to the [update rules](references/adoption.md#update): classify added/strengthened/
@@ -150,16 +158,17 @@ applicable project conventions. Do not create a tracker or index just to run the
 For an adopted tracker, verify links, IDs, and dependencies for affected cards; ensure the task
 index matches the agreed roadmap, each registered task is visible exactly once, status projections
 match canonical cards, and indexes do not contain a second plan or contract. A full graph scan is required only for an explicitly full
-migration/audit scope. Check semantic completeness against the sources separately: successful lint
-does not prove it. Do not call proposed work accepted or a task done without completed acceptance,
-evidence, and the applicable implementation reconciliation with canonical decisions under the
+migration/audit scope. Check semantic completeness of the documentation against its declared
+sources separately: successful lint does not prove it. Do not call proposed work accepted or a
+task done without completed acceptance, a verification record, and the applicable implementation
+reconciliation with canonical decisions under the
 policy's "Implementation closure reconciliation" section.
 
 When work spans multiple batches, check direction against the request after each batch. For an
 ordinary migration, progress and compact mapping in the existing PR/task are sufficient; a
-separate card is optional. A separate temporary source-mapping file is required only for a
+separate card is optional. A separate temporary migration-coverage file is required only for a
 full/large migration or required traceability, and at completion it is either condensed or retained
-as historical evidence according to policy. Do not create a duplicate log or log tree.
+as a historical migration record according to policy. Do not create a duplicate log or log tree.
 
 Orchestration, worktrees, checks, commits, and the PR lifecycle belong to the active project-work
 policy. `dev-docs` develops dependency-ready task tracks, non-blocking parallel work, and any

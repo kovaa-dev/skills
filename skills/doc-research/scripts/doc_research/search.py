@@ -1,0 +1,407 @@
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+from .common import MAX_BATCH_QUERIES, MAX_FILTER_TEXT, MAX_QUERY_TEXT, database, emit_json, load_bounded_json, optional_research_text, required_record_id, required_research_text
+from .index import bounded_rows, index_fingerprint, like_contains, literal_query, prefix_query, require_current_schema, require_database, search_row_locator, select_search_rows
+from .receipts import lookup_cached_receipt, receipt_cache_id, save_cached_receipt
+from .research_links import link_receipt_to_research, validate_research_receipt_link
+from .common import SQLITE_OPERATIONAL_ERROR
+
+def search_payload(args: argparse.Namespace) -> dict[str, object]:
+    db_path = require_database(args.db)
+    if (args.research_db is None) != (args.facet_id is None):
+        raise ValueError(
+            "--research-db and --facet-id must be provided together when linking a receipt"
+        )
+    if args.receipts_db is None and any(
+        value is not None
+        for value in (args.research_db, args.facet_id, args.receipt_id)
+    ):
+        raise ValueError(
+            "--research-db, --facet-id, and --receipt-id require the independent "
+            "--receipts-db store"
+        )
+    if args.refresh and args.receipts_db is None:
+        raise ValueError("--refresh requires --receipts-db")
+    if args.read_only_receipts and args.receipts_db is None:
+        raise ValueError("--read-only-receipts requires --receipts-db")
+    if args.read_only_receipts and args.research_db is not None:
+        raise ValueError(
+            "--read-only-receipts cannot link a receipt to writable research state"
+        )
+
+    facet_id = (
+        required_record_id(args.facet_id, "--facet-id")
+        if args.facet_id is not None
+        else None
+    )
+    receipt_id = (
+        required_record_id(args.receipt_id, "--receipt-id")
+        if args.receipt_id is not None
+        else None
+    )
+    if not 1 <= args.limit <= 50:
+        raise ValueError("--limit must be between 1 and 50")
+    if args.offset < 0:
+        raise ValueError("--offset must be zero or greater")
+    if not 100 <= args.max_chars <= 8000:
+        raise ValueError("--max-chars must be between 100 and 8000")
+    if not 100 <= args.max_total_chars <= 100000:
+        raise ValueError("--max-total-chars must be between 100 and 100000")
+    if not 4 <= args.snippet_tokens <= 64:
+        raise ValueError("--snippet-tokens must be between 4 and 64")
+    if not 0 <= args.max_per_source <= 50:
+        raise ValueError("--max-per-source must be between 0 and 50")
+
+    raw_query = required_research_text(args.query, "--query", MAX_QUERY_TEXT)
+    normalized_filters = {
+        key: optional_research_text(value, f"--{key}", MAX_FILTER_TEXT)
+        for key, value in {
+            "source": args.source,
+            "page": args.page,
+            "section": args.section,
+            "version": args.version,
+            "date": args.date,
+        }.items()
+    }
+
+    if args.mode == "literal":
+        query = literal_query(raw_query)
+    elif args.mode == "prefix":
+        query = prefix_query(raw_query)
+    else:
+        query = raw_query
+    conditions = ["chunks MATCH ?"]
+    parameters: list[object] = [query]
+    if normalized_filters["source"]:
+        source_pattern = like_contains(normalized_filters["source"])
+        conditions.append(
+            "(source_path LIKE ? ESCAPE '\\' OR source LIKE ? ESCAPE '\\')"
+        )
+        parameters.extend((source_pattern, source_pattern))
+    if normalized_filters["page"]:
+        conditions.append("(page = ? OR (',' || page || ',') LIKE ? ESCAPE '\\')")
+        parameters.extend((normalized_filters["page"], like_contains(f",{normalized_filters['page']},")))
+    if normalized_filters["section"]:
+        conditions.append("section LIKE ? ESCAPE '\\'")
+        parameters.append(like_contains(normalized_filters["section"]))
+    if normalized_filters["version"]:
+        conditions.append("version = ?")
+        parameters.append(normalized_filters["version"])
+    if normalized_filters["date"]:
+        conditions.append("date = ?")
+        parameters.append(normalized_filters["date"])
+    filters = {
+        key: value for key, value in normalized_filters.items()
+        if value is not None
+    }
+    candidate_limit = args.limit
+    if args.dedupe_exact or args.max_per_source:
+        candidate_limit = min(250, max(args.limit * 5, args.limit))
+    parameters.extend((candidate_limit + 1, args.offset))
+
+    sql = f"""
+        SELECT rowid AS passage_id,
+               bm25(chunks, 0.0, 3.0, 0.0, 0.0, 5.0, 0.0, 0.0, 2.0, 1.0) AS score,
+               source_path, source, source_hash, page, section, version, date,
+               text AS full_text,
+               snippet(chunks, 8, '', '', ' … ', {args.snippet_tokens}) AS text
+        FROM chunks
+        WHERE {' AND '.join(conditions)}
+        ORDER BY score, rowid
+        LIMIT ? OFFSET ?
+    """
+
+    fingerprint: str | None = None
+    corpus_root: Path | None = None
+    cached_receipt_id: str | None = None
+    try:
+        with database(db_path, readonly=True) as connection:
+            require_current_schema(connection)
+            corpus_row = connection.execute(
+                "SELECT value FROM metadata WHERE key = 'corpus_root'"
+            ).fetchone()
+            if corpus_row is None:
+                raise ValueError("Index database has no corpus binding")
+            corpus_root = Path(corpus_row["value"])
+            if args.receipts_db is not None:
+                fingerprint = index_fingerprint(connection)
+                receipt_identity = dict(filters)
+                receipt_identity.update(
+                    {
+                        "_limit": args.limit,
+                        "_dedupe_exact": args.dedupe_exact,
+                        "_max_per_source": args.max_per_source,
+                        "_offset": args.offset,
+                    }
+                )
+                cached_receipt_id = receipt_id or receipt_cache_id(
+                    raw_query, args.mode, receipt_identity, args.offset
+                )
+                if not args.refresh:
+                    cached = lookup_cached_receipt(
+                        args.receipts_db,
+                        db_path,
+                        corpus_root,
+                        fingerprint,
+                        cached_receipt_id,
+                        raw_query,
+                        args.mode,
+                        receipt_identity,
+                    )
+                    if cached is not None:
+                        if args.research_db is not None and facet_id is not None:
+                            link_receipt_to_research(
+                                args.research_db,
+                                args.receipts_db,
+                                corpus_root,
+                                db_path,
+                                fingerprint,
+                                cached_receipt_id,
+                                facet_id,
+                            )
+                        references = cached["result_refs"]
+                        if not isinstance(references, list):
+                            raise ValueError("Cached receipt references are not a list")
+                        cache_payload: dict[str, object] = {
+                            "query": raw_query,
+                            "mode": args.mode,
+                            "filters": filters,
+                            "offset": args.offset,
+                            "result_count": len(references),
+                            "characters": 0,
+                            "has_more": cached["next_offset"] is not None,
+                            "results": references,
+                            "receipt_hit": True,
+                            "receipt_id": cached_receipt_id,
+                        }
+                        if cached["next_offset"] is not None:
+                            cache_payload["next_offset"] = cached["next_offset"]
+                        return cache_payload
+            rows = connection.execute(sql, parameters).fetchall()
+    except SQLITE_OPERATIONAL_ERROR as exc:
+        raise ValueError(f"Invalid FTS query or index: {exc}") from exc
+
+    (
+        selected_rows,
+        selected_positions,
+        duplicate_locators,
+        filtered_has_more,
+        next_advance,
+    ) = select_search_rows(
+        rows,
+        args.limit,
+        args.dedupe_exact,
+        args.max_per_source,
+        candidate_limit,
+    )
+    results, characters, output_truncated = bounded_rows(
+        selected_rows, args.max_chars, args.max_total_chars
+    )
+    for index, result in enumerate(results):
+        aliases = duplicate_locators.get(index)
+        if aliases:
+            result["also_in"] = aliases
+    has_more = filtered_has_more or len(selected_rows) > len(results)
+    payload: dict[str, object] = {
+        "query": raw_query,
+        "mode": args.mode,
+        "filters": filters,
+        "offset": args.offset,
+        "result_count": len(results),
+        "characters": characters,
+        "has_more": has_more,
+        "results": results,
+    }
+    if output_truncated:
+        payload["text_truncated"] = True
+    if has_more:
+        if results and len(results) < len(selected_positions):
+            next_advance = selected_positions[len(results) - 1] + 1
+        payload["next_offset"] = args.offset + next_advance
+    if (
+        args.receipts_db is not None
+        and not args.read_only_receipts
+        and fingerprint is not None
+        and corpus_root is not None
+        and cached_receipt_id is not None
+    ):
+        receipt_results: list[dict[str, object]] = []
+        for index, row in enumerate(selected_rows):
+            locator = search_row_locator(row)
+            aliases = duplicate_locators.get(index)
+            if aliases:
+                locator["also_in"] = aliases
+            receipt_results.append(locator)
+        receipt_payload = {
+            **payload,
+            "filters": receipt_identity,
+            "results": receipt_results,
+            "result_count": len(receipt_results),
+            "characters": 0,
+            "has_more": filtered_has_more,
+        }
+        if filtered_has_more:
+            receipt_payload["next_offset"] = args.offset + next_advance
+        else:
+            receipt_payload.pop("next_offset", None)
+        if args.research_db is not None and facet_id is not None:
+            validate_research_receipt_link(
+                args.research_db,
+                corpus_root,
+                facet_id,
+                db_path,
+                fingerprint,
+            )
+        save_cached_receipt(
+            args.receipts_db,
+            db_path,
+            corpus_root,
+            fingerprint,
+            cached_receipt_id,
+            receipt_payload,
+        )
+        if args.research_db is not None and facet_id is not None:
+            link_receipt_to_research(
+                args.research_db,
+                args.receipts_db,
+                corpus_root,
+                db_path,
+                fingerprint,
+                cached_receipt_id,
+                facet_id,
+            )
+        payload["receipt_hit"] = False
+        payload["receipt_id"] = cached_receipt_id
+    elif args.receipts_db is not None:
+        payload["receipt_hit"] = False
+        payload["receipt_persisted"] = False
+    return payload
+
+def command_search(args: argparse.Namespace) -> int:
+    emit_json(search_payload(args), args.pretty)
+    return 0
+
+def command_search_many(args: argparse.Namespace) -> int:
+    if args.read_only_receipts and args.receipts_db is None:
+        raise ValueError("--read-only-receipts requires --receipts-db")
+    if args.read_only_receipts and args.research_db is not None:
+        raise ValueError(
+            "--read-only-receipts cannot link receipts to writable research state"
+        )
+    raw = load_bounded_json(args.input, "Batch query file")
+    items = raw.get("queries") if isinstance(raw, dict) else raw
+    if not isinstance(items, list):
+        raise ValueError("Batch query file must be an array or an object with a queries array")
+    if len(items) > MAX_BATCH_QUERIES:
+        raise ValueError(f"At most {MAX_BATCH_QUERIES} batch queries are allowed")
+    if args.query_offset < 0:
+        raise ValueError("--query-offset must be zero or greater")
+    if not 1 <= args.limit_per_query <= 20:
+        raise ValueError("--limit-per-query must be between 1 and 20")
+    if not 100 <= args.max_per_query_chars <= 20_000:
+        raise ValueError("--max-per-query-chars must be between 100 and 20000")
+    if not 1_000 <= args.max_total_chars <= 100_000:
+        raise ValueError("--max-total-chars must be between 1000 and 100000")
+
+    allowed = {
+        "query",
+        "mode",
+        "source",
+        "page",
+        "section",
+        "version",
+        "date",
+        "offset",
+        "facet_id",
+        "receipt_id",
+        "refresh",
+    }
+    normalized: list[dict[str, object]] = []
+    for index, item in enumerate(items):
+        if not isinstance(item, dict):
+            raise ValueError(f"Batch query {index} must be an object")
+        unknown = set(item) - allowed
+        if unknown:
+            raise ValueError(
+                f"Batch query {index} has unsupported fields: {', '.join(sorted(unknown))}"
+            )
+        query = item.get("query")
+        if not isinstance(query, str) or not query.strip():
+            raise ValueError(f"Batch query {index} requires non-empty query text")
+        mode = item.get("mode", "literal")
+        if mode not in {"literal", "prefix", "fts"}:
+            raise ValueError(f"Batch query {index} has unsupported mode: {mode}")
+        for field in (
+            "source",
+            "page",
+            "section",
+            "version",
+            "date",
+            "facet_id",
+            "receipt_id",
+        ):
+            if field in item and item[field] is not None and not isinstance(item[field], str):
+                raise ValueError(f"Batch query {index} field {field} must be a string")
+        offset = item.get("offset", 0)
+        if not isinstance(offset, int) or isinstance(offset, bool) or offset < 0:
+            raise ValueError(f"Batch query {index} offset must be zero or greater")
+        refresh = item.get("refresh", False)
+        if not isinstance(refresh, bool):
+            raise ValueError(f"Batch query {index} refresh must be a boolean")
+        normalized.append(item)
+
+    selected = normalized[args.query_offset :]
+    outputs: list[dict[str, object]] = []
+    characters = 0
+    processed = 0
+    for item in selected:
+        namespace = argparse.Namespace(
+            db=args.db,
+            query=item["query"],
+            mode=item.get("mode", "literal"),
+            source=item.get("source"),
+            page=item.get("page"),
+            section=item.get("section"),
+            version=item.get("version"),
+            date=item.get("date"),
+            limit=args.limit_per_query,
+            offset=item.get("offset", 0),
+            max_chars=args.max_chars,
+            max_total_chars=args.max_per_query_chars,
+            snippet_tokens=args.snippet_tokens,
+            receipts_db=args.receipts_db,
+            research_db=args.research_db,
+            facet_id=item.get("facet_id"),
+            receipt_id=item.get("receipt_id"),
+            refresh=bool(item.get("refresh", False)),
+            read_only_receipts=args.read_only_receipts,
+            dedupe_exact=args.dedupe_exact,
+            max_per_source=args.max_per_source,
+            pretty=False,
+        )
+        payload = search_payload(namespace)
+        encoded = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        if outputs and characters + len(encoded) > args.max_total_chars:
+            break
+        if not outputs and len(encoded) > args.max_total_chars:
+            raise ValueError("--max-total-chars is too small for one query result")
+        outputs.append(payload)
+        characters += len(encoded)
+        processed += 1
+
+    has_more = args.query_offset + processed < len(normalized)
+    result: dict[str, object] = {
+        "query_offset": args.query_offset,
+        "query_count": len(outputs),
+        "characters": characters,
+        "has_more": has_more,
+        "results": outputs,
+    }
+    if has_more:
+        result["next_query_offset"] = args.query_offset + processed
+    emit_json(result, args.pretty)
+    return 0

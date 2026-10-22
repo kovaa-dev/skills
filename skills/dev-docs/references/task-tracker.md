@@ -68,7 +68,7 @@ or introducing a parallel tracker.
   migration merely to create parallelism, and do not create a card without an independent
   outcome.
 - If independent tracks require a separate consolidation of shared indexes, contracts,
-  or source mappings, conflict resolution, or end-to-end verification, create an
+  or migration coverage, conflict resolution, or end-to-end verification, create an
   integration task only when it has its own verifiable outcome. It depends on all input
   tracks, owns only the shared boundary, and does not copy their acceptance criteria or
   statuses. A trivial merge or coordinator review does not warrant a fictitious
@@ -101,8 +101,9 @@ or introducing a parallel tracker.
   accepted, explicit dependencies are named, and the card contains
   `- Grooming: completed YYYY-MM-DD; source: <exact confirmation or stable link>`.
   Substantive results remain in normal contract/acceptance/decision sections rather
-  than being copied into this field. A `planned` task without grooming evidence is a
-  migration defect, not ready work. Do not retrospectively rewrite historical `done`
+  than being copied into this field. A `planned` task without a grooming completion
+  record and acceptance source is a migration defect, not ready work. Do not
+  retrospectively rewrite historical `done`
   cards solely to add the new field. Contributors do not become a second owner. Scope
   and API definitions remain in their canonical sources.
 - The shared task index is the sole roadmap and lists every registered task exactly once.
@@ -111,7 +112,7 @@ or introducing a parallel tracker.
   different sequence. Within a group, Product and actual technical-layer subgroups are
   allowed. An active task belongs to exactly one delivery group. A completed or cancelled
   task remains in its last assigned group or is moved exactly once to `History`.
-  `History` is a visible part of the roadmap, but it is not a delivery stage or evidence
+  `History` is a visible part of the roadmap, but it is not a delivery stage or proof
   of delivery. For an existing product, first determine the current state and future
   sequence: assign an open legacy task to a current or future group without claiming a
   past stage, and place a historical `done` or `cancelled` task in `History` if its former
@@ -159,7 +160,7 @@ or introducing a parallel tracker.
   why it blocks, the recommended option, realistic alternatives, and the answer owner.
   A routine reversible implementation detail is not `need-info`. After an answer, the
   task returns to `planned` or `in-progress`; a materially changed contract updates the
-  grooming evidence and `Decision changes` before work continues.
+  grooming completion source and `Decision changes` before work continues.
 - `blocked` means an unmet prerequisite, external artifact/event/environment result, or
   another adjacent dependency—not a child relationship and not missing information.
   The card must contain `- Blocker: <exact link/condition and reason>` and
@@ -173,14 +174,14 @@ or introducing a parallel tracker.
   `backlog → cancelled` does not require full grooming. A cancelled task may resume
   without erasing its previous reason. `done` is terminal: a regression, new scope, or
   changed outcome receives a new linked task, while the completed task's closure,
-  checklist, and evidence remain unchanged. Transition to `done`, including from
+  checklist, and verification record remain unchanged. Transition to `done`, including from
   `blocked`, is allowed only after actual acceptance.
   A routine `done` task needs only one closure statement: the observable result, the
   current canonical decision source, and the verification or manual path used. For an
   implemented or changed documented contract, first perform the
   [implementation closure reconciliation](documentation.md#implementation-closure-reconciliation):
   any unresolved discrepancy blocks `done`. A date, version, or artifact is required only
-  for a release, migration, external audit, benchmark, security/privacy evidence, or an
+  for a release, migration, external audit, benchmark, security/privacy verification, or an
   outcome that cannot be reconstructed from the task, commit, or PR. PRD acceptance is an
   end-to-end user outcome, not an automatic consequence of closing technical tasks.
 - Perform migrations in small, verifiable increments: declare the boundaries, sources,
@@ -191,7 +192,7 @@ or introducing a parallel tracker.
   replacement of old text with pointers and relocation into clearly designated history
   are allowed after checkpointing and copying/moving. Do not accumulate two current
   versions. Historical `*.history.md` files are not plans; their internal wording is no
-  longer authoritative, and closed evidence remains unchanged. During an agreed naming
+  longer authoritative, and closed verification records remain unchanged. During an agreed naming
   migration, previous IDs, including those of closed records, may be reassigned by
   applying the “Hard migration: names and IDs of historical documents” section of the
   [migration process](governance-migration.md). Outside such a transition, IDs remain
@@ -199,8 +200,9 @@ or introducing a parallel tracker.
 - Before completing a routine migration, check only the active changed mappings, links,
   agreement between the status projections and canonical cards of affected tasks,
   uniqueness of affected IDs, and absence of lost or duplicated tasks. A complete
-  reconciliation of every requirement, question, dependency, and piece of evidence is
-  required only for an explicitly requested full review or full backlog migration. List
+  reconciliation of every requirement, question, dependency, acceptance source, and
+  verification record is required only for an explicitly requested full review or full
+  backlog migration. List
   any agreed scope that was not migrated; do not present a partial migration as complete.
 
 ## Related Workflows

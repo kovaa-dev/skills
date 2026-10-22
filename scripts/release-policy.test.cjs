@@ -70,7 +70,12 @@ test('docs-only release includes notes and synchronized managed versions', async
   }
   const marketplace = updates.get('.claude-plugin/marketplace.json');
   assert.equal(JSON.parse(marketplace.updater.updateContent(read(marketplace.path))).plugins[0].version, version);
-  for (const path of ['README.md', 'skills/dev-docs/README.md', 'skills/dev-rules/README.md']) {
+  for (const path of [
+    'README.md',
+    'skills/doc-research/README.md',
+    'skills/dev-docs/README.md',
+    'skills/dev-rules/README.md',
+  ]) {
     const content = updates.get(path).updater.updateContent(read(path));
     assert.ok(content.includes(`v${version}`), `${path} must publish the new version`);
   }

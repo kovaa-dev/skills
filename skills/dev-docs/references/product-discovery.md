@@ -62,6 +62,17 @@ and unresolved independently actionable/high-risk questions that meet the tracke
 threshold; leave other suggestions in the discussion summary without automatically
 accepting them into the first release.
 
+Use direct project facts and a small number of already identified sources locally. When a
+choice depends on searching a large collection, reconciling versions or conflicting sources,
+establishing research-corpus coverage, or producing claim-level citations, do not expand product
+discovery into a research workflow. Send the question to any available authorized research
+capability, or return the request packet to the user when none is available. Keep only the
+affected decision open; continue independent grooming.
+
+Use the [bounded research handoff](research-handoff.md) for the request and result packet.
+The returned research support does not accept a requirement or decision; that remains with its
+normal canonical owner and acceptance source.
+
 ## 2. Solution grooming with the user
 
 Before developing a new product, conduct overall initial grooming. It must establish the baseline direction for the work and
@@ -87,7 +98,7 @@ Continue grooming incrementally on the selected `backlog` task, as close as poss
 
 Grooming is complete when the user has accepted the current outcome and boundaries,
  required product/cross-layer/risky decisions, verifiable acceptance, and the dependency
- graph. The card records grooming evidence under the tracker rules. If the task is
+ graph. The card records its grooming completion and acceptance source under the tracker rules. If the task is
  selected for the executable queue and has neither unresolved information nor blocking
  prerequisites, it moves `backlog → planned`; otherwise it remains `backlog` or receives
  `need-info`, `blocked`, or `cancelled` according to the actual reason. Do not move a
