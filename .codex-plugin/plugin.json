@@ -1,7 +1,7 @@
 {
   "name": "kovaa-agent-skills",
   "version": "0.4.3",
-  "description": "Independent agent skills for document research, product documentation governance, and reliable software delivery workflows.",
+  "description": "Independent agent skills for cost audits, task orchestration, document research, documentation governance, and reliable software delivery.",
   "author": {
     "name": "kovaa",
     "email": "alex@kovaa.me",
@@ -14,6 +14,8 @@
     "agent-skills",
     "document-research",
     "retrieval",
+    "task-orchestration",
+    "multi-agent",
     "product-discovery",
     "documentation",
     "roadmap",
@@ -23,8 +25,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "kovaa Agent Skills",
-    "shortDescription": "Document research, product, and delivery workflows",
-    "longDescription": "Use doc-research for bounded, traceable analysis across large document collections. Use dev-docs to guide product discovery, PRDs, roadmaps, decisions, maintenance, and documentation governance. Use dev-rules independently to execute engineering work with explicit scope, proportional validation, Git safety, pull-request readiness, and recoverable handoffs.",
+    "shortDescription": "Cost, orchestration, research, product, and delivery skills",
+    "longDescription": "Use cost-audit for evidence-based session and instruction overhead audits. Use orchestra for adaptive routing that discovers or safely acquires useful tools and delegates only bounded work. Use doc-research for bounded, traceable analysis across large document collections. Use dev-docs for product and documentation governance, and dev-rules for reliable engineering delivery.",
     "developerName": "kovaa",
     "category": "Developer Tools",
     "capabilities": [
@@ -37,6 +39,7 @@
     "termsOfServiceURL": "https://github.com/kovaa-dev/skills/blob/main/LICENSE",
     "defaultPrompt": [
       "Research this question across the available documents and support the answer with traceable citations.",
+      "Choose the smallest capable route, discovering or safely acquiring a useful tool when justified and delegating only bounded independent work.",
       "Help me shape a product idea into the smallest usable release path.",
       "Implement this engineering task with explicit scope and proportional validation."
     ],

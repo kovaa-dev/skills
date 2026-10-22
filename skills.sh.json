@@ -4,11 +4,13 @@
   "groupings": [
     {
       "title": "Research, product, and engineering workflows",
-      "description": "Skills for evidence-grounded document research, product documentation, task governance, and reliable software delivery.",
+      "description": "Skills for evidence-based agent cost audits, adaptive task orchestration, document research, product documentation, task governance, and reliable software delivery.",
       "skills": [
+        "cost-audit",
         "doc-research",
         "dev-docs",
-        "dev-rules"
+        "dev-rules",
+        "orchestra"
       ]
     }
   ]
