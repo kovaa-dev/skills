@@ -50,6 +50,8 @@ An exact repeated call means the same tool name and normalized structured argume
 
 A runtime may expose one model-visible wrapper call while hiding several nested tool operations. Report wrapper visibility and opaque-call counts. If failure status is unavailable inside the wrapper, the error metric is unknown even when no structured error was observed.
 
+For directly visible tool calls, a missing matching result makes error observability partial: retain observed errors, but report the total as unavailable rather than zero.
+
 ## Adaptive selection
 
 Start with every session's metadata in the authorized time window, but deep-inspect only a selected set.

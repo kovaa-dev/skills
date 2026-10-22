@@ -211,9 +211,9 @@ def provider_for(path: Path, requested: str, sample: list[dict[str, Any]]) -> st
         if isinstance(message, dict) and ("usage" in message or "content" in message):
             return "claude"
     lower_parts = {part.lower() for part in path.parts}
-    if ".claude" in lower_parts or "projects" in lower_parts:
+    if ".claude" in lower_parts:
         return "claude"
-    if ".codex" in lower_parts or "sessions" in lower_parts:
+    if ".codex" in lower_parts:
         return "codex"
     return "unknown"
 
@@ -497,6 +497,11 @@ def parse_claude(
         )
         for row in usage_rows
     ]
+    missing_results = set(call_names) - seen_results
+    calls_without_ids = metrics.tool_calls > len(call_names)
+    if missing_results or calls_without_ids:
+        metrics.tool_errors = None
+        metrics.tool_error_observability = "partial"
     metrics.usage_window_coverage = "complete" if usage_rows else "unavailable"
     finalize_metrics(metrics)
 
@@ -1137,6 +1142,8 @@ def select_activity_buckets(
     def add(bucket: dict[str, Any], reason: str) -> None:
         turn = int(bucket["turn"])
         if turn not in selected:
+            if len(selected) >= maximum:
+                return
             selected[turn] = {**bucket, "selection_reasons": []}
         selected[turn]["selection_reasons"].append(reason)
 

@@ -80,6 +80,38 @@ class CostAuditTests(unittest.TestCase):
             self.assertNotIn("private", json.dumps(public))
             self.assertNotIn("secret-project", json.dumps(public))
 
+    def test_claude_missing_tool_result_has_partial_error_observability(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "claude-incomplete.jsonl"
+            write_jsonl(
+                path,
+                [
+                    {
+                        "type": "assistant",
+                        "message": {
+                            "id": "message-1",
+                            "role": "assistant",
+                            "usage": {"input_tokens": 10, "output_tokens": 1},
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "id": "call-without-result",
+                                    "name": "Bash",
+                                    "input": {"command": "true"},
+                                }
+                            ],
+                        },
+                    }
+                ],
+            )
+
+            metrics = COST_AUDIT.parse_session(path, "claude", include_locator=False)
+
+            self.assertEqual(metrics.tool_calls, 1)
+            self.assertEqual(metrics.observed_tool_errors, 0)
+            self.assertIsNone(metrics.tool_errors)
+            self.assertEqual(metrics.tool_error_observability, "partial")
+
     def test_codex_cumulative_usage_uses_maximum_not_sum(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "codex-session.jsonl"
@@ -205,6 +237,36 @@ class CostAuditTests(unittest.TestCase):
         self.assertEqual({item.session_key for item, _ in selected}, {"measured", "proxy"})
         self.assertEqual(coverage["token_coverage"], 1.0)
         self.assertEqual(coverage["proxy_byte_coverage"], 1.0)
+
+    def test_activity_bucket_selection_obeys_a_maximum_of_one(self) -> None:
+        first = COST_AUDIT.new_bucket(1)
+        first["tool_calls"] = 1
+        last = COST_AUDIT.new_bucket(2)
+        last["tool_calls"] = 2
+
+        selected = COST_AUDIT.select_activity_buckets([first, last], 1)
+
+        self.assertEqual(len(selected), 1)
+        self.assertEqual(selected[0]["turn"], 1)
+        self.assertEqual(selected[0]["selection_reasons"], ["first"])
+
+    def test_provider_detection_ignores_generic_directory_names(self) -> None:
+        self.assertEqual(
+            COST_AUDIT.provider_for(Path("/tmp/projects/session.jsonl"), "auto", []),
+            "unknown",
+        )
+        self.assertEqual(
+            COST_AUDIT.provider_for(Path("/tmp/sessions/session.jsonl"), "auto", []),
+            "unknown",
+        )
+        self.assertEqual(
+            COST_AUDIT.provider_for(Path("/tmp/.claude/session.jsonl"), "auto", []),
+            "claude",
+        )
+        self.assertEqual(
+            COST_AUDIT.provider_for(Path("/tmp/.codex/session.jsonl"), "auto", []),
+            "codex",
+        )
 
     def test_document_inventory_is_bounded_and_does_not_emit_content(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
