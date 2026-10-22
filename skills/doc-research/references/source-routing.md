@@ -18,6 +18,8 @@ This separation makes source changes, retention, access review, and removal loca
 
 A project is a retrieval view, not a source container, permission boundary, or second evidence store. Its only durable data is a stable ID, one or more stable anchors, and many-to-many links to registered corpora. Shared corpora are searched once after project unions are deduplicated. Reuse the catalog already bound by active research or configured by the current workspace. If none is known, do not scan the machine for databases: continue with an explicitly selected corpus, or create a catalog only in an authorized durable derived-data location and report that path.
 
+Keep identity separate from presentation. When the positional ID is omitted, `catalog-put` derives `corpus-<hash>` from the access boundary, adapter, and canonical source locator; `catalog-project-put` and `catalog-project-resolve --create` derive `project-<hash>` from the access boundary, anchor kind, and normalized anchor. They independently infer a short label from the directory or final locator component. `--label` overrides that presentation without changing identity, and later calls without `--label` preserve the stored label. Equal labels never merge records. Source generations, query text, and generated summaries never enter an ID. Use an explicit ID when identity must survive a source move or locator change that the catalog cannot recognize as the same source.
+
 Routing precedence is: an active research binding; an explicit project/corpus selection; one unambiguous stable context-anchor match; then a projectless explicitly bounded corpus search. Never select a project by recency alone. A term associated with another project is a reason to propose or perform a named-gap expansion, not permission to broaden the initial search.
 
 Resolve an unnamed project from an authorized stable anchor:
@@ -32,10 +34,10 @@ Filesystem resolution uses the most specific containing anchor and returns less-
 When durable setup is authorized, create-or-attach by stable anchor and an existing corpus:
 
 ```bash
-scripts/corpus catalog-project-resolve catalog.sqlite --anchor-kind filesystem --anchor CURRENT_WORKSPACE --access-boundary workspace-a --create --corpus-id project-a
+scripts/corpus catalog-project-resolve catalog.sqlite --anchor-kind filesystem --anchor CURRENT_WORKSPACE --access-boundary workspace-a --create --corpus-id CORPUS_ID
 ```
 
-This operation is idempotent. It attaches to one unambiguous containing project or creates a deterministic `auto-*` project. It refuses empty projects and ambiguous matches. Never auto-create from a natural-language query, topic similarity, filename, transient chat ID, or generated summary. Without a stable anchor or durable-write authority, keep the task projectless and search explicitly selected corpus IDs or one access boundary; do not persist a synthetic “misc” or “inbox” project.
+This operation is idempotent. It attaches to one unambiguous containing project or creates a deterministic `project-*` ID and a separate inferred label. It refuses empty projects and ambiguous matches. Never auto-create from a natural-language query, topic similarity, filename, transient chat ID, or generated summary. Without a stable anchor or durable-write authority, keep the task projectless and search explicitly selected corpus IDs or one access boundary; do not persist a synthetic “misc” or “inbox” project.
 
 Use `catalog-project-put` for an explicit project or additional anchor. Repeated `--corpus-id` values add memberships; `--replace-corpora` deliberately makes that list authoritative without deleting corpus databases. `catalog-put --project-id` can attach a newly registered corpus to existing projects. Project and member corpora must share one access boundary; the project ID never grants access.
 
@@ -57,16 +59,18 @@ A catalog entry with adapter `external` is a coverage descriptor, not an executa
 For each local or materialized corpus, create its own index and receipt store. Then register it once:
 
 ```bash
-scripts/corpus index CORPUS_A --db project-a.index.sqlite
-scripts/corpus receipts-init project-a.receipts.sqlite --corpus CORPUS_A --index project-a.index.sqlite
+scripts/corpus index CORPUS_A --db corpus-a.index.sqlite
+scripts/corpus receipts-init corpus-a.receipts.sqlite --corpus CORPUS_A --index corpus-a.index.sqlite
 scripts/corpus catalog-init catalog.sqlite
-scripts/corpus catalog-put catalog.sqlite project-a --adapter local-index --access-boundary workspace-a --index project-a.index.sqlite --receipts-db project-a.receipts.sqlite
+scripts/corpus catalog-put catalog.sqlite --adapter local-index --access-boundary workspace-a --index corpus-a.index.sqlite --receipts-db corpus-a.receipts.sqlite
 ```
+
+The registration response contains the stable `corpus_id` and inferred `label`; reuse the ID in project membership and locators. Pass a positional ID only to preserve an established external identity. Pass `--label` only when the inferred display name is unclear.
 
 Register a remote source only to make coverage and freshness explicit:
 
 ```bash
-scripts/corpus catalog-put catalog.sqlite wiki-a --adapter external --access-boundary workspace-a --locator wiki://space/page --generation VERSION
+scripts/corpus catalog-put catalog.sqlite --adapter external --access-boundary workspace-a --locator wiki://space/page --generation VERSION
 ```
 
 `access-boundary` is a stable permission or tenant label, not a credential. If a catalog contains several boundaries, `catalog-search` requires explicit `--project-id`, `--access-boundary`, or `--corpus-id` selection. A single search is capped at 16 corpora; partition larger collections by a meaningful boundary or named facet rather than paying an unbounded fan-out cost.
@@ -78,7 +82,7 @@ Treat `access-boundary` as permission scope, not project identity. An explicit `
 ```bash
 scripts/corpus catalog-info catalog.sqlite --live
 scripts/corpus catalog-search catalog.sqlite "search terms" --access-boundary workspace-a --limit 8
-scripts/corpus catalog-get catalog.sqlite project-a=12 project-b=7
+scripts/corpus catalog-get catalog.sqlite CORPUS_A_ID=12 CORPUS_B_ID=7
 ```
 
 Skip `catalog-info --live` on routine searches when no source changed; `catalog-search` validates selected local bindings and checks its deterministic composite receipt. A hit returns locators without passage text. Without durable-write authority, add `--read-only`: current catalog/member receipts may be reused, but misses are not persisted and research state cannot be linked. Continue the same query only when `next_offset` is returned. `has_more` means another local page is available; `coverage_complete: false` and `unsearched_corpora` describe an external or unavailable-source gap, not a continuation. Use `--allow-partial` only when that gap is acceptable for the current claim; an incomplete search cannot support a corpus-wide absence claim.
@@ -92,7 +96,7 @@ Create research state only for a long or consequential investigation. The facet 
 ```bash
 scripts/corpus research-init research.sqlite --scope "question" --catalog catalog.sqlite --project-id review-a --project-id review-b
 scripts/corpus research-put research.sqlite facet F1 --question "answerable facet"
-scripts/corpus catalog-search catalog.sqlite "search terms" --corpus-id project-a --corpus-id project-b --research-db research.sqlite --facet-id F1
+scripts/corpus catalog-search catalog.sqlite "search terms" --corpus-id CORPUS_A_ID --corpus-id CORPUS_B_ID --research-db research.sqlite --facet-id F1
 scripts/corpus research-info research.sqlite --resume
 ```
 

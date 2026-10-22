@@ -7,6 +7,7 @@ import os
 import tempfile
 from contextlib import closing
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 from .common import (
     CATALOG_APPLICATION_ID,
@@ -78,6 +79,51 @@ CATALOG_COLUMNS = {
         "last_used_at",
     ),
 }
+
+AUTO_ID_DIGEST_LENGTH = 20
+MAX_INFERRED_LABEL_CHARS = 160
+
+
+def generated_catalog_id(
+    entity_kind: str,
+    access_boundary: str,
+    identity_kind: str,
+    identity: str,
+) -> str:
+    payload = json.dumps(
+        [entity_kind, access_boundary, identity_kind, identity],
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+    digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    return f"{entity_kind}-{digest[:AUTO_ID_DIGEST_LENGTH]}"
+
+
+def inferred_catalog_label(
+    entity_kind: str,
+    identity_kind: str,
+    identity: str,
+    generated_id: str,
+) -> str:
+    candidate = ""
+    if identity_kind == "filesystem":
+        path = Path(identity)
+        candidate = path.name or path.anchor or identity
+    else:
+        parsed = urlsplit(identity)
+        path_parts = [unquote(part) for part in parsed.path.split("/") if part]
+        if path_parts:
+            candidate = path_parts[-1]
+        elif parsed.hostname:
+            candidate = parsed.hostname
+        else:
+            candidate = identity.rstrip("/\\").replace("\\", "/").rsplit("/", 1)[-1]
+    label = " ".join(candidate.split())
+    if not label:
+        label = f"{entity_kind.capitalize()} {generated_id[-8:]}"
+    if len(label) > MAX_INFERRED_LABEL_CHARS:
+        label = label[: MAX_INFERRED_LABEL_CHARS - 1].rstrip() + "…"
+    return label
 
 def require_catalog_owner(connection: sqlite3.Connection) -> None:
     identifier = application_id(connection)
@@ -226,6 +272,30 @@ def normalize_project_anchor(anchor_kind: str, value: str) -> str:
         return os.path.normcase(str(Path(normalized).resolve()))
     return normalized
 
+
+def require_generated_project_identity(
+    connection: sqlite3.Connection,
+    project_id: str,
+    access_boundary: str,
+    anchor_kind: str,
+    anchor: str,
+) -> None:
+    existing = connection.execute(
+        "SELECT access_boundary FROM projects WHERE project_id = ?", (project_id,)
+    ).fetchone()
+    if existing is None:
+        return
+    exact_anchor = connection.execute(
+        "SELECT 1 FROM project_anchors "
+        "WHERE project_id = ? AND anchor_kind = ? AND anchor = ?",
+        (project_id, anchor_kind, anchor),
+    ).fetchone()
+    if existing["access_boundary"] != access_boundary or exact_anchor is None:
+        raise ValueError(
+            "Generated project ID collides with a different stored identity; "
+            "provide an explicit project ID"
+        )
+
 def project_candidates(
     connection: sqlite3.Connection,
     anchor_kind: str,
@@ -363,6 +433,7 @@ def upsert_catalog_project(
     connection: sqlite3.Connection,
     project_id: str,
     label: str | None,
+    default_label: str,
     access_boundary: str,
     anchor_kind: str,
     anchor: str,
@@ -383,7 +454,11 @@ def upsert_catalog_project(
         raise ValueError("A new project must be attached to at least one corpus")
     now = utc_now()
     created_at = str(existing["created_at"]) if existing else now
-    stored_label = label if label is not None else (existing["label"] if existing else None)
+    stored_label = (
+        label
+        if label is not None
+        else (existing["label"] if existing and existing["label"] else default_label)
+    )
     connection.execute(
         """
         INSERT INTO projects(project_id, label, access_boundary, created_at, updated_at)
@@ -612,8 +687,12 @@ def command_catalog_init(args: argparse.Namespace) -> int:
     return 0
 def command_catalog_put(args: argparse.Namespace) -> int:
     db_path = require_catalog_database(args.db)
-    corpus_id = validate_record_id(args.corpus_id, "corpus_id")
-    label = optional_research_text(args.label, "--label")
+    explicit_corpus_id = (
+        validate_record_id(args.corpus_id, "corpus_id")
+        if args.corpus_id is not None
+        else None
+    )
+    requested_label = optional_research_text(args.label, "--label")
     access_boundary = required_research_text(
         args.access_boundary, "--access-boundary"
     )
@@ -656,16 +735,41 @@ def command_catalog_put(args: argparse.Namespace) -> int:
         locator = required_research_text(args.locator, "--locator")
         generation = optional_research_text(args.generation, "--generation")
 
+    corpus_id = explicit_corpus_id or generated_catalog_id(
+        "corpus", access_boundary, adapter, locator
+    )
+    default_label = inferred_catalog_label(
+        "corpus",
+        "filesystem" if adapter == "local-index" else "external",
+        locator,
+        corpus_id,
+    )
+
     now = utc_now()
     with database(db_path) as connection:
         require_catalog_schema(connection)
         existing = connection.execute(
-            "SELECT access_boundary, created_at FROM corpora WHERE corpus_id = ?",
+            "SELECT label, access_boundary, adapter, locator, created_at "
+            "FROM corpora WHERE corpus_id = ?",
             (corpus_id,),
         ).fetchone()
         if existing is not None and existing["access_boundary"] != access_boundary:
             raise ValueError("A corpus access boundary cannot be changed in place")
+        if (
+            explicit_corpus_id is None
+            and existing is not None
+            and (existing["adapter"] != adapter or existing["locator"] != locator)
+        ):
+            raise ValueError(
+                "Generated corpus ID collides with a different stored identity; "
+                "provide an explicit corpus ID"
+            )
         created_at = str(existing["created_at"]) if existing else now
+        stored_label = (
+            requested_label
+            if requested_label is not None
+            else (existing["label"] if existing and existing["label"] else default_label)
+        )
         connection.execute(
             """
             INSERT INTO corpora(
@@ -685,7 +789,7 @@ def command_catalog_put(args: argparse.Namespace) -> int:
             """,
             (
                 corpus_id,
-                label,
+                stored_label,
                 access_boundary,
                 adapter,
                 locator,
@@ -745,6 +849,7 @@ def command_catalog_put(args: argparse.Namespace) -> int:
         {
             "database": str(db_path),
             "corpus_id": corpus_id,
+            "label": stored_label,
             "adapter": adapter,
             "locator": locator,
             "generation": generation,
@@ -757,13 +862,23 @@ def command_catalog_put(args: argparse.Namespace) -> int:
     return 0
 def command_catalog_project_put(args: argparse.Namespace) -> int:
     db_path = require_catalog_database(args.db)
-    project_id = validate_record_id(args.project_id, "project_id")
+    explicit_project_id = (
+        validate_record_id(args.project_id, "project_id")
+        if args.project_id is not None
+        else None
+    )
     label = optional_research_text(args.label, "--label")
     access_boundary = required_research_text(
         args.access_boundary, "--access-boundary"
     )
     anchor_kind = args.anchor_kind
     anchor = normalize_project_anchor(anchor_kind, args.anchor)
+    project_id = explicit_project_id or generated_catalog_id(
+        "project", access_boundary, anchor_kind, anchor
+    )
+    default_label = inferred_catalog_label(
+        "project", anchor_kind, anchor, project_id
+    )
     if anchor_kind == "filesystem" and not Path(anchor).is_dir():
         raise ValueError("A filesystem project anchor must be an existing directory")
     corpus_ids = [
@@ -771,21 +886,30 @@ def command_catalog_project_put(args: argparse.Namespace) -> int:
     ]
     with database(db_path) as connection:
         require_catalog_schema(connection)
+        if explicit_project_id is None:
+            require_generated_project_identity(
+                connection, project_id, access_boundary, anchor_kind, anchor
+            )
         action, members = upsert_catalog_project(
             connection,
             project_id,
             label,
+            default_label,
             access_boundary,
             anchor_kind,
             anchor,
             corpus_ids,
             args.replace_corpora,
         )
+        stored_label = connection.execute(
+            "SELECT label FROM projects WHERE project_id = ?", (project_id,)
+        ).fetchone()["label"]
     harden_database_permissions(db_path)
     emit_json(
         {
             "database": str(db_path),
             "project_id": project_id,
+            "label": stored_label,
             "access_boundary": access_boundary,
             "anchor_kind": anchor_kind,
             "anchor": anchor,
@@ -832,20 +956,24 @@ def command_catalog_project_resolve(args: argparse.Namespace) -> int:
             project_id_value = resolution.get("project_id")
             project_existed = project_id_value is not None
             if project_id_value is None:
-                identity = json.dumps(
-                    [access_boundary, anchor_kind, anchor],
-                    ensure_ascii=False,
-                    separators=(",", ":"),
+                project_id_value = generated_catalog_id(
+                    "project", access_boundary, anchor_kind, anchor
                 )
-                project_id_value = (
-                    "auto-"
-                    + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16]
+                require_generated_project_identity(
+                    connection,
+                    project_id_value,
+                    access_boundary,
+                    anchor_kind,
+                    anchor,
                 )
             project_id = validate_record_id(str(project_id_value), "project_id")
             action, members = upsert_catalog_project(
                 connection,
                 project_id,
                 optional_research_text(args.label, "--label"),
+                inferred_catalog_label(
+                    "project", anchor_kind, anchor, project_id
+                ),
                 access_boundary,
                 anchor_kind,
                 anchor,

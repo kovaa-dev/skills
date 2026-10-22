@@ -71,7 +71,11 @@ def parser() -> argparse.ArgumentParser:
         "catalog-put", help="Register or update one corpus in a logical catalog"
     )
     catalog_put.add_argument("db", type=Path, help="Catalog SQLite database path")
-    catalog_put.add_argument("corpus_id", help="Stable corpus identifier")
+    catalog_put.add_argument(
+        "corpus_id",
+        nargs="?",
+        help="Stable corpus identifier; derived from the source identity when omitted",
+    )
     catalog_put.add_argument("--adapter", choices=sorted(CATALOG_ADAPTERS), required=True)
     catalog_put.add_argument(
         "--access-boundary",
@@ -100,7 +104,11 @@ def parser() -> argparse.ArgumentParser:
         help="Create or update one logical project view over registered corpora",
     )
     catalog_project_put.add_argument("db", type=Path, help="Catalog SQLite database path")
-    catalog_project_put.add_argument("project_id", help="Stable logical project identifier")
+    catalog_project_put.add_argument(
+        "project_id",
+        nargs="?",
+        help="Stable logical project identifier; derived from the anchor when omitted",
+    )
     catalog_project_put.add_argument("--label", help="Human-readable project label")
     catalog_project_put.add_argument(
         "--access-boundary", required=True, help="Permission boundary identifier"

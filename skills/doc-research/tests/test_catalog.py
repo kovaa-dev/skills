@@ -4,6 +4,180 @@ from test_support import *
 
 
 class CatalogCliTest(CorpusCliTestCase):
+    def test_catalog_derives_stable_ids_and_separate_labels(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog = root / "catalog.sqlite"
+            self.assertEqual(run_corpus("catalog-init", catalog).returncode, 0)
+
+            registrations: list[dict[str, object]] = []
+            for parent in ("first", "second"):
+                corpus = root / parent / "Shared Docs"
+                corpus.mkdir(parents=True)
+                (corpus / "source.txt").write_text(parent, encoding="utf-8")
+                index = root / f"{parent}.index.sqlite"
+                receipts = root / f"{parent}.receipts.sqlite"
+                self.assertEqual(
+                    run_corpus("index", corpus, "--db", index).returncode, 0
+                )
+                self.assertEqual(
+                    run_corpus(
+                        "receipts-init",
+                        receipts,
+                        "--corpus",
+                        corpus,
+                        "--index",
+                        index,
+                    ).returncode,
+                    0,
+                )
+                registered = run_corpus(
+                    "catalog-put",
+                    catalog,
+                    "--adapter",
+                    "local-index",
+                    "--access-boundary",
+                    "workspace",
+                    "--index",
+                    index,
+                    "--receipts-db",
+                    receipts,
+                )
+                self.assertEqual(registered.returncode, 0, registered.stderr)
+                registrations.append(json.loads(registered.stdout))
+
+            first, second = registrations
+            self.assertTrue(str(first["corpus_id"]).startswith("corpus-"))
+            self.assertNotEqual(first["corpus_id"], second["corpus_id"])
+            self.assertEqual(first["label"], "Shared Docs")
+            self.assertEqual(second["label"], "Shared Docs")
+
+            relabeled = run_corpus(
+                "catalog-put",
+                catalog,
+                "--adapter",
+                "local-index",
+                "--access-boundary",
+                "workspace",
+                "--index",
+                root / "first.index.sqlite",
+                "--receipts-db",
+                root / "first.receipts.sqlite",
+                "--label",
+                "Primary shared documents",
+            )
+            self.assertEqual(relabeled.returncode, 0, relabeled.stderr)
+            relabeled_payload = json.loads(relabeled.stdout)
+            self.assertEqual(relabeled_payload["corpus_id"], first["corpus_id"])
+            self.assertEqual(relabeled_payload["label"], "Primary shared documents")
+
+            repeated = run_corpus(
+                "catalog-put",
+                catalog,
+                "--adapter",
+                "local-index",
+                "--access-boundary",
+                "workspace",
+                "--index",
+                root / "first.index.sqlite",
+                "--receipts-db",
+                root / "first.receipts.sqlite",
+            )
+            self.assertEqual(repeated.returncode, 0, repeated.stderr)
+            repeated_payload = json.loads(repeated.stdout)
+            self.assertEqual(repeated_payload["corpus_id"], first["corpus_id"])
+            self.assertEqual(repeated_payload["label"], "Primary shared documents")
+
+            external = run_corpus(
+                "catalog-put",
+                catalog,
+                "--adapter",
+                "external",
+                "--access-boundary",
+                "workspace",
+                "--locator",
+                "wiki://knowledge/policies/security",
+                "--generation",
+                "v1",
+            )
+            self.assertEqual(external.returncode, 0, external.stderr)
+            external_payload = json.loads(external.stdout)
+            self.assertTrue(str(external_payload["corpus_id"]).startswith("corpus-"))
+            self.assertEqual(external_payload["label"], "security")
+            external_update = run_corpus(
+                "catalog-put",
+                catalog,
+                "--adapter",
+                "external",
+                "--access-boundary",
+                "workspace",
+                "--locator",
+                "wiki://knowledge/policies/security",
+                "--generation",
+                "v2",
+            )
+            self.assertEqual(external_update.returncode, 0, external_update.stderr)
+            self.assertEqual(
+                json.loads(external_update.stdout)["corpus_id"],
+                external_payload["corpus_id"],
+            )
+
+            project_anchor = root / "Acme Workspace"
+            project_anchor.mkdir()
+            project = run_corpus(
+                "catalog-project-put",
+                catalog,
+                "--access-boundary",
+                "workspace",
+                "--anchor-kind",
+                "filesystem",
+                "--anchor",
+                project_anchor,
+                "--corpus-id",
+                first["corpus_id"],
+            )
+            self.assertEqual(project.returncode, 0, project.stderr)
+            project_payload = json.loads(project.stdout)
+            self.assertTrue(str(project_payload["project_id"]).startswith("project-"))
+            self.assertEqual(project_payload["label"], "Acme Workspace")
+
+            repeated_project = run_corpus(
+                "catalog-project-put",
+                catalog,
+                "--access-boundary",
+                "workspace",
+                "--anchor-kind",
+                "filesystem",
+                "--anchor",
+                project_anchor,
+                "--label",
+                "Shared workspace",
+                "--corpus-id",
+                second["corpus_id"],
+            )
+            self.assertEqual(repeated_project.returncode, 0, repeated_project.stderr)
+            repeated_project_payload = json.loads(repeated_project.stdout)
+            self.assertEqual(
+                repeated_project_payload["project_id"], project_payload["project_id"]
+            )
+            self.assertEqual(repeated_project_payload["label"], "Shared workspace")
+            preserved_project = run_corpus(
+                "catalog-project-put",
+                catalog,
+                "--access-boundary",
+                "workspace",
+                "--anchor-kind",
+                "filesystem",
+                "--anchor",
+                project_anchor,
+                "--corpus-id",
+                first["corpus_id"],
+            )
+            self.assertEqual(preserved_project.returncode, 0, preserved_project.stderr)
+            self.assertEqual(
+                json.loads(preserved_project.stdout)["label"], "Shared workspace"
+            )
+
     def test_catalog_federates_local_corpora_and_resumes_catalog_research(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -11,8 +185,8 @@ class CatalogCliTest(CorpusCliTestCase):
             self.assertEqual(run_corpus("catalog-init", catalog).returncode, 0)
 
             for corpus_id, text in (
-                ("project-a", "Needle evidence from alpha."),
-                ("project-b", "Needle evidence from beta."),
+                ("corpus-a", "Needle evidence from alpha."),
+                ("corpus-b", "Needle evidence from beta."),
             ):
                 corpus = root / corpus_id
                 corpus.mkdir()
@@ -54,7 +228,7 @@ class CatalogCliTest(CorpusCliTestCase):
             self.assertFalse(payload["receipt_hit"])
             self.assertEqual(
                 {result["corpus_id"] for result in payload["results"]},
-                {"project-a", "project-b"},
+                {"corpus-a", "corpus-b"},
             )
             locators = [
                 f"{result['corpus_id']}={result['passage_id']}"
@@ -110,7 +284,7 @@ class CatalogCliTest(CorpusCliTestCase):
                 "--facet",
                 "F1",
                 "--corpus-id",
-                "project-a",
+                "corpus-a",
                 "--finding",
                 "Needle found.",
                 "--source",
@@ -122,7 +296,7 @@ class CatalogCliTest(CorpusCliTestCase):
             listed_evidence = json.loads(
                 run_corpus("research-list", research, "evidence").stdout
             )
-            self.assertEqual(listed_evidence["records"][0]["corpus_id"], "project-a")
+            self.assertEqual(listed_evidence["records"][0]["corpus_id"], "corpus-a")
             linked = run_corpus(
                 "catalog-search",
                 catalog,
@@ -470,7 +644,8 @@ class CatalogCliTest(CorpusCliTestCase):
             self.assertEqual(created.returncode, 0, created.stderr)
             created_payload = json.loads(created.stdout)
             self.assertTrue(created_payload["resolved"])
-            self.assertTrue(created_payload["project_id"].startswith("auto-"))
+            self.assertTrue(created_payload["project_id"].startswith("project-"))
+            self.assertEqual(created_payload["project"]["label"], "unassigned")
             repeated = json.loads(
                 run_corpus(
                     "catalog-project-resolve",

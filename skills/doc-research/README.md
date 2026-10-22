@@ -21,6 +21,8 @@ multiple isolated corpora -> optional catalog routing
 
 The index is rebuildable retrieval data, receipts remember completed searches by locator, and research state keeps only selected facets, evidence, conflicts, gaps, and the next action. Exact schemas and lifecycle rules live in [evidence schema](references/evidence-schema.md).
 
+Catalog registration can derive opaque stable project/corpus IDs from canonical context while keeping a separate editable human-readable label; source-routing rules own the exact identity contract.
+
 Durable paths are caller-selected. Generated databases belong in an authorized persistent derived-data location, not in the installed skill, a temporary directory, or among originals. Existing compatible project stores or connectors can serve as adapters instead of creating parallel state.
 
 For interoperability, the skill accepts a bounded request describing the question, facets,
