@@ -5,7 +5,7 @@ import importlib
 import sys
 from pathlib import Path
 
-from .common import CATALOG_ADAPTERS, CONFIDENCE_VALUES, DEFAULT_MAX_ARCHIVE_BYTES, DEFAULT_MAX_ARCHIVE_ENTRIES, DEFAULT_MAX_ARCHIVE_MEMBER_BYTES, DEFAULT_MAX_ARCHIVE_RATIO, DEFAULT_MAX_COMPARE_UNITS, DEFAULT_MAX_CORPUS_BYTES, DEFAULT_MAX_SOURCE_BYTES, PROJECT_ANCHOR_KINDS, RESEARCH_STATUSES
+from .common import CATALOG_ADAPTERS, CONFIDENCE_VALUES, DEFAULT_MAX_ARCHIVE_BYTES, DEFAULT_MAX_ARCHIVE_ENTRIES, DEFAULT_MAX_ARCHIVE_MEMBER_BYTES, DEFAULT_MAX_ARCHIVE_RATIO, DEFAULT_MAX_COMPARE_UNITS, DEFAULT_MAX_CORPUS_BYTES, DEFAULT_MAX_SOURCE_BYTES, EVIDENCE_EXECUTION_ROUTES, EVIDENCE_FALLBACK_REASONS, EVIDENCE_WORKER_CONTEXTS, PROJECT_ANCHOR_KINDS, RESEARCH_STATUSES
 from .common import HANDLED_ERRORS
 
 def parser() -> argparse.ArgumentParser:
@@ -25,7 +25,11 @@ def parser() -> argparse.ArgumentParser:
     doctor.set_defaults(handler=("ingestion", "command_doctor"))
 
     index = subparsers.add_parser("index", help="Create or incrementally update an index")
-    index.add_argument("corpus", type=Path, help="Directory containing .md, .txt, or .jsonl files")
+    index.add_argument(
+        "corpus",
+        type=Path,
+        help="A .md, .txt, .jsonl, or .xsd file, or a directory containing them",
+    )
     index.add_argument("--db", type=Path, required=True, help="SQLite index path")
     index.add_argument(
         "--max-chars", type=int, default=3500, help="Maximum characters per stored chunk"
@@ -59,6 +63,48 @@ def parser() -> argparse.ArgumentParser:
     )
     info.add_argument("--pretty", action="store_true", help="Pretty-print JSON output")
     info.set_defaults(handler=("index", "command_info"))
+
+    normalize_xml_schema = subparsers.add_parser(
+        "normalize-xml-schema",
+        help="Inspect the built-in semantic normalization of XSD or embedded XSD",
+    )
+    normalize_xml_schema.add_argument(
+        "source", type=Path, help="A .xsd file or Markdown file with fenced XSD blocks"
+    )
+    normalize_xml_schema.add_argument(
+        "--include-records",
+        action="store_true",
+        help="Include a bounded page of normalized semantic records",
+    )
+    normalize_xml_schema.add_argument("--limit", type=int, default=20)
+    normalize_xml_schema.add_argument("--offset", type=int, default=0)
+    normalize_xml_schema.add_argument("--max-total-chars", type=int, default=12000)
+    normalize_xml_schema.add_argument("--pretty", action="store_true")
+    normalize_xml_schema.set_defaults(
+        handler=("index", "command_normalize_xml_schema")
+    )
+
+    schema_query = subparsers.add_parser(
+        "schema-query",
+        help="Run a bounded diagnostic query over persisted schema records",
+    )
+    schema_query.add_argument("db", type=Path, help="SQLite index path")
+    schema_query.add_argument("query", help="Name, path, documentation, or fact substring")
+    schema_query.add_argument("--kind", help="Restrict to an exact normalized node kind")
+    schema_query.add_argument("--source", help="Restrict to a source path substring")
+    schema_query.add_argument("--schema", help="Restrict to a schema name substring")
+    schema_query.add_argument("--limit", type=int, default=10)
+    schema_query.add_argument("--offset", type=int, default=0)
+    schema_query.add_argument("--max-total-chars", type=int, default=12000)
+    schema_query.add_argument(
+        "--purpose",
+        choices=("adapter-debugging", "custom-adapter"),
+        required=True,
+        help="Explicit diagnostic use; ordinary retrieval must use evidence-pack",
+    )
+    schema_query.add_argument("--purpose-reason", required=True)
+    schema_query.add_argument("--pretty", action="store_true")
+    schema_query.set_defaults(handler=("index", "command_schema_query"))
 
     catalog_init = subparsers.add_parser(
         "catalog-init", help="Create a logical catalog of isolated corpora"
@@ -255,7 +301,12 @@ def parser() -> argparse.ArgumentParser:
         "receipts-init", help="Create an independent cross-session search-receipt store"
     )
     receipts_init.add_argument("db", type=Path, help="Receipt SQLite database path")
-    receipts_init.add_argument("--corpus", type=Path, required=True, help="Authorized corpus root")
+    receipts_init.add_argument(
+        "--corpus",
+        type=Path,
+        required=True,
+        help="Authorized corpus file or directory",
+    )
     receipts_init.add_argument("--index", type=Path, required=True, help="Bound corpus index")
     receipts_init.add_argument("--pretty", action="store_true", help="Pretty-print JSON output")
     receipts_init.set_defaults(handler=("receipts", "command_receipts_init"))
@@ -298,7 +349,9 @@ def parser() -> argparse.ArgumentParser:
     research_init.add_argument("db", type=Path, help="Research SQLite database path")
     research_init.add_argument("--scope", required=True, help="Investigation scope")
     research_binding = research_init.add_mutually_exclusive_group(required=True)
-    research_binding.add_argument("--corpus", type=Path, help="Authorized corpus root")
+    research_binding.add_argument(
+        "--corpus", type=Path, help="Authorized corpus file or directory"
+    )
     research_binding.add_argument("--catalog", type=Path, help="Bound corpus catalog")
     research_init.add_argument(
         "--corpus-id", action="append", default=[], help="Repeat to scope catalog research"
@@ -465,7 +518,21 @@ def parser() -> argparse.ArgumentParser:
     search = subparsers.add_parser("search", help="Search an existing index")
     search.add_argument("db", type=Path, help="SQLite index path")
     search.add_argument("query", help="Search text or FTS5 expression")
-    search.add_argument("--mode", choices=("literal", "prefix", "fts"), default="literal")
+    search.add_argument(
+        "--purpose",
+        choices=("named-gap", "adapter-debugging", "custom-adapter"),
+        required=True,
+        help="Explicit lower-level use; ordinary Retrieval must use evidence-pack",
+    )
+    search.add_argument("--task-receipt", type=Path)
+    search.add_argument("--gap-facet")
+    search.add_argument("--purpose-reason")
+    search.add_argument(
+        "--mode",
+        choices=("auto", "literal", "prefix", "fts"),
+        default="auto",
+        help="auto selects FTS syntax, prefix matching, or literal terms",
+    )
     search.add_argument("--source", help="Restrict to source names or paths containing this string")
     search.add_argument("--page", help="Restrict to a page value or page-list member")
     search.add_argument("--section", help="Restrict to sections containing this string")
@@ -522,10 +589,20 @@ def parser() -> argparse.ArgumentParser:
     search.set_defaults(handler=("search", "command_search"))
 
     search_many = subparsers.add_parser(
-        "search-many", help="Run up to eight bounded searches from one JSON request"
+        "search-many",
+        help="Run up to 24 bounded searches and deduplicate repeated snippets",
     )
     search_many.add_argument("db", type=Path, help="SQLite index path")
     search_many.add_argument("input", type=Path, help="JSON array or object with queries")
+    search_many.add_argument(
+        "--purpose",
+        choices=("named-gap", "adapter-debugging", "custom-adapter"),
+        required=True,
+        help="Explicit lower-level use; ordinary Retrieval must use evidence-pack",
+    )
+    search_many.add_argument("--task-receipt", type=Path)
+    search_many.add_argument("--gap-facet")
+    search_many.add_argument("--purpose-reason")
     search_many.add_argument("--receipts-db", type=Path, help="Independent receipt store")
     search_many.add_argument(
         "--read-only-receipts",
@@ -546,9 +623,113 @@ def parser() -> argparse.ArgumentParser:
     search_many.add_argument("--pretty", action="store_true")
     search_many.set_defaults(handler=("search", "command_search_many"))
 
+    evidence_pack = subparsers.add_parser(
+        "evidence-pack",
+        help="Index, search, verify, and reopen evidence in one bounded command",
+    )
+    evidence_pack.add_argument(
+        "corpus",
+        type=Path,
+        help="A .md, .txt, .jsonl, or .xsd file, or a directory containing them",
+    )
+    evidence_pack.add_argument(
+        "input", type=Path, help="JSON array or object with evidence questions"
+    )
+    evidence_pack.add_argument("--db", type=Path, required=True, help="SQLite index path")
+    evidence_pack.add_argument(
+        "--receipts-db",
+        type=Path,
+        help="Receipt store path (default: INDEX_STEM.receipts.sqlite)",
+    )
+    evidence_pack.add_argument(
+        "--task-receipt",
+        type=Path,
+        required=True,
+        help="Required compact task receipt for replay and optimization audit",
+    )
+    evidence_pack.add_argument(
+        "--execution-route",
+        choices=EVIDENCE_EXECUTION_ROUTES,
+        required=True,
+        help="Executor route; auto performs deterministic cost routing",
+    )
+    evidence_pack.add_argument(
+        "--executor",
+        help="Actual worker/model/agent label for --execution-route low-overhead-worker",
+    )
+    evidence_pack.add_argument(
+        "--worker-context",
+        choices=EVIDENCE_WORKER_CONTEXTS,
+        help="Required compact context contract for a low-overhead worker",
+    )
+    evidence_pack.add_argument(
+        "--fallback-reason",
+        choices=EVIDENCE_FALLBACK_REASONS,
+        help="Why a cold request could not use a low-overhead worker",
+    )
+    evidence_pack.add_argument(
+        "--pack-output",
+        type=Path,
+        help="Write a worker-selected evidence pack here; required for --execution-route auto",
+    )
+    evidence_pack.add_argument(
+        "--routing-profile",
+        type=Path,
+        help="Optional measured cost profile for deterministic auto routing",
+    )
+    evidence_pack.add_argument("--chunk-chars", type=int, default=3500)
+    evidence_pack.add_argument(
+        "--max-source-bytes",
+        type=int,
+        default=DEFAULT_MAX_SOURCE_BYTES,
+        help=f"Maximum bytes per source (default: {DEFAULT_MAX_SOURCE_BYTES})",
+    )
+    evidence_pack.add_argument(
+        "--max-corpus-bytes",
+        type=int,
+        default=DEFAULT_MAX_CORPUS_BYTES,
+        help=f"Maximum total source bytes (default: {DEFAULT_MAX_CORPUS_BYTES})",
+    )
+    evidence_pack.add_argument("--limit-per-query", type=int, default=2)
+    evidence_pack.add_argument("--max-passages-per-question", type=int, default=3)
+    evidence_pack.add_argument("--max-passages", type=int, default=16)
+    evidence_pack.add_argument("--max-passage-chars", type=int, default=3500)
+    evidence_pack.add_argument("--max-total-chars", type=int, default=20000)
+    evidence_pack.add_argument("--pretty", action="store_true")
+    evidence_pack.set_defaults(handler=("evidence_pack", "command_evidence_pack"))
+
+    findings_save = subparsers.add_parser(
+        "findings-save",
+        help="Attach bounded verified facet findings to a current task receipt",
+    )
+    findings_save.add_argument("task_receipt", type=Path)
+    findings_save.add_argument("input", type=Path, help="JSON findings array or object")
+    findings_save.add_argument(
+        "--execution-route",
+        choices=("coordinator-direct", "low-overhead-worker", "coordinator-fallback"),
+        required=True,
+        help="Actual model route that produced the findings",
+    )
+    findings_save.add_argument("--executor")
+    findings_save.add_argument("--worker-context", choices=EVIDENCE_WORKER_CONTEXTS)
+    findings_save.add_argument(
+        "--fallback-reason", choices=EVIDENCE_FALLBACK_REASONS
+    )
+    findings_save.add_argument("--pretty", action="store_true")
+    findings_save.set_defaults(handler=("evidence_pack", "command_findings_save"))
+
     get = subparsers.add_parser("get", help="Retrieve passages by ID")
     get.add_argument("db", type=Path, help="SQLite index path")
     get.add_argument("passage_ids", type=int, nargs="+", help="Passage IDs from search results")
+    get.add_argument(
+        "--purpose",
+        choices=("named-gap", "adapter-debugging", "custom-adapter", "locator-verification"),
+        required=True,
+        help="Explicit lower-level use; ordinary Retrieval must use evidence-pack",
+    )
+    get.add_argument("--task-receipt", type=Path)
+    get.add_argument("--gap-facet")
+    get.add_argument("--purpose-reason")
     get.add_argument("--limit", type=int, default=12)
     get.add_argument("--offset", type=int, default=0, help="Continue at this passage offset")
     get.add_argument(
@@ -560,8 +741,8 @@ def parser() -> argparse.ArgumentParser:
     get.set_defaults(handler=("index", "command_get"))
 
     compare = subparsers.add_parser("compare", help="Compare two normalized source files")
-    compare.add_argument("left", type=Path, help="First .md, .txt, or .jsonl source")
-    compare.add_argument("right", type=Path, help="Second .md, .txt, or .jsonl source")
+    compare.add_argument("left", type=Path, help="First .md, .txt, .jsonl, or .xsd source")
+    compare.add_argument("right", type=Path, help="Second .md, .txt, .jsonl, or .xsd source")
     compare.add_argument("--context-lines", type=int, default=2)
     compare.add_argument("--max-total-chars", type=int, default=20000)
     compare.add_argument(

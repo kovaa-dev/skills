@@ -8,6 +8,7 @@ Apply these checks in proportion to the stakes of the answer. Do not add ceremon
 - A compact coverage matrix maps each material facet to evidence IDs, conflicts, and status; duplicate passages do not count as additional coverage.
 - Search included exact identifiers and material synonyms where wording may differ.
 - Definitions, appendices, amendments, referenced schedules, and exclusions were considered when applicable.
+- Universal claims were checked across every applicable variant, message/file type, schema declaration, or table branch; the first matching instance was not treated as proof of a shared pattern.
 
 ## Source integrity
 
@@ -39,18 +40,25 @@ Apply these checks in proportion to the stakes of the answer. Do not add ceremon
 
 ## Context and tool efficiency
 
+- For an explicitly invoked skill, the selected route and adapter satisfy the binding execution contract. Retrieval/Research over normalized local files used `scripts/corpus` or a named capability-equivalent adapter; ad hoc raw-text search was not substituted.
+- The user received one concise route/tool update: selected adapter plus use/install/setup/fallback decision for every materially relevant external capability. Existing useful tools were used, not merely recommended.
+- A missing materially useful tool was either installed in an authorized isolated scope and exercised on a representative input, or proposed with an exact setup action, scope, expected gain, permission/data implications, verification, and fallback limitation. No silent downgrade preceded that decision.
+- Irrelevant tools were neither probed nor proposed. For already normalized input, conversion/OCR tools were explicitly ruled unnecessary rather than loaded into the workflow.
 - The final reasoning context contains selected evidence, not the whole corpus or raw tool logs.
 - Duplicate passages and repeated summaries were removed.
 - Retrieval expanded only for a named coverage gap.
+- Cold/partial Retrieval first used deterministic auto routing, one planned support/check batch for missing facets, coverage-aware selection, exact deduplication, and at most one batched reopen. A model worker was launched only when a measured routing profile cleared its saving threshold, and it interpreted the materialized pack without repeating retrieval.
+- A required task receipt was created after first Retrieval and bounded findings were saved after interpretation. An unchanged verified repeat checked freshness and returned findings without launching a worker, rerunning searches, or reopening passages. A partial repeat searched only facet-hash misses. A stale corpus fingerprint failed closed into fresh retrieval.
+- Before delivery, the task receipt records the cold/latest execution route and reason, the SQLite index/search-receipt/task-receipt states, bounded batch/deduplication/reopen decisions, current corpus fingerprint, facet hashes, relevant query receipts, decisive locators, completed exception/variant checks, and bounded atomic findings.
 - At the selected effort profile's expansion cap, the method changed or the facet was marked unresolved instead of silently exceeding its budget.
 - Repeated tool failures changed the method rather than producing blind retries.
 
 ## Data boundaries
 
 - The search did not cross an unauthorized organization, client, matter, project, or repository boundary.
-- When durable-write authority was absent, existing receipt/catalog stores were opened through the read-only search modes and remained unchanged; a writable filesystem or existing database was not treated as write authority.
+- When durable-write authority was absent, existing receipt/catalog stores were opened through the read-only search modes and remained unchanged; a writable filesystem or existing database was not treated as write authority. Large local input still used one task-local ephemeral index rather than repeated raw scans when the runtime permitted it.
 - A federated search names its selected corpus IDs or access boundary when the catalog spans more than one boundary; every `unsearched_corpora` entry is reflected in coverage and absence claims.
 - Derived indexes and evidence artifacts are stored under the same applicable access and retention rules as their sources.
 - Resumable work names its corpus index/receipt store or catalog and—when Research is used—one investigation-state location. Current receipts were checked before repeating searches, and stale generations or invalid continuations are disclosed.
-- The reusable index contains no conclusions, receipts contain no copied passages or analysis, and research state promotes only selected evidence rather than duplicating search output.
+- The reusable index contains no conclusions, query receipts contain no copied passages or analysis, task receipts contain only bounded locator-backed atomic findings rather than passages or final answers, and research state promotes only selected evidence rather than duplicating search output.
 - External services received source content only when explicitly authorized for that data scope.

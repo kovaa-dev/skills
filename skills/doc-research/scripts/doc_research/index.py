@@ -10,8 +10,39 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Iterator
 
-from .common import APPLICATION_ID, CHUNK_COLUMNS, HEADING, INDEX_FINGERPRINT_KEY, METADATA_COLUMNS, MIN_INDEX_HEADROOM_BYTES, PAGE_MARKER, SCHEMA_VERSION, SHA256, SOURCE_COLUMNS, SUPPORTED_SUFFIXES, TOKEN, application_id, clip_text, connect, database, database_objects, emit_json, file_signature, harden_database_permissions, normalize_text, schema_version, sha256_file, table_exists
+from .common import APPLICATION_ID, CHUNK_COLUMNS, HEADING, INDEX_FINGERPRINT_KEY, METADATA_COLUMNS, MIN_INDEX_HEADROOM_BYTES, PAGE_MARKER, SCHEMA_VERSION, SHA256, SOURCE_COLUMNS, SUPPORTED_SUFFIXES, TOKEN, application_id, clip_text, connect, database, database_objects, emit_json, file_signature, harden_database_permissions, lower_level_purpose_record, normalize_text, schema_version, sha256_file, table_exists
 from .common import sqlite3
+from .common import MAX_FILTER_TEXT, MAX_QUERY_TEXT
+from .schema_ir import SCHEMA_IR_VERSION, NormalizedSchemaSource, SchemaBlock, SchemaRecord, iter_fact_groups, normalize_schema_source, optional_capabilities
+
+
+SCHEMA_BLOCK_COLUMNS = (
+    "source_path",
+    "block_index",
+    "schema_name",
+    "block_hash",
+    "markdown_start_line",
+    "markdown_end_line",
+    "target_namespace",
+    "normalizer_version",
+    "record_count",
+)
+
+SCHEMA_RECORD_COLUMNS = (
+    "source_path",
+    "block_index",
+    "record_order",
+    "parent_order",
+    "namespace",
+    "kind",
+    "name",
+    "path",
+    "source_line",
+    "attributes_json",
+    "text",
+    "documentation",
+    "fact_text",
+)
 
 @dataclass(frozen=True)
 class Chunk:
@@ -98,9 +129,14 @@ def paragraphs_from_text(raw: str) -> Iterator[tuple[str | None, str | None, str
             yield item
 
 def chunks_from_text(
-    path: Path, relative_path: str, source_hash: str, max_chars: int
+    path: Path,
+    relative_path: str,
+    source_hash: str,
+    max_chars: int,
+    normalized: NormalizedSchemaSource | None = None,
 ) -> Iterator[Chunk]:
-    raw = path.read_text(encoding="utf-8")
+    normalized = normalized or normalize_schema_source(path, relative_path)
+    raw = normalized.narrative_text
     pending: list[str] = []
     pending_length = 0
     pending_page: str | None = None
@@ -152,6 +188,19 @@ def chunks_from_text(
     item = flush_pending()
     if item:
         yield item
+
+    for block in normalized.blocks:
+        for fact_group in iter_fact_groups(block, max_chars):
+            yield Chunk(
+                relative_path,
+                source_hash,
+                None,
+                f"XSD schema {block.schema_name}",
+                None,
+                None,
+                f"schema-ir-v{SCHEMA_IR_VERSION}; block={block.block_index}",
+                fact_group,
+            )
 
 def scalar_text(value: object, location: str, field: str) -> str:
     if isinstance(value, bool) or not isinstance(value, (str, int, float)):
@@ -213,6 +262,10 @@ def chunks_from_jsonl(
                 )
 
 def iter_source_files(corpus: Path) -> Iterator[Path]:
+    if corpus.is_file():
+        if corpus.suffix.lower() in SUPPORTED_SUFFIXES:
+            yield corpus
+        return
     for path in sorted(corpus.rglob("*")):
         if path.is_symlink() or not path.is_file() or path.suffix.lower() not in SUPPORTED_SUFFIXES:
             continue
@@ -228,6 +281,14 @@ def source_columns(connection: sqlite3.Connection) -> tuple[str, ...]:
 
 def metadata_columns(connection: sqlite3.Connection) -> tuple[str, ...]:
     return tuple(row["name"] for row in connection.execute("PRAGMA table_info(metadata)"))
+
+
+def schema_block_columns(connection: sqlite3.Connection) -> tuple[str, ...]:
+    return tuple(row["name"] for row in connection.execute("PRAGMA table_info(schema_blocks)"))
+
+
+def schema_record_columns(connection: sqlite3.Connection) -> tuple[str, ...]:
+    return tuple(row["name"] for row in connection.execute("PRAGMA table_info(schema_records)"))
 
 def require_index_owner(connection: sqlite3.Connection) -> None:
     identifier = application_id(connection)
@@ -277,6 +338,51 @@ def create_schema(connection: sqlite3.Connection) -> None:
         )
         """
     )
+    connection.execute(
+        """
+        CREATE TABLE schema_blocks (
+            source_path TEXT NOT NULL,
+            block_index INTEGER NOT NULL,
+            schema_name TEXT NOT NULL,
+            block_hash TEXT NOT NULL,
+            markdown_start_line INTEGER NOT NULL,
+            markdown_end_line INTEGER NOT NULL,
+            target_namespace TEXT,
+            normalizer_version INTEGER NOT NULL,
+            record_count INTEGER NOT NULL,
+            PRIMARY KEY(source_path, block_index)
+        ) WITHOUT ROWID
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE schema_records (
+            source_path TEXT NOT NULL,
+            block_index INTEGER NOT NULL,
+            record_order INTEGER NOT NULL,
+            parent_order INTEGER,
+            namespace TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            name TEXT,
+            path TEXT NOT NULL,
+            source_line INTEGER NOT NULL,
+            attributes_json TEXT NOT NULL,
+            text TEXT,
+            documentation TEXT,
+            fact_text TEXT NOT NULL,
+            PRIMARY KEY(source_path, block_index, record_order),
+            FOREIGN KEY(source_path, block_index)
+                REFERENCES schema_blocks(source_path, block_index)
+                ON DELETE CASCADE
+        ) WITHOUT ROWID
+        """
+    )
+    connection.execute(
+        "CREATE INDEX schema_records_kind_name ON schema_records(kind, name)"
+    )
+    connection.execute(
+        "CREATE INDEX schema_records_source_path ON schema_records(source_path, path)"
+    )
     connection.execute(f"PRAGMA application_id = {APPLICATION_ID}")
     connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
 
@@ -286,9 +392,13 @@ def schema_is_current(connection: sqlite3.Connection) -> bool:
         and table_exists(connection, "chunks")
         and table_exists(connection, "sources")
         and table_exists(connection, "metadata")
+        and table_exists(connection, "schema_blocks")
+        and table_exists(connection, "schema_records")
         and metadata_columns(connection) == METADATA_COLUMNS
         and source_columns(connection) == SOURCE_COLUMNS
         and chunk_columns(connection) == CHUNK_COLUMNS
+        and schema_block_columns(connection) == SCHEMA_BLOCK_COLUMNS
+        and schema_record_columns(connection) == SCHEMA_RECORD_COLUMNS
         and schema_version(connection) == SCHEMA_VERSION
         and connection.execute(
             "SELECT 1 FROM metadata WHERE key = 'corpus_root'"
@@ -296,6 +406,11 @@ def schema_is_current(connection: sqlite3.Connection) -> bool:
         is not None
     )
     if not structure_is_current:
+        return False
+    normalizer = connection.execute(
+        "SELECT value FROM metadata WHERE key = 'schema_ir_version'"
+    ).fetchone()
+    if normalizer is None or normalizer["value"] != str(SCHEMA_IR_VERSION):
         return False
     fingerprint = connection.execute(
         "SELECT value FROM metadata WHERE key = ?", (INDEX_FINGERPRINT_KEY,)
@@ -329,7 +444,9 @@ def inventory_sources(
     for path in iter_source_files(corpus):
         if path.resolve() == db_path:
             continue
-        relative_path = path.relative_to(corpus).as_posix()
+        relative_path = (
+            path.name if corpus.is_file() else path.relative_to(corpus).as_posix()
+        )
         before = file_signature(path)
         size = before[2]
         if size > max_source_bytes:
@@ -392,7 +509,130 @@ def calculate_index_fingerprint(connection: sqlite3.Connection) -> str:
             ).encode("utf-8")
         )
         digest.update(b"\n")
+    for row in connection.execute(
+        """
+        SELECT source_path, block_index, block_hash, record_count
+        FROM schema_blocks
+        ORDER BY source_path, block_index
+        """
+    ):
+        digest.update(
+            json.dumps(list(row), ensure_ascii=False, separators=(",", ":")).encode(
+                "utf-8"
+            )
+        )
+        digest.update(b"\n")
     return digest.hexdigest()
+
+
+def store_schema_blocks(
+    connection: sqlite3.Connection, source_path: str, blocks: Iterable[SchemaBlock]
+) -> tuple[int, int]:
+    block_count = 0
+    record_count = 0
+    for block in blocks:
+        connection.execute(
+            """
+            INSERT INTO schema_blocks(
+                source_path, block_index, schema_name, block_hash,
+                markdown_start_line, markdown_end_line, target_namespace,
+                normalizer_version, record_count
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                source_path,
+                block.block_index,
+                block.schema_name,
+                block.block_hash,
+                block.markdown_start_line,
+                block.markdown_end_line,
+                block.target_namespace,
+                SCHEMA_IR_VERSION,
+                len(block.records),
+            ),
+        )
+        connection.executemany(
+            """
+            INSERT INTO schema_records(
+                source_path, block_index, record_order, parent_order,
+                namespace, kind, name, path, source_line, attributes_json,
+                text, documentation, fact_text
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                (
+                    source_path,
+                    block.block_index,
+                    record.record_order,
+                    record.parent_order,
+                    record.namespace,
+                    record.kind,
+                    record.name,
+                    record.path,
+                    record.source_line,
+                    record.attributes_json,
+                    record.text,
+                    record.documentation,
+                    record.fact_text,
+                )
+                for record in block.records
+            ),
+        )
+        block_count += 1
+        record_count += len(block.records)
+    return block_count, record_count
+
+
+def load_schema_block_cache(
+    connection: sqlite3.Connection, source_path: str
+) -> dict[str, SchemaBlock]:
+    blocks = connection.execute(
+        """
+        SELECT * FROM schema_blocks
+        WHERE source_path = ? AND normalizer_version = ?
+        ORDER BY block_index
+        """,
+        (source_path, SCHEMA_IR_VERSION),
+    ).fetchall()
+    output: dict[str, SchemaBlock] = {}
+    for block in blocks:
+        rows = connection.execute(
+            """
+            SELECT * FROM schema_records
+            WHERE source_path = ? AND block_index = ?
+            ORDER BY record_order
+            """,
+            (source_path, block["block_index"]),
+        ).fetchall()
+        if len(rows) != int(block["record_count"]):
+            continue
+        records = tuple(
+            SchemaRecord(
+                record_order=int(row["record_order"]),
+                parent_order=row["parent_order"],
+                namespace=str(row["namespace"]),
+                kind=str(row["kind"]),
+                name=row["name"],
+                path=str(row["path"]),
+                source_line=int(row["source_line"]),
+                attributes_json=str(row["attributes_json"]),
+                text=row["text"],
+                documentation=row["documentation"],
+                fact_text=str(row["fact_text"]),
+            )
+            for row in rows
+        )
+        cached = SchemaBlock(
+            block_index=int(block["block_index"]),
+            schema_name=str(block["schema_name"]),
+            block_hash=str(block["block_hash"]),
+            markdown_start_line=int(block["markdown_start_line"]),
+            markdown_end_line=int(block["markdown_end_line"]),
+            target_namespace=block["target_namespace"],
+            records=records,
+        )
+        output[cached.block_hash] = cached
+    return output
 
 def store_index_fingerprint(connection: sqlite3.Connection) -> str:
     fingerprint = calculate_index_fingerprint(connection)
@@ -425,11 +665,18 @@ def resolve_index_binding(index_path: Path, corpus_root: Path) -> tuple[Path, st
         fingerprint = index_fingerprint(connection)
     return resolved, fingerprint
 
-def command_index(args: argparse.Namespace) -> int:
+def index_payload(args: argparse.Namespace) -> dict[str, object]:
     corpus = args.corpus.resolve()
     db_path = args.db.resolve()
-    if not corpus.is_dir():
-        raise ValueError(f"Corpus directory does not exist: {corpus}")
+    if not corpus.exists():
+        raise ValueError(f"Corpus path does not exist: {corpus}")
+    if corpus.is_file() and corpus.suffix.lower() not in SUPPORTED_SUFFIXES:
+        raise ValueError(
+            "Corpus file must use a supported suffix: "
+            + ", ".join(sorted(SUPPORTED_SUFFIXES))
+        )
+    if not corpus.is_dir() and not corpus.is_file():
+        raise ValueError(f"Corpus path is not a regular file or directory: {corpus}")
     if args.max_chars < 500:
         raise ValueError("--max-chars must be at least 500")
 
@@ -445,6 +692,10 @@ def command_index(args: argparse.Namespace) -> int:
     unchanged = 0
     removed = 0
     total_chunks = 0
+    total_schema_blocks = 0
+    total_schema_records = 0
+    schema_blocks_parsed = 0
+    schema_blocks_reused = 0
     existing: dict[str, sqlite3.Row] = {}
     existing_connection: sqlite3.Connection | None = None
     database_existed = db_path.exists()
@@ -479,31 +730,54 @@ def command_index(args: argparse.Namespace) -> int:
         if database_existed and not changed_paths and not stale_paths:
             verify_source_inventory(sources)
             total_chunks = sum(int(row["chunk_count"]) for row in existing.values())
+            total_schema_blocks = int(
+                existing_connection.execute(
+                    "SELECT COUNT(*) FROM schema_blocks"
+                ).fetchone()[0]
+            )
+            total_schema_records = int(
+                existing_connection.execute(
+                    "SELECT COUNT(*) FROM schema_records"
+                ).fetchone()[0]
+            )
+            schema_blocks_reused = total_schema_blocks
             unchanged = len(sources)
             if existing_connection is not None:
                 existing_connection.close()
                 existing_connection = None
             permissions_hardened = harden_database_permissions(db_path)
-            emit_json(
-                {
-                    "corpus": str(corpus),
-                    "database": str(db_path),
-                    "files_seen": len(sources),
-                    "files_indexed": 0,
-                    "files_unchanged": unchanged,
-                    "files_removed": 0,
-                    "corpus_bytes": corpus_bytes,
-                    "chunks": total_chunks,
-                    "database_rebuilt": False,
-                    "update_strategy": "none",
-                    "permissions_hardened": permissions_hardened,
-                }
-            )
-            return 0
+            return {
+                "corpus": str(corpus),
+                "database": str(db_path),
+                "files_seen": len(sources),
+                "files_indexed": 0,
+                "files_unchanged": unchanged,
+                "files_removed": 0,
+                "corpus_bytes": corpus_bytes,
+                "chunks": total_chunks,
+                "schema_blocks": total_schema_blocks,
+                "schema_records": total_schema_records,
+                "schema_blocks_parsed": 0,
+                "schema_blocks_reused": schema_blocks_reused,
+                "database_rebuilt": False,
+                "update_strategy": "none",
+                "permissions_hardened": permissions_hardened,
+            }
 
         changed_sources = [
             source for source in sources if source.relative_path in changed_paths
         ]
+        if database_existed and existing_connection is not None:
+            unchanged_paths = current_paths - changed_paths
+            if unchanged_paths:
+                placeholders = ",".join("?" for _ in unchanged_paths)
+                schema_blocks_reused = int(
+                    existing_connection.execute(
+                        f"SELECT COUNT(*) FROM schema_blocks "
+                        f"WHERE source_path IN ({placeholders})",
+                        tuple(sorted(unchanged_paths)),
+                    ).fetchone()[0]
+                )
         if database_existed:
             update_strategy = "delta-copy"
             # The temporary database starts as a page-level snapshot of the old
@@ -573,6 +847,14 @@ def command_index(args: argparse.Namespace) -> int:
                         "(SELECT rowid FROM affected_chunk_rows)"
                     )
                     new_connection.execute(
+                        "DELETE FROM schema_records WHERE source_path IN "
+                        "(SELECT path FROM affected_sources)"
+                    )
+                    new_connection.execute(
+                        "DELETE FROM schema_blocks WHERE source_path IN "
+                        "(SELECT path FROM affected_sources)"
+                    )
+                    new_connection.execute(
                         "DELETE FROM sources WHERE path IN "
                         "(SELECT path FROM affected_sources)"
                     )
@@ -583,8 +865,13 @@ def command_index(args: argparse.Namespace) -> int:
                         "INSERT INTO metadata(key, value) VALUES ('corpus_root', ?)",
                         (str(corpus),),
                     )
+                    new_connection.execute(
+                        "INSERT INTO metadata(key, value) VALUES ('schema_ir_version', ?)",
+                        (str(SCHEMA_IR_VERSION),),
+                    )
 
                 for source in changed_sources:
+                    normalized: NormalizedSchemaSource | None = None
                     if source.path.suffix.lower() == ".jsonl":
                         chunks = chunks_from_jsonl(
                             source.path,
@@ -593,11 +880,24 @@ def command_index(args: argparse.Namespace) -> int:
                             args.max_chars,
                         )
                     else:
+                        cached_blocks = (
+                            load_schema_block_cache(
+                                existing_connection, source.relative_path
+                            )
+                            if existing_connection is not None
+                            else None
+                        )
+                        normalized = normalize_schema_source(
+                            source.path, source.relative_path, cached_blocks
+                        )
+                        schema_blocks_parsed += normalized.parsed_blocks
+                        schema_blocks_reused += normalized.reused_blocks
                         chunks = chunks_from_text(
                             source.path,
                             source.relative_path,
                             source.sha256,
                             args.max_chars,
+                            normalized,
                         )
                     chunk_count = 0
 
@@ -639,11 +939,27 @@ def command_index(args: argparse.Namespace) -> int:
                             chunk_count,
                         ),
                     )
+                    if normalized is not None:
+                        store_schema_blocks(
+                            new_connection,
+                            source.relative_path,
+                            normalized.blocks,
+                        )
                     indexed += 1
 
                 verify_source_inventory(sources)
                 total_chunks = int(
                     new_connection.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
+                )
+                total_schema_blocks = int(
+                    new_connection.execute(
+                        "SELECT COUNT(*) FROM schema_blocks"
+                    ).fetchone()[0]
+                )
+                total_schema_records = int(
+                    new_connection.execute(
+                        "SELECT COUNT(*) FROM schema_records"
+                    ).fetchone()[0]
                 )
                 store_index_fingerprint(new_connection)
 
@@ -667,21 +983,27 @@ def command_index(args: argparse.Namespace) -> int:
         if temporary_path is not None:
             temporary_path.unlink(missing_ok=True)
 
-    emit_json(
-        {
-            "corpus": str(corpus),
-            "database": str(db_path),
-            "files_seen": len(sources),
-            "files_indexed": indexed,
-            "files_unchanged": unchanged,
-            "files_removed": removed,
-            "corpus_bytes": corpus_bytes,
-            "chunks": total_chunks,
-            "database_rebuilt": True,
-            "update_strategy": update_strategy,
-            "permissions_hardened": permissions_hardened,
-        }
-    )
+    return {
+        "corpus": str(corpus),
+        "database": str(db_path),
+        "files_seen": len(sources),
+        "files_indexed": indexed,
+        "files_unchanged": unchanged,
+        "files_removed": removed,
+        "corpus_bytes": corpus_bytes,
+        "chunks": total_chunks,
+        "schema_blocks": total_schema_blocks,
+        "schema_records": total_schema_records,
+        "schema_blocks_parsed": schema_blocks_parsed,
+        "schema_blocks_reused": schema_blocks_reused,
+        "database_rebuilt": True,
+        "update_strategy": update_strategy,
+        "permissions_hardened": permissions_hardened,
+    }
+
+
+def command_index(args: argparse.Namespace) -> int:
+    emit_json(index_payload(args), getattr(args, "pretty", False))
     return 0
 
 def command_info(args: argparse.Namespace) -> int:
@@ -700,6 +1022,12 @@ def command_info(args: argparse.Namespace) -> int:
         ).fetchone()
         source_count = int(connection.execute("SELECT COUNT(*) FROM sources").fetchone()[0])
         chunk_count = int(connection.execute("SELECT COUNT(*) FROM chunks").fetchone()[0])
+        schema_block_count = int(
+            connection.execute("SELECT COUNT(*) FROM schema_blocks").fetchone()[0]
+        )
+        schema_record_count = int(
+            connection.execute("SELECT COUNT(*) FROM schema_records").fetchone()[0]
+        )
         indexed_range = connection.execute(
             "SELECT MIN(indexed_at) AS earliest, MAX(indexed_at) AS latest FROM sources"
         ).fetchone()
@@ -777,6 +1105,9 @@ def command_info(args: argparse.Namespace) -> int:
         "schema_version": SCHEMA_VERSION,
         "source_count": source_count,
         "chunk_count": chunk_count,
+        "schema_ir_version": SCHEMA_IR_VERSION,
+        "schema_block_count": schema_block_count,
+        "schema_record_count": schema_record_count,
         "indexed_at": {
             "earliest": indexed_range["earliest"],
             "latest": indexed_range["latest"],
@@ -795,6 +1126,246 @@ def command_info(args: argparse.Namespace) -> int:
     if metadata_summary is not None:
         payload["metadata_summary"] = metadata_summary
     emit_json(payload, args.pretty)
+    return 0
+
+
+def bounded_schema_attributes(
+    raw: str, limit: int
+) -> tuple[dict[str, str], int, bool]:
+    values = json.loads(raw)
+    output: dict[str, str] = {}
+    used = 0
+    truncated = False
+    for key, value in values.items():
+        remaining = limit - used - len(key)
+        if remaining < 2:
+            truncated = True
+            break
+        visible, value_truncated = clip_text(str(value), remaining)
+        output[str(key)] = visible
+        used += len(str(key)) + len(visible)
+        truncated = truncated or value_truncated
+        if value_truncated:
+            break
+    return output, used, truncated
+
+
+def bounded_schema_record(
+    block: SchemaBlock,
+    record: SchemaRecord,
+    limit: int,
+    *,
+    source: str | None = None,
+) -> tuple[dict[str, object], int]:
+    fact_limit = max(1, min(limit, max(100, limit // 2)))
+    fact, fact_truncated = clip_text(record.fact_text, fact_limit)
+    used = len(fact)
+    attribute_limit = max(0, min(4_000, (limit - used) // 2))
+    attributes, attribute_chars, attributes_truncated = bounded_schema_attributes(
+        record.attributes_json, attribute_limit
+    )
+    used += attribute_chars
+
+    documentation: str | None = None
+    text: str | None = None
+    for field, value in (("documentation", record.documentation), ("text", record.text)):
+        if value is None or used >= limit:
+            continue
+        clipped, value_truncated = clip_text(value, min(2_000, limit - used))
+        used += len(clipped)
+        fact_truncated = fact_truncated or value_truncated
+        if field == "documentation":
+            documentation = clipped
+        else:
+            text = clipped
+
+    item: dict[str, object] = {
+        "schema_name": block.schema_name,
+        "block_index": block.block_index,
+        "record_order": record.record_order,
+        "parent_order": record.parent_order,
+        "namespace": record.namespace,
+        "kind": record.kind,
+        "name": record.name,
+        "path": record.path,
+        "xsd_line": record.source_line,
+        "markdown_line": block.markdown_start_line + record.source_line - 1,
+        "attributes": attributes,
+        "documentation": documentation,
+        "text": text,
+        "fact_text": fact,
+    }
+    if source is not None:
+        item["source"] = source
+    if fact_truncated or attributes_truncated:
+        item["truncated"] = True
+    return item, used
+
+
+def normalize_xml_schema_payload(args: argparse.Namespace) -> dict[str, object]:
+    source = args.source.resolve()
+    if not source.is_file():
+        raise ValueError(f"Schema source does not exist: {source}")
+    if source.suffix.lower() not in {".md", ".xsd"}:
+        raise ValueError("Schema source must be a .md or .xsd file")
+    if not 1 <= args.limit <= 100:
+        raise ValueError("--limit must be between 1 and 100")
+    if args.offset < 0:
+        raise ValueError("--offset must be zero or greater")
+    if not 100 <= args.max_total_chars <= 40_000:
+        raise ValueError("--max-total-chars must be between 100 and 40000")
+    normalized = normalize_schema_source(source, source.name)
+    records = [
+        (block, record)
+        for block in normalized.blocks
+        for record in block.records
+    ]
+    selected: list[dict[str, object]] = []
+    characters = 0
+    if args.include_records:
+        for block, record in records[args.offset : args.offset + args.limit]:
+            remaining = args.max_total_chars - characters
+            if remaining < 100:
+                break
+            item, used = bounded_schema_record(block, record, remaining)
+            selected.append(item)
+            characters += used
+    block_summaries = [
+        {
+            "block_index": block.block_index,
+            "schema_name": block.schema_name,
+            "block_sha256": block.block_hash,
+            "markdown_start_line": block.markdown_start_line,
+            "markdown_end_line": block.markdown_end_line,
+            "target_namespace": block.target_namespace,
+            "record_count": len(block.records),
+        }
+        for block in normalized.blocks
+    ]
+    return {
+        "source": str(source),
+        "schema_ir_version": SCHEMA_IR_VERSION,
+        "capabilities": optional_capabilities(),
+        "block_count": len(normalized.blocks),
+        "record_count": len(records),
+        "offset": args.offset,
+        "result_count": len(selected) if args.include_records else 0,
+        "characters": characters,
+        "has_more": args.include_records and args.offset + len(selected) < len(records),
+        "blocks": block_summaries,
+        "records": selected,
+    }
+
+
+def command_normalize_xml_schema(args: argparse.Namespace) -> int:
+    emit_json(normalize_xml_schema_payload(args), args.pretty)
+    return 0
+
+
+def schema_query_payload(args: argparse.Namespace) -> dict[str, object]:
+    db_path = require_database(args.db)
+    if not 1 <= args.limit <= 50:
+        raise ValueError("--limit must be between 1 and 50")
+    if args.offset < 0:
+        raise ValueError("--offset must be zero or greater")
+    if not 100 <= args.max_total_chars <= 40_000:
+        raise ValueError("--max-total-chars must be between 100 and 40000")
+    query = args.query.strip()
+    if not query:
+        raise ValueError("Schema query must not be empty")
+    if len(query) > MAX_QUERY_TEXT:
+        raise ValueError(f"Schema query exceeds {MAX_QUERY_TEXT} characters")
+    for label, value in (("--kind", args.kind), ("--source", args.source), ("--schema", args.schema)):
+        if value is not None and len(value) > MAX_FILTER_TEXT:
+            raise ValueError(f"{label} exceeds {MAX_FILTER_TEXT} characters")
+    purpose = lower_level_purpose_record(args)
+    needle = like_contains(query)
+    filters = [
+        "(r.name LIKE ? ESCAPE '\\' OR r.path LIKE ? ESCAPE '\\' "
+        "OR r.fact_text LIKE ? ESCAPE '\\' OR r.documentation LIKE ? ESCAPE '\\' "
+        "OR r.text LIKE ? ESCAPE '\\')"
+    ]
+    parameters: list[object] = [needle] * 5
+    if args.kind:
+        filters.append("r.kind = ?")
+        parameters.append(args.kind)
+    if args.source:
+        filters.append("r.source_path LIKE ? ESCAPE '\\'")
+        parameters.append(like_contains(args.source))
+    if args.schema:
+        filters.append("b.schema_name LIKE ? ESCAPE '\\'")
+        parameters.append(like_contains(args.schema))
+    parameters.extend((args.limit + 1, args.offset))
+    sql = f"""
+        SELECT r.*, b.schema_name, b.block_hash, b.markdown_start_line,
+               b.markdown_end_line
+        FROM schema_records AS r
+        JOIN schema_blocks AS b
+          ON b.source_path = r.source_path AND b.block_index = r.block_index
+        WHERE {' AND '.join(filters)}
+        ORDER BY r.source_path, r.block_index, r.record_order
+        LIMIT ? OFFSET ?
+    """
+    with database(db_path, readonly=True) as connection:
+        require_current_schema(connection)
+        rows = connection.execute(sql, parameters).fetchall()
+
+    selected = rows[: args.limit]
+    results: list[dict[str, object]] = []
+    characters = 0
+    truncated = False
+    for row in selected:
+        if characters >= args.max_total_chars:
+            truncated = True
+            break
+        block = SchemaBlock(
+            block_index=int(row["block_index"]),
+            schema_name=str(row["schema_name"]),
+            block_hash=str(row["block_hash"]),
+            markdown_start_line=int(row["markdown_start_line"]),
+            markdown_end_line=int(row["markdown_end_line"]),
+            target_namespace=None,
+            records=(),
+        )
+        record = SchemaRecord(
+            record_order=int(row["record_order"]),
+            parent_order=row["parent_order"],
+            namespace=str(row["namespace"]),
+            kind=str(row["kind"]),
+            name=row["name"],
+            path=str(row["path"]),
+            source_line=int(row["source_line"]),
+            attributes_json=str(row["attributes_json"]),
+            text=row["text"],
+            documentation=row["documentation"],
+            fact_text=str(row["fact_text"]),
+        )
+        item, used = bounded_schema_record(
+            block,
+            record,
+            args.max_total_chars - characters,
+            source=str(row["source_path"]),
+        )
+        results.append(item)
+        characters += used
+        if item.get("truncated"):
+            truncated = True
+            break
+    has_more = len(rows) > args.limit or truncated
+    return {
+        "query": query,
+        "purpose": purpose,
+        "offset": args.offset,
+        "result_count": len(results),
+        "characters": characters,
+        "has_more": has_more,
+        "next_offset": args.offset + len(results) if has_more else None,
+        "results": results,
+    }
+
+
+def command_schema_query(args: argparse.Namespace) -> int:
+    emit_json(schema_query_payload(args), args.pretty)
     return 0
 
 def literal_query(query: str) -> str:
@@ -954,8 +1525,8 @@ def get_payload(args: argparse.Namespace) -> dict[str, object]:
         raise ValueError("--start-char must be zero or greater")
     if not 100 <= args.max_chars <= 8000:
         raise ValueError("--max-chars must be between 100 and 8000")
-    if not 100 <= args.max_total_chars <= 100000:
-        raise ValueError("--max-total-chars must be between 100 and 100000")
+    if not 100 <= args.max_total_chars <= 40_000:
+        raise ValueError("--max-total-chars must be between 100 and 40000")
 
     placeholders = ",".join("?" for _ in unique_ids)
     sql = f"""
@@ -1033,5 +1604,8 @@ def get_payload(args: argparse.Namespace) -> dict[str, object]:
     return payload
 
 def command_get(args: argparse.Namespace) -> int:
-    emit_json(get_payload(args), args.pretty)
+    purpose = lower_level_purpose_record(args, args.passage_ids)
+    payload = get_payload(args)
+    payload["purpose"] = purpose
+    emit_json(payload, args.pretty)
     return 0

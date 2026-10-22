@@ -28,13 +28,28 @@ from doc_research import common as COMMON_MODULE
 from doc_research import index as INDEX_MODULE
 
 
-def run_corpus(*args: object) -> subprocess.CompletedProcess[str]:
+def run_corpus_raw(*args: object) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, str(SCRIPT), *(str(arg) for arg in args)],
         check=False,
         capture_output=True,
         text=True,
     )
+
+
+def run_corpus(*args: object) -> subprocess.CompletedProcess[str]:
+    normalized = list(args)
+    if normalized and normalized[0] in {"search", "search-many", "get"}:
+        if "--purpose" not in normalized:
+            normalized.extend(
+                (
+                    "--purpose",
+                    "adapter-debugging",
+                    "--purpose-reason",
+                    "test-suite",
+                )
+            )
+    return run_corpus_raw(*normalized)
 
 
 class CorpusCliTestCase(unittest.TestCase):

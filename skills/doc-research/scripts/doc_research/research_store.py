@@ -676,8 +676,8 @@ def command_research_init(args: argparse.Namespace) -> int:
         if args.corpus is None:
             raise ValueError("Provide --corpus or --catalog")
         corpus_root = args.corpus.resolve()
-        if not corpus_root.is_dir():
-            raise ValueError(f"Corpus directory does not exist: {corpus_root}")
+        if not corpus_root.is_dir() and not corpus_root.is_file():
+            raise ValueError(f"Corpus path does not exist: {corpus_root}")
         if args.index is not None:
             index_path, index_fingerprint_value = resolve_index_binding(
                 args.index, corpus_root

@@ -437,7 +437,7 @@ def normalized_comparison_units(
         raise ValueError(f"Source file does not exist: {path}")
     if path.suffix.lower() not in SUPPORTED_SUFFIXES:
         raise ValueError(
-            f"Unsupported source type {path.suffix or '<none>'}; expected .md, .txt, or .jsonl"
+            f"Unsupported source type {path.suffix or '<none>'}; expected .md, .txt, .jsonl, or .xsd"
         )
     size = path.stat().st_size
     if size > max_source_bytes:

@@ -4,6 +4,39 @@ from test_support import *
 
 
 class IndexCliTest(CorpusCliTestCase):
+    def test_single_file_can_be_indexed_and_incrementally_refreshed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "large-source.md"
+            source.write_text(
+                "# File 01\n\nPattern R_T_A_E_O_W.\n\n"
+                "# File 07\n\nException pattern R_T_A_W.",
+                encoding="utf-8",
+            )
+            database = root / "index.sqlite"
+
+            first = run_corpus("index", source, "--db", database)
+            self.assertEqual(first.returncode, 0, first.stderr)
+            first_payload = json.loads(first.stdout)
+            self.assertEqual(first_payload["corpus"], str(source.resolve()))
+            self.assertEqual(first_payload["files_seen"], 1)
+
+            info = json.loads(run_corpus("info", database, "--hashes").stdout)
+            self.assertEqual(info["source_count"], 1)
+            self.assertEqual(info["sources"][0]["path"], source.name)
+
+            source.write_text(
+                source.read_text(encoding="utf-8") + "\n\nChanged marker.",
+                encoding="utf-8",
+            )
+            refreshed = run_corpus("index", source, "--db", database)
+            self.assertEqual(refreshed.returncode, 0, refreshed.stderr)
+            refresh_payload = json.loads(refreshed.stdout)
+            self.assertEqual(refresh_payload["update_strategy"], "delta-copy")
+            self.assertEqual(refresh_payload["files_indexed"], 1)
+            found = json.loads(run_corpus("search", database, "changed marker").stdout)
+            self.assertEqual(found["result_count"], 1)
+
     def test_info_reports_bounded_index_inventory(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -20,7 +53,7 @@ class IndexCliTest(CorpusCliTestCase):
             first = run_corpus("info", database, "--source-limit", 1)
             self.assertEqual(first.returncode, 0, first.stderr)
             payload = json.loads(first.stdout)
-            self.assertEqual(payload["schema_version"], 1)
+            self.assertEqual(payload["schema_version"], 2)
             self.assertEqual(payload["corpus"], str(corpus.resolve()))
             self.assertEqual(payload["source_count"], 2)
             self.assertEqual(payload["chunk_count"], 2)

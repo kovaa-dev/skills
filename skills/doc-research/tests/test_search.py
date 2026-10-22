@@ -4,6 +4,315 @@ from test_support import *
 
 
 class SearchCliTest(CorpusCliTestCase):
+    def test_lower_level_search_requires_an_explicit_purpose(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.md"
+            source.write_text("Needle.", encoding="utf-8")
+            index = root / "index.sqlite"
+            indexed = run_corpus("index", source, "--db", index)
+            self.assertEqual(indexed.returncode, 0, indexed.stderr)
+
+            queries = root / "queries.json"
+            queries.write_text(
+                json.dumps([{"query": "needle"}]), encoding="utf-8"
+            )
+            commands = (
+                ("search", index, "needle"),
+                ("search-many", index, queries),
+                ("get", index, 1),
+            )
+            for command in commands:
+                with self.subTest(command=command[0]):
+                    result = run_corpus_raw(*command)
+                    self.assertEqual(result.returncode, 2)
+                    self.assertIn("--purpose", result.stderr)
+                    declared = run_corpus(*command)
+                    self.assertEqual(declared.returncode, 0, declared.stderr)
+                    self.assertEqual(
+                        json.loads(declared.stdout)["purpose"],
+                        {"kind": "adapter-debugging", "reason": "test-suite"},
+                    )
+
+    def test_lower_level_purposes_require_receipt_evidence_or_a_reason(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.md"
+            source.write_text("Needle.", encoding="utf-8")
+            index = root / "index.sqlite"
+            indexed = run_corpus("index", source, "--db", index)
+            self.assertEqual(indexed.returncode, 0, indexed.stderr)
+            receipt = root / "task-receipt.json"
+            receipt.write_text(
+                json.dumps(
+                    {
+                        "version": COMMON_MODULE.TASK_RECEIPT_VERSION,
+                        "facets": [
+                            {"id": "F1", "passage_ids": [1]},
+                            {"id": "F2", "passage_ids": [1]},
+                        ],
+                        "gaps": [{"facet_id": "F1", "reason": "control-not-found"}],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            missing_receipt = run_corpus_raw(
+                "search", index, "needle", "--purpose", "named-gap", "--gap-facet", "F1"
+            )
+            self.assertEqual(missing_receipt.returncode, 2)
+            self.assertIn("--task-receipt is required", missing_receipt.stderr)
+
+            unknown_gap = run_corpus_raw(
+                "search",
+                index,
+                "needle",
+                "--purpose",
+                "named-gap",
+                "--task-receipt",
+                receipt,
+                "--gap-facet",
+                "F2",
+            )
+            self.assertEqual(unknown_gap.returncode, 2)
+            self.assertIn("no named gap for facet F2", unknown_gap.stderr)
+
+            named_gap = run_corpus_raw(
+                "search",
+                index,
+                "needle",
+                "--purpose",
+                "named-gap",
+                "--task-receipt",
+                receipt,
+                "--gap-facet",
+                "F1",
+            )
+            self.assertEqual(named_gap.returncode, 0, named_gap.stderr)
+            self.assertEqual(
+                json.loads(named_gap.stdout)["purpose"],
+                {"kind": "named-gap", "facet_id": "F1"},
+            )
+
+            outside_locator = run_corpus_raw(
+                "get",
+                index,
+                2,
+                "--purpose",
+                "locator-verification",
+                "--task-receipt",
+                receipt,
+            )
+            self.assertEqual(outside_locator.returncode, 2)
+            self.assertIn("outside the task receipt: 2", outside_locator.stderr)
+
+            verified_locator = run_corpus_raw(
+                "get",
+                index,
+                1,
+                "--purpose",
+                "locator-verification",
+                "--task-receipt",
+                receipt,
+            )
+            self.assertEqual(verified_locator.returncode, 0, verified_locator.stderr)
+            self.assertEqual(
+                json.loads(verified_locator.stdout)["purpose"],
+                {"kind": "locator-verification", "passage_ids": [1]},
+            )
+
+            missing_reason = run_corpus_raw(
+                "search", index, "needle", "--purpose", "adapter-debugging"
+            )
+            self.assertEqual(missing_reason.returncode, 2)
+            self.assertIn("--purpose-reason", missing_reason.stderr)
+
+    def test_retrieval_commands_enforce_hard_output_cap(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.md"
+            source.write_text("Needle evidence.", encoding="utf-8")
+            index = root / "index.sqlite"
+            self.assertEqual(run_corpus("index", source, "--db", index).returncode, 0)
+
+            search = run_corpus(
+                "search", index, "needle", "--max-total-chars", 40001
+            )
+            self.assertEqual(search.returncode, 2)
+            self.assertIn("between 100 and 40000", search.stderr)
+
+            get = run_corpus("get", index, 1, "--max-total-chars", 40001)
+            self.assertEqual(get.returncode, 2)
+            self.assertIn("between 100 and 40000", get.stderr)
+
+    def test_search_many_fits_multi_facet_and_exception_probes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.md"
+            source.write_text("Needle evidence.", encoding="utf-8")
+            index = root / "index.sqlite"
+            queries = root / "queries.json"
+            queries.write_text(
+                json.dumps({"queries": [{"query": "needle"}] * 24}),
+                encoding="utf-8",
+            )
+
+            self.assertEqual(run_corpus("index", source, "--db", index).returncode, 0)
+            bounded = run_corpus(
+                "search-many", index, queries, "--max-total-chars", 40000
+            )
+            self.assertEqual(bounded.returncode, 0, bounded.stderr)
+            self.assertEqual(json.loads(bounded.stdout)["query_count"], 24)
+
+            queries.write_text(
+                json.dumps({"queries": [{"query": "needle"}] * 25}),
+                encoding="utf-8",
+            )
+            rejected = run_corpus("search-many", index, queries)
+            self.assertEqual(rejected.returncode, 2)
+            self.assertIn("At most 24 batch queries", rejected.stderr)
+
+            queries.write_text(
+                json.dumps({"queries": [{"query": "needle"}] * 24}),
+                encoding="utf-8",
+            )
+            oversized = run_corpus(
+                "search-many", index, queries, "--max-total-chars", 40001
+            )
+            self.assertEqual(oversized.returncode, 2)
+            self.assertIn("between 1000 and 40000", oversized.stderr)
+
+    def test_auto_mode_handles_prefix_and_fts_queries(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.md"
+            source.write_text(
+                "Accepted cargo volume.\n\nPlanned shipment volume.",
+                encoding="utf-8",
+            )
+            index = root / "index.sqlite"
+            self.assertEqual(run_corpus("index", source, "--db", index).returncode, 0)
+
+            prefix = json.loads(
+                run_corpus("search", index, "accept* cargo*").stdout
+            )
+            self.assertEqual(prefix["mode"], "prefix")
+            self.assertEqual(prefix["requested_mode"], "auto")
+            self.assertEqual(prefix["result_count"], 1)
+
+            fts = json.loads(
+                run_corpus(
+                    "search",
+                    index,
+                    '"missing phrase" OR "planned shipment"',
+                ).stdout
+            )
+            self.assertEqual(fts["mode"], "fts")
+            self.assertEqual(fts["requested_mode"], "auto")
+            self.assertEqual(fts["result_count"], 1)
+
+    def test_search_many_emits_one_snippet_per_passage(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.md"
+            source.write_text("Needle supporting evidence.", encoding="utf-8")
+            index = root / "index.sqlite"
+            queries = root / "queries.json"
+            queries.write_text(
+                json.dumps(
+                    {"queries": [{"query": "needle"}, {"query": "supporting"}]}
+                ),
+                encoding="utf-8",
+            )
+            self.assertEqual(run_corpus("index", source, "--db", index).returncode, 0)
+
+            payload = json.loads(run_corpus("search-many", index, queries).stdout)
+            first = payload["results"][0]["results"][0]
+            second = payload["results"][1]["results"][0]
+            self.assertIn("text", first)
+            self.assertNotIn("text", second)
+            self.assertTrue(second["batch_duplicate"])
+            self.assertEqual(payload["duplicate_snippets_removed"], 1)
+
+    def test_single_file_receipts_are_reused(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.md"
+            source.write_text(
+                "# Variants\n\nGeneral pattern R_T_A_E_O_W.\n\n"
+                "Exception pattern R_T_A_W for files 07 and 08.",
+                encoding="utf-8",
+            )
+            index = root / "index.sqlite"
+            receipts = root / "receipts.sqlite"
+            queries = root / "queries.json"
+            queries.write_text(
+                json.dumps(
+                    {
+                        "queries": [
+                            {"query": "R_T_A_E_O_W"},
+                            {"query": "R_T_A_W"},
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            self.assertEqual(run_corpus("index", source, "--db", index).returncode, 0)
+            initialized = run_corpus(
+                "receipts-init", receipts, "--corpus", source, "--index", index
+            )
+            self.assertEqual(initialized.returncode, 0, initialized.stderr)
+            first = json.loads(
+                run_corpus(
+                    "search-many", index, queries, "--receipts-db", receipts
+                ).stdout
+            )
+            self.assertTrue(all(not item["receipt_hit"] for item in first["results"]))
+            repeated = json.loads(
+                run_corpus(
+                    "search-many", index, queries, "--receipts-db", receipts
+                ).stdout
+            )
+            self.assertTrue(all(item["receipt_hit"] for item in repeated["results"]))
+
+    def test_auto_mode_reuses_legacy_literal_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.md"
+            source.write_text("Needle evidence.", encoding="utf-8")
+            index = root / "index.sqlite"
+            receipts = root / "receipts.sqlite"
+
+            self.assertEqual(run_corpus("index", source, "--db", index).returncode, 0)
+            initialized = run_corpus(
+                "receipts-init", receipts, "--corpus", source, "--index", index
+            )
+            self.assertEqual(initialized.returncode, 0, initialized.stderr)
+
+            legacy = json.loads(
+                run_corpus(
+                    "search",
+                    index,
+                    "needle",
+                    "--mode",
+                    "literal",
+                    "--receipts-db",
+                    receipts,
+                ).stdout
+            )
+            automatic = json.loads(
+                run_corpus(
+                    "search", index, "needle", "--receipts-db", receipts
+                ).stdout
+            )
+
+            self.assertFalse(legacy["receipt_hit"])
+            self.assertTrue(automatic["receipt_hit"])
+            self.assertEqual(automatic["mode"], "literal")
+            self.assertEqual(automatic["requested_mode"], "auto")
+            self.assertEqual(automatic["receipt_id"], legacy["receipt_id"])
+
     def test_search_and_get_continue_without_repeats(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

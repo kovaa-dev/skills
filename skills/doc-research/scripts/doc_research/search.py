@@ -4,11 +4,65 @@ import argparse
 import json
 from pathlib import Path
 
-from .common import MAX_BATCH_QUERIES, MAX_FILTER_TEXT, MAX_QUERY_TEXT, database, emit_json, load_bounded_json, optional_research_text, required_record_id, required_research_text
+from .common import MAX_BATCH_QUERIES, MAX_FILTER_TEXT, MAX_QUERY_TEXT, database, emit_json, load_bounded_json, lower_level_purpose_record, optional_research_text, required_record_id, required_research_text
 from .index import bounded_rows, index_fingerprint, like_contains, literal_query, prefix_query, require_current_schema, require_database, search_row_locator, select_search_rows
 from .receipts import lookup_cached_receipt, receipt_cache_id, save_cached_receipt
 from .research_links import link_receipt_to_research, validate_research_receipt_link
 from .common import SQLITE_OPERATIONAL_ERROR
+
+
+FTS_BOOLEAN_OPERATORS = (" AND ", " OR ", " NOT ", " NEAR ")
+
+
+def resolved_query_mode(query: str, requested_mode: str) -> str:
+    if requested_mode != "auto":
+        return requested_mode
+    padded = f" {query.upper()} "
+    if any(operator in padded for operator in FTS_BOOLEAN_OPERATORS):
+        return "fts"
+    if '"' in query or "(" in query or ")" in query:
+        return "fts"
+    if "*" in query:
+        return "prefix"
+    return "literal"
+
+
+def deduplicate_batch_snippets(
+    payload: dict[str, object], seen_passages: set[tuple[object, object]]
+) -> int:
+    raw_results = payload.get("results")
+    if not isinstance(raw_results, list):
+        return 0
+    compact_results: list[object] = []
+    duplicate_count = 0
+    removed_characters = 0
+    for raw_result in raw_results:
+        if not isinstance(raw_result, dict):
+            compact_results.append(raw_result)
+            continue
+        result = dict(raw_result)
+        passage_id = result.get("passage_id")
+        source_hash = result.get("source_hash")
+        text = result.get("text")
+        key = (source_hash, passage_id)
+        if passage_id is not None and isinstance(text, str):
+            if key in seen_passages:
+                removed_characters += len(text)
+                result.pop("text", None)
+                result.pop("text_truncated", None)
+                result["batch_duplicate"] = True
+                duplicate_count += 1
+            else:
+                seen_passages.add(key)
+        compact_results.append(result)
+    if duplicate_count:
+        payload["results"] = compact_results
+        payload["batch_duplicate_count"] = duplicate_count
+        characters = payload.get("characters")
+        if isinstance(characters, int):
+            payload["characters"] = max(0, characters - removed_characters)
+    return duplicate_count
+
 
 def search_payload(args: argparse.Namespace) -> dict[str, object]:
     db_path = require_database(args.db)
@@ -49,8 +103,8 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
         raise ValueError("--offset must be zero or greater")
     if not 100 <= args.max_chars <= 8000:
         raise ValueError("--max-chars must be between 100 and 8000")
-    if not 100 <= args.max_total_chars <= 100000:
-        raise ValueError("--max-total-chars must be between 100 and 100000")
+    if not 100 <= args.max_total_chars <= 40_000:
+        raise ValueError("--max-total-chars must be between 100 and 40000")
     if not 4 <= args.snippet_tokens <= 64:
         raise ValueError("--snippet-tokens must be between 4 and 64")
     if not 0 <= args.max_per_source <= 50:
@@ -68,9 +122,10 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
         }.items()
     }
 
-    if args.mode == "literal":
+    mode = resolved_query_mode(raw_query, args.mode)
+    if mode == "literal":
         query = literal_query(raw_query)
-    elif args.mode == "prefix":
+    elif mode == "prefix":
         query = prefix_query(raw_query)
     else:
         query = raw_query
@@ -139,7 +194,7 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
                     }
                 )
                 cached_receipt_id = receipt_id or receipt_cache_id(
-                    raw_query, args.mode, receipt_identity, args.offset
+                    raw_query, mode, receipt_identity, args.offset
                 )
                 if not args.refresh:
                     cached = lookup_cached_receipt(
@@ -149,7 +204,7 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
                         fingerprint,
                         cached_receipt_id,
                         raw_query,
-                        args.mode,
+                        mode,
                         receipt_identity,
                     )
                     if cached is not None:
@@ -168,7 +223,7 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
                             raise ValueError("Cached receipt references are not a list")
                         cache_payload: dict[str, object] = {
                             "query": raw_query,
-                            "mode": args.mode,
+                            "mode": mode,
                             "filters": filters,
                             "offset": args.offset,
                             "result_count": len(references),
@@ -180,6 +235,8 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
                         }
                         if cached["next_offset"] is not None:
                             cache_payload["next_offset"] = cached["next_offset"]
+                        if args.mode == "auto":
+                            cache_payload["requested_mode"] = "auto"
                         return cache_payload
             rows = connection.execute(sql, parameters).fetchall()
     except SQLITE_OPERATIONAL_ERROR as exc:
@@ -208,7 +265,7 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
     has_more = filtered_has_more or len(selected_rows) > len(results)
     payload: dict[str, object] = {
         "query": raw_query,
-        "mode": args.mode,
+        "mode": mode,
         "filters": filters,
         "offset": args.offset,
         "result_count": len(results),
@@ -216,6 +273,8 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
         "has_more": has_more,
         "results": results,
     }
+    if args.mode == "auto":
+        payload["requested_mode"] = "auto"
     if output_truncated:
         payload["text_truncated"] = True
     if has_more:
@@ -282,10 +341,14 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
     return payload
 
 def command_search(args: argparse.Namespace) -> int:
-    emit_json(search_payload(args), args.pretty)
+    purpose = lower_level_purpose_record(args)
+    payload = search_payload(args)
+    payload["purpose"] = purpose
+    emit_json(payload, args.pretty)
     return 0
 
 def command_search_many(args: argparse.Namespace) -> int:
+    purpose = lower_level_purpose_record(args)
     if args.read_only_receipts and args.receipts_db is None:
         raise ValueError("--read-only-receipts requires --receipts-db")
     if args.read_only_receipts and args.research_db is not None:
@@ -304,8 +367,8 @@ def command_search_many(args: argparse.Namespace) -> int:
         raise ValueError("--limit-per-query must be between 1 and 20")
     if not 100 <= args.max_per_query_chars <= 20_000:
         raise ValueError("--max-per-query-chars must be between 100 and 20000")
-    if not 1_000 <= args.max_total_chars <= 100_000:
-        raise ValueError("--max-total-chars must be between 1000 and 100000")
+    if not 1_000 <= args.max_total_chars <= 40_000:
+        raise ValueError("--max-total-chars must be between 1000 and 40000")
 
     allowed = {
         "query",
@@ -332,8 +395,8 @@ def command_search_many(args: argparse.Namespace) -> int:
         query = item.get("query")
         if not isinstance(query, str) or not query.strip():
             raise ValueError(f"Batch query {index} requires non-empty query text")
-        mode = item.get("mode", "literal")
-        if mode not in {"literal", "prefix", "fts"}:
+        mode = item.get("mode", "auto")
+        if mode not in {"auto", "literal", "prefix", "fts"}:
             raise ValueError(f"Batch query {index} has unsupported mode: {mode}")
         for field in (
             "source",
@@ -358,11 +421,13 @@ def command_search_many(args: argparse.Namespace) -> int:
     outputs: list[dict[str, object]] = []
     characters = 0
     processed = 0
+    seen_passages: set[tuple[object, object]] = set()
+    duplicate_snippets_removed = 0
     for item in selected:
         namespace = argparse.Namespace(
             db=args.db,
             query=item["query"],
-            mode=item.get("mode", "literal"),
+            mode=item.get("mode", "auto"),
             source=item.get("source"),
             page=item.get("page"),
             section=item.get("section"),
@@ -384,6 +449,9 @@ def command_search_many(args: argparse.Namespace) -> int:
             pretty=False,
         )
         payload = search_payload(namespace)
+        duplicate_snippets_removed += deduplicate_batch_snippets(
+            payload, seen_passages
+        )
         encoded = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
         if outputs and characters + len(encoded) > args.max_total_chars:
             break
@@ -395,12 +463,15 @@ def command_search_many(args: argparse.Namespace) -> int:
 
     has_more = args.query_offset + processed < len(normalized)
     result: dict[str, object] = {
+        "purpose": purpose,
         "query_offset": args.query_offset,
         "query_count": len(outputs),
         "characters": characters,
         "has_more": has_more,
         "results": outputs,
     }
+    if duplicate_snippets_removed:
+        result["duplicate_snippets_removed"] = duplicate_snippets_removed
     if has_more:
         result["next_query_offset"] = args.query_offset + processed
     emit_json(result, args.pretty)

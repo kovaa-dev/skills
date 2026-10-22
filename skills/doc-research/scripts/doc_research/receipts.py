@@ -161,16 +161,18 @@ def receipt_store_status(db_path: Path) -> dict[str, object]:
         payload["index_error"] = index_error
     return payload
 
-def command_receipts_init(args: argparse.Namespace) -> int:
-    db_path = args.db.resolve()
-    corpus_root = args.corpus.resolve()
-    if not corpus_root.is_dir():
-        raise ValueError(f"Corpus directory does not exist: {corpus_root}")
+def initialize_receipt_store(
+    db: Path, corpus: Path, index: Path
+) -> dict[str, object]:
+    db_path = db.resolve()
+    corpus_root = corpus.resolve()
+    if not corpus_root.is_dir() and not corpus_root.is_file():
+        raise ValueError(f"Corpus path does not exist: {corpus_root}")
     if db_path.exists():
         with database(db_path, readonly=True) as connection:
             require_receipt_owner(connection)
         raise ValueError(f"Receipt database already exists: {db_path}")
-    index_path, fingerprint = resolve_index_binding(args.index, corpus_root)
+    index_path, fingerprint = resolve_index_binding(index, corpus_root)
     if index_path == db_path:
         raise ValueError("Receipt database and index database must be separate files")
 
@@ -208,7 +210,14 @@ def command_receipts_init(args: argparse.Namespace) -> int:
         if temporary_path is not None:
             temporary_path.unlink(missing_ok=True)
 
-    emit_json(receipt_store_status(db_path), args.pretty)
+    return receipt_store_status(db_path)
+
+
+def command_receipts_init(args: argparse.Namespace) -> int:
+    emit_json(
+        initialize_receipt_store(args.db, args.corpus, args.index),
+        args.pretty,
+    )
     return 0
 
 def command_receipts_info(args: argparse.Namespace) -> int:

@@ -21,13 +21,13 @@ except ImportError as exc:  # Some minimal Python builds omit the stdlib extensi
 else:
     SQLITE_IMPORT_ERROR = None
 
-SUPPORTED_SUFFIXES = {".md", ".txt", ".jsonl"}
+SUPPORTED_SUFFIXES = {".md", ".txt", ".jsonl", ".xsd"}
 
 MIN_PYTHON = (3, 10)
 
 APPLICATION_ID = 0x44524348  # "DRCH"
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 RESEARCH_APPLICATION_ID = 0x44525348  # "DRSH"
 
@@ -36,6 +36,8 @@ RESEARCH_SCHEMA_VERSION = 1
 RECEIPT_APPLICATION_ID = 0x44524350  # "DRCP"
 
 RECEIPT_SCHEMA_VERSION = 1
+
+TASK_RECEIPT_VERSION = 2
 
 CATALOG_APPLICATION_ID = 0x44524354  # "DRCT"
 
@@ -55,7 +57,7 @@ MAX_RESEARCH_EXCERPT = 2_000
 
 MAX_RESEARCH_JSON = 16_000
 
-MAX_BATCH_QUERIES = 8
+MAX_BATCH_QUERIES = 24
 
 MAX_BATCH_RECORDS = 100
 
@@ -117,7 +119,96 @@ CONFIDENCE_VALUES = {"confirmed", "probable", "uncertain"}
 
 CATALOG_ADAPTERS = {"local-index", "external"}
 
+LOWER_LEVEL_DIAGNOSTIC_PURPOSES = {"adapter-debugging", "custom-adapter"}
+
+EVIDENCE_EXECUTION_ROUTES = (
+    "auto",
+    "coordinator-direct",
+    "low-overhead-worker",
+    "coordinator-warm",
+    "coordinator-fallback",
+)
+
+EVIDENCE_FALLBACK_REASONS = (
+    "context-isolation-unavailable",
+    "model-routing-unavailable",
+    "worker-tools-unavailable",
+    "worker-source-access-unavailable",
+    "policy-restriction",
+)
+
+EVIDENCE_WORKER_CONTEXTS = ("capsule-no-parent-history-v1",)
+
 PROJECT_ANCHOR_KINDS = {"connector", "filesystem", "manual"}
+
+
+def lower_level_purpose_record(
+    args: object, passage_ids: Iterable[int] | None = None
+) -> dict[str, object]:
+    purpose = getattr(args, "purpose", None)
+    reason = getattr(args, "purpose_reason", None)
+    task_receipt_path = getattr(args, "task_receipt", None)
+    gap_facet = getattr(args, "gap_facet", None)
+
+    if purpose in LOWER_LEVEL_DIAGNOSTIC_PURPOSES:
+        diagnostic_reason = required_research_text(
+            reason, "--purpose-reason", MAX_RESEARCH_TEXT
+        )
+        if task_receipt_path is not None or gap_facet is not None:
+            raise ValueError(
+                "--task-receipt and --gap-facet are not valid for diagnostic purposes"
+            )
+        return {"kind": purpose, "reason": diagnostic_reason}
+
+    if reason is not None:
+        raise ValueError("--purpose-reason is only valid for diagnostic purposes")
+    if task_receipt_path is None:
+        raise ValueError(f"--task-receipt is required for --purpose {purpose}")
+    receipt = load_bounded_json(Path(task_receipt_path), "Task receipt")
+    if not isinstance(receipt, dict) or receipt.get("version") != TASK_RECEIPT_VERSION:
+        raise ValueError("Task receipt is invalid or unsupported")
+
+    facets = receipt.get("facets")
+    if not isinstance(facets, list):
+        raise ValueError("Task receipt facets must be an array")
+
+    if purpose == "named-gap":
+        facet_id = required_record_id(gap_facet, "--gap-facet")
+        if not any(
+            isinstance(facet, dict) and facet.get("id") == facet_id for facet in facets
+        ):
+            raise ValueError(f"Task receipt has no facet {facet_id}")
+        gaps = receipt.get("gaps")
+        if not isinstance(gaps, list) or not any(
+            isinstance(gap, dict) and gap.get("facet_id") == facet_id for gap in gaps
+        ):
+            raise ValueError(f"Task receipt has no named gap for facet {facet_id}")
+        return {"kind": purpose, "facet_id": facet_id}
+
+    if purpose == "locator-verification":
+        if gap_facet is not None:
+            raise ValueError("--gap-facet is only valid for --purpose named-gap")
+        allowed: set[int] = set()
+        for facet in facets:
+            if not isinstance(facet, dict):
+                continue
+            values = facet.get("passage_ids")
+            if isinstance(values, list):
+                allowed.update(
+                    value
+                    for value in values
+                    if isinstance(value, int) and not isinstance(value, bool)
+                )
+        requested = set(passage_ids or ())
+        missing = sorted(requested - allowed)
+        if missing:
+            raise ValueError(
+                "Passage IDs are outside the task receipt: "
+                + ", ".join(str(value) for value in missing)
+            )
+        return {"kind": purpose, "passage_ids": sorted(requested)}
+
+    raise ValueError("Unsupported lower-level purpose")
 
 if sqlite3 is None:
     SQLITE_OPERATIONAL_ERROR = RuntimeError
