@@ -47,17 +47,21 @@ recreate historical sources from memory.
    Do not label historical work current production verification, reopen done, or lose
    unfinished work inside an archive. Queues may be partitioned with global IDs and
    cross-queue waits; avoid duplicate canonical entries.
-5. **Retire converted operational routing.** Apply the
+5. **Verify before switching.** Run the shared
+   [two-way coverage check](legacy-transition.md#coverage-and-reconciliation) against the
+   entire agreed baseline and [new/changed inputs](requirements.md#questions-during-work).
+   Name residual/unavailable/unmapped sources and unresolved conflicts. Captured questions
+   can remain open; uncovered source meaning prevents a completed full-migration claim
+   and keeps the affected source ranges active.
+6. **Switch verified routing and check the result.** Apply the
    [range-specific notices](legacy-transition.md#convert-before-continuing) to converted
    source sections and their entrypoints. A shared source's out-of-scope remainder stays
    active and discoverable under on-touch conversion; whole-source retirement requires
    complete coverage. Preserve old links and update affected templates, bootstrap,
    local rules, and parser routing so new work does not regenerate legacy tasks.
-6. **Verify the entire agreed scope.** Run the shared two-way coverage check against the
-   baseline and [new/changed inputs](requirements.md#questions-during-work). Check graph
-   integrity, applicability, proposal targets, retirement redirects, and affected enforcement.
-   Name residual/unavailable/unmapped sources and unresolved conflicts. Captured questions
-   can remain open; uncovered source meaning prevents a completed full-migration claim.
+   After switching, check graph integrity, applicability, proposal targets, retirement
+   redirects, and affected enforcement. Reconcile material source/input changes since
+   the coverage check before claiming completion.
 
 Progress and a compact source-to-requirement/work/result mapping belong with the migration
 work's result. A temporary detailed coverage file is appropriate for a full/large

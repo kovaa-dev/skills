@@ -83,8 +83,9 @@ acceptance; it does not inherit accepted metadata from the containing specificat
 
 Revision: 1. Definition: proposed.
 Origin: recovered from code.
-Sources: <repository-relative path>::<symbol or lines> at <inspected SHA or exact snapshot/digest>;
+Sources: <repository-relative path>::<symbol or lines> at <retrievable commit SHA or preserved scoped snapshot/patch locator>;
 <supporting test/config source, with its distinct role>.
+Source integrity: <optional digest; does not replace recoverable source content>.
 
 <Recovered behavior, actor, conditions and exceptions, readable without the source code.>
 

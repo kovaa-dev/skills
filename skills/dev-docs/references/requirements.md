@@ -79,8 +79,11 @@ to the affected capability; routine work does not require a repository-wide extr
 3. Mark a newly recovered requirement **Origin: recovered from code**. For existing
    requirements, retain their origin and add **Implementation sources**. Record repository-relative
    source paths with symbols or useful line locators, and the actual inspected baseline
-   (commit SHA or exact snapshot/digest). For uncommitted code, preserve or identify the
-   inspected scoped content rather than citing HEAD as its version. Distinguish implementation,
+   at a retrievable immutable commit or a preserved scoped snapshot/patch with its locator.
+   For uncommitted code, retain the inspected content needed to recover that behavior;
+   HEAD alone does not identify it. A digest can check integrity but cannot replace
+   recoverable source bytes. If those bytes are unavailable, record the source gap and
+   limit the recovery claim. Distinguish implementation,
    test expectations, configuration, comments, and inferred meaning; label unsupported
    rationale/intent as unknown or inferred. A separate source registry or code mirror is not required.
 4. Keep implementation origin separate from acceptance source. A coherent recovered
@@ -108,8 +111,8 @@ Definition state is not a work status. Use compatible project tokens with these 
 
 | State | Meaning and use |
 | --- | --- |
-| draft | Desired behavior or observable bounds are unsettled or unagreed; not a binding obligation. |
-| proposed | A coherent candidate awaiting a decision; may intentionally contradict the current contract. |
+| draft | Required behavior, scope, or observable bounds remain incomplete or unsettled; not a binding obligation. |
+| proposed | A coherent candidate with stated scope, ready for and awaiting a decision; may intentionally contradict the current contract. |
 | accepted | Agreed obligation, binding only for its stated applicability and activation condition. |
 | rejected | A candidate was considered and declined; retain the reason/source. |
 | withdrawn | A candidate was dropped without becoming a binding obligation; retain the reason/source. |

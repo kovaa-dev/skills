@@ -95,7 +95,11 @@ second live requirement catalog or work queue.
    product requirement. Map waits to specific supplying work/results; preserve unresolved
    external prerequisites explicitly. Import completed outcomes into queue history with
    the original result/date/limits when this source is being converted.
-4. **Switch the selected reading route.** Mark the exact converted sections/ranges and
+4. **Verify before switching.** Perform the [two-way coverage check](#coverage-and-reconciliation),
+   including new inputs received during the work. Resolve missing/unmapped source meaning
+   before applying a converted or historical label. Verify only the ranges whose meaning
+   is accounted for; an incomplete remainder stays active and explicitly incomplete.
+5. **Switch the verified reading route and continue.** Mark the exact verified sections/ranges and
    link their new owners, applicable queue entries, and results from the old source and
    affected navigation. Only those ranges become historical for current execution.
    For a partial source, add a prominent notice identifying converted ranges and the
@@ -103,9 +107,9 @@ second live requirement catalog or work queue.
    under on-touch conversion; do not archive the whole body or retire its remaining work.
    Keep original IDs, closure facts, acceptance, and verification accessible. The converted
    scope must be usable without old task text as required context.
-5. **Verify and continue.** Perform the [two-way coverage check](#coverage-and-reconciliation),
-   including new inputs received during the work. Verify IDs, redirects, dependencies,
-   applicable checks, and discoverability of the unconverted remainder.
+   After switching, check IDs, redirects, dependencies, applicable checks, and
+   discoverability of the unconverted remainder. Reconcile any material source/input
+   changes since the coverage check before continuing or claiming completion.
    Continue the selected converted scope only in its new canonical records; its old
    formulation/status is historical. Do not duplicate live contracts or execution state.
 

@@ -89,7 +89,7 @@ npx skills update dev-docs
 npx skills remove dev-docs
 ```
 
-See the repository [installation guide](../../README.md#install-with-npx-skills) for project/global scope, reproducible commit-pinned sources, telemetry, and Codex plugin installation.
+See the repository [installation guide](https://github.com/kovaa-dev/skills#install-with-npx-skills) for project/global scope, reproducible commit-pinned sources, telemetry, and Codex plugin installation.
 
 ## Language and version
 

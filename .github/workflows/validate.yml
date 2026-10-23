@@ -30,6 +30,12 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Install validation dependencies
+        run: python3 -m pip install -r scripts/requirements-validation.txt
+
+      - name: Test repository validator
+        run: python3 -m unittest discover -s scripts -p 'test_*.py'
+
       - name: Verify release policy
         env:
           RELEASE_POLICY_DEPS: ${{ runner.temp }}/release-policy
@@ -38,13 +44,10 @@ jobs:
           npm install --prefix "$RELEASE_POLICY_DEPS" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund release-please@17.3.0
           node --test scripts/release-policy.test.cjs
 
-      - name: Validate repository
-        run: python3 scripts/validate.py
-
-      - name: Verify skills CLI discovery
+      - name: Validate repository and exact skills CLI discovery
         env:
           DISABLE_TELEMETRY: "1"
-        run: npx --yes skills@1.5.26 add . --list
+        run: python3 scripts/validate.py --check-cli
 
       - name: Report dispatched validation status
         if: ${{ always() && github.event_name == 'workflow_dispatch' }}
