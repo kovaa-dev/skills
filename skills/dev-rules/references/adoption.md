@@ -1,7 +1,7 @@
 # Adopting, auditing, migrating, and updating project-work rules
 
 This reference governs only the rules for performing engineering work. Requirements,
-PRDs, the task tracker, TDs/ADRs, and documentation history remain in their respective
+specifications, work queues, decisions, and documentation history remain in their
 canonical project sources; this skill does not require a specific documentation system.
 
 ## How a project uses the skill

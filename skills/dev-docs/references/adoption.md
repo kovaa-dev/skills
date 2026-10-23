@@ -1,152 +1,94 @@
-# Adopting, auditing, migrating, and updating documentation rules
+# Adoption, updates, and ordinary maintenance
 
-This is the sole source of the requirements governing adoption of `dev-docs` in a project.
-[Bootstrap](documentation-system-template.md) creates the minimum structure, while
-[migration](governance-migration.md) addresses existing rules. Installing the skill alone does not
-change the project's active rules.
+Requirements/specifications and lean queues are the current model. Old PRD/task tracking
+is officially legacy; selected legacy work follows [on-touch conversion](legacy-transition.md).
+A full backlog transition uses the separately requested [one-shot migration](governance-migration.md).
 
 ## Routine maintenance without adoption
 
-Routine documentation, task, and decision maintenance does not require `init`, migration, or
-adopting the skill as project governance. When the skill is selected explicitly or implicitly
-during project work, help maintain the affected documents within the current task's authority:
+Selecting dev-docs for authorized work does not require init, a global policy migration,
+or an adoption-mode field. Maintain the affected scope using
+[documentation purpose and ownership](documentation.md#documentation-purpose-and-ownership):
 
-- Keep the project's rules, structure, language, formats, IDs, statuses, and history conventions.
-  Use compatible skill guidance to improve the current work; its schemas and templates do not
-  override existing conventions. Differences from the skill are not migration defects or scoped
-  exceptions in a project that has not adopted it.
-- Update the existing canonical documents and directly related links, navigation, or task state
-  as implementation and accepted decisions change. Do not rewrite unrelated sections or scan the
-  whole documentation tree for a local task.
-- Create a document only when the actual work needs a durable source and no suitable one exists.
-  Follow existing conventions; if none exist, agree only the minimum missing placement/format.
-  Do not generate indexes, settings, layer registries, PRDs, or ADRs merely to satisfy the skill.
-- Keep adoption, rule consolidation, bulk cleanup, renaming, and restructuring outside routine
-  maintenance unless separately requested. Do not ask the user to choose an adoption method or
-  create a mode/profile before making an otherwise authorized edit.
-- If related accepted project sources contradict one another, surface the conflict and seek a
-  decision only for the affected part; continue independent work. A difference between the skill
-  and an existing project convention alone does not block maintenance under that convention.
+- Preserve compatible project paths, language, stable IDs, accepted meaning, history, and
+  explicit constraints. Reuse existing specifications/wiki and queue locations.
+- Use the [conversion trigger](legacy-transition.md#trigger-and-authority) for selected legacy
+  material and [ongoing capture](requirements.md#questions-during-work) for new input.
+  Keep unrelated legacy records available with an explicit route to the new model.
+- Faithful capture of an existing accepted contract is continuity, not a new product
+  decision. Do not ask again merely to convert the selected item or start already
+  authorized work. Do not infer write permission from a read-only request.
+- Create only material needed for the actual question/contract/result; no empty indexes, layers,
+  PRDs, or ADRs to satisfy a template.
+- Do not change binding agent instructions/hooks/CI or bulk-delete/restructure sources
+  without the corresponding scope. If explicit project constraints prohibit conversion,
+  show the exact conflict and proposed minimum change; do not claim conversion or silently
+  continue the affected implementation under a duplicate hidden tracker.
 
-Read-only requests remain read-only. Availability of the skill supports ordinary agent selection;
-it does not install hooks, change agent entrypoints, or run an independent background process.
+A source pinned to an older skill revision remains that project's selected source until
+an authorized update. Installing this revision does not silently rewrite consuming projects.
+These limits do not make routine authorized documentation maintenance depend on init.
 
-## How a project adopts the skill as governance
+## How a project adopts governance
 
-During `init`, the user explicitly chooses one of two clear methods:
+Explicit init/adoption selects one reproducible method:
 
-### Copy in the repository
+- **Copy in the repository:** the complete skill directory at a project-local path,
+  committed and linked by the entrypoint; propose this default when no method was chosen.
+- **Pinned public source:** a public source at an immutable Git SHA/content digest,
+  chosen explicitly or required by organization policy. Mutable branches/latest/tags
+  without immutable targets and personal machine paths are not reproducible governance.
 
-The complete skill directory is stored at a project-local path, usually
-`.agents/skills/dev-docs/`, and committed with the project. The repository is self-contained: the
-documentation/agent entrypoint points to this exact copy. If the user has not selected another
-method, propose this option by default.
+Do not store a separate mode/profile/rule-source registry. The copy or pinned pointer
+makes the method evident. Ask only when adoption or a change of source is actually
+requested and the choice is not already authorized.
 
-### Link to the published skill
+Requirements, queues, decisions, artifacts, history, and local settings remain project
+content. General governance has one canonical source; do not keep a paraphrased third
+policy. Old task cards may remain unconverted after governance adoption, with explicit
+on-touch routing; adopting a source is not proof of a fully migrated backlog.
 
-The repository retains the product documentation, task tracker, project settings, scoped
-exceptions, and a short entrypoint linking to a publicly available `dev-docs`, pinned to an
-immutable Git commit SHA or reproducible content digest. A branch, a tag without an immutable
-target, `latest`, and a personal absolute path are not reproducible sources. This method is allowed
-only after an explicit user choice or under organization policy.
+## Safe adoption and verification
 
-Do not create a `mode`, `profile`, or `rule_source` field or a separate selection registry. The
-method is unambiguous from the project structure: either a complete project-local copy exists, or
-the entrypoint contains a pinned public link. Request the decision during `init`; ask again only
-during an explicitly invoked `migrate`/`update` when the user wants to change the method or the
-operation affects adoption. Do not ask again during ordinary docs/tasks work.
+1. Identify the affected rules, contracts, entrypoints, templates, and actual parser checks.
+2. Compare related accepted project sources, preserve unique settings/exceptions, and
+   resolve conflicts with their authorized owner. A format difference is not automatically
+   a product conflict.
+3. Apply the authorized copy/pointer and entrypoint/settings changes. Clearly state the
+   new default and the legacy conversion route. Execution policy owns agent/CI/Git changes.
+4. Verify affected links, source availability, requirement/work identity, canonical state,
+   applicability, and one ordinary request route.
+5. Claim only the achieved scope. If governance update or content conversion is partial,
+   list the remaining boundary; keep unresolved sources accessible without presenting
+   duplicate active contracts.
 
-Until either method has been accepted and verified, the existing project rules remain in effect,
-and routine maintenance follows the contract above. Adoption verification gates the change of
-governance source, not authorized edits under existing rules.
+Full verification is required for an explicitly full migration/audit or an actual project
+policy requirement. It covers all source types/ranges in scope, preserved questions,
+acceptance/verification, cross-links/dependencies, real enforcement, and residual legacy
+routing. It checks the documentation system, not product/security correctness.
 
-Temporary status and compact migration coverage live in the migration task/PR itself.
-Create a separate working mapping file only for a full/large migration or explicitly required
-policy traceability; condense or delete it after verification. Preserve a long-term migration record
-only when explicitly required, and do not turn it into permanent governance state.
-
-## Verification depth
-
-Do not store a separate adoption profile. By default, perform the normal affected-scope check:
-
-- active docs/task rule sources in the scope are listed;
-- every document type in the selected scope is checked, with no exclusions based on directory/name;
-- related project docs are checked against each other, and the user resolves conflicts;
-- when migration/audit remediation exists, independently executable work is ordered by dependency,
-  and a shared integration boundary gets a separate task only when it has its own result;
-- unique project settings and scoped exceptions are preserved;
-- semantic duplicates are removed or excluded from the active route;
-- the selected adoption method is reproducible;
-- one typical docs/task request finds the correct skill without reading the entire backlog;
-- changed links, IDs, and dependencies pass the applicable project checks.
-
-A full check is required only when explicitly requested or when repository/org/compliance policy
-requires it. It additionally covers the entire agreed source scope, a temporary old→new mapping,
-requirements and history, docs parser/validator enforcement, source availability to every
-necessary executor, and a reproducible verification record. Every applicable criterion must be met; this checks
-the documentation system, not the product, code, or security.
-
-## Safe adoption
-
-1. Within the authorized `init`/`migrate`, locate active docs/task rules, settings, related
-   product/technical documents, and automation that enforces their format. First perform an
-   affected consistency check of project docs. Do not change agent instructions, hooks, CI, Git,
-   or handoff without authority under the active project-work policy.
-2. Ask the user to choose "copy in the repository" or "link to the published skill." Do not encode
-   the choice in an additional state field.
-3. Show local↔local and local↔skill conflicts with their practical consequences. Do not
-   independently choose the skill, one of the project sources, or the later text.
-4. After write permission is granted, create either the complete project-local copy or a pinned
-   pointer, preserve project settings/scoped exceptions, and remove the agreed active duplicates.
-   Preserve historical records, but exclude them from the active route.
-5. Perform the normal check or the explicitly required full check. Only after it succeeds does
-   ordinary work automatically apply the adopted skill without manual invocation.
-6. If it fails, leave the previous working sources available and list the blocker and remaining work
-   in the migration task/PR. Do not create a permanent `migrating` mode.
-
-An empty new project follows the same path without artificial history, a backlog, or code. Missing
-materials do not require fictitious research support or verification records.
-
-## What remains in the project
-
-Regardless of the adoption method, the project retains product requirements, PRDs, tasks,
-decisions, history, navigation, specific paths/layers/language, project settings, and
-explicitly accepted scoped exceptions. The general policy is represented either by a complete
-project-local copy of the skill or by a pinned public link; do not create a third paraphrased copy.
-
-Agree new local exceptions and explicitly limit their scope. Propose a new general principle as a
-separate change to the source skill rather than adding it silently to one project.
+Detailed working coverage is used when migration scope or required traceability warrants
+it. Condense transient detail under the [coverage protocol](legacy-transition.md#coverage-and-reconciliation),
+keeping checked provenance accessible. It is not a permanent migration mode or live tracker.
 
 ## Update
 
-When a new revision becomes available, `update` performs a limited affected-scope `audit + migrate`
-itself; it does not require a separate preliminary audit run.
+For an authorized source revision update:
 
-1. Identify the current source from the project-local directory or pinned pointer. Do not look for
-   a separate selection field.
-2. For a project-local copy, compare its content with the new revision; for a published source,
-   compare the old and new immutable commits/digests. If the previous source is unavailable, audit
-   the current rules against the new version and explicitly state the comparison limitation.
-3. Classify rules as added, strengthened, weakened, removed, renamed/moved, or clarification.
-   Weakening and removal are significant changes.
-4. Find docs/task copies, settings, exceptions, templates, and parser/validator rules that preserve
-   the old behavior. Show conflicts and consequences to the user.
-5. After agreement, update the complete copy or pinned pointer and migrate only the affected scope.
-   Remove a stale local requirement and docs/task enforcement if the new revision weakened or
-   removed it; retain a stricter variant only as an explicitly accepted scoped exception.
-6. Recheck the affected criteria and one ordinary docs/task route. A full repeat of every check is
-   unnecessary for a compatible local diff.
-7. Change the commit SHA/content digest in the pointer as the final step. For a project-local copy,
-   no separate revision record is required: its committed content is the revision in use. If there
-   is a blocker, leave the previous working source in place and list the remaining work.
+1. Locate the installed copy/pinned source and compare actual revisions. If the previous
+   source is unavailable, state that limitation and audit the current affected rules.
+2. Classify added, strengthened, weakened, removed, and moved rules. Find consumers,
+   templates, old instruction copies, parser assumptions, and source availability.
+3. Resolve material conflicts, update the canonical owner, then consumer references and
+   applicable settings in one coherent change. Preserve accepted scoped exceptions;
+   do not keep obsolete stricter requirements silently active.
+4. Update skill copy/pointer and affected routing to requirements/queues. Remaining legacy
+   work follows on-touch conversion; run the separate migrate action only when full
+   content conversion was requested.
+5. Verify the affected routes/checks and then finalize the pinned revision or committed
+   copy. Do not claim completion if the selected source is inaccessible or links still
+   direct new work into old task authoring.
 
-In read-only mode, keep the result and migration plan in the response. Update does not authorize
-silently changing product decisions or deleting historical verification records.
-
-## Coordinated update with project-work governance
-
-When documentation governance and independent project-work rules are updated together, or a rule
-moves between their scopes, update the canonical owner first, followed by consumer references and
-project settings. Change related project-local copies or pinned pointers in one coherent diff. No
-specific execution skill is required; do not duplicate orchestration here or create a compatibility
-registry.
+Coordinated changes with project-work governance update the owning rule once and link
+consumers to it. This skill does not require a particular execution skill or gain
+permission to merge, release, or deploy from adoption.

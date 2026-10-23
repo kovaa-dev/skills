@@ -1,8 +1,11 @@
 # Technical and Architectural Decisions
 
-Rules: [task tracker](task-tracker.md), [documentation rules](documentation.md).
-Use the appropriate form; examples and placeholders are not project tasks.
+Rules: [requirements](requirements.md) and [work queues](work-queue.md), [documentation rules](documentation.md).
+Use the appropriate form; examples are not project decisions. Legacy tasks follow [on-touch conversion](legacy-transition.md).
 Adapt paths and field language to the project settings and the checks actually selected.
+Use [decision approval](documentation.md#decision-approval) for acceptance authority and
+[evidence vocabulary](documentation.md#evidence-vocabulary) to distinguish agreement from
+implementation verification. The templates do not add an extra user-approval gate.
 
 ## TD — `docs/solutions/auth/TD-AUTH-001.md`
 
@@ -26,11 +29,10 @@ Adapt paths and field language to the project settings and the checks actually s
 
 <Options, trade-offs and proposed choice.>
 
-## User approval
+## Acceptance source
 
-Pending. Before accepted, record the exact agreed choice, explicit user confirmation,
-approval date and source; if no stable link exists, retain an accurate summary
-and date. Document date and validation results do not replace user approval.
+Pending. <When accepted: exact choice, accepting owner or applied policy/authority,
+date and source, including an accurate summary when there is no stable link.>
 
 ## Consequences and constraints
 
@@ -38,11 +40,8 @@ and date. Document date and validation results do not replace user approval.
 
 ## Validation
 
-<Research support needed to choose and approve this decision, if any; numeric thresholds
-only when justified. Separately state how the implemented contract must be verified;
-implementation steps, acceptance and results belong in technical task cards.>
-User approval accepts the decision, not its implementation. Do not require a finished
-implementation to approve its contract; investigate essential unknowns separately.
+<Research support needed to choose this decision, if any; planned implementation checks,
+applicable requirement revisions, and actual result/verification locators when available.>
 
 ## Migration and rollback
 
@@ -71,11 +70,10 @@ implementation to approve its contract; investigate essential unknowns separatel
 
 <Options, proposed choice and rationale.>
 
-## User approval
+## Acceptance source
 
-Pending. Before accepted, record the exact agreed choice, explicit user confirmation,
-approval date and source; if no stable link exists, retain an accurate summary
-and date. Document date and validation results do not replace user approval.
+Pending. <When accepted: exact choice, accepting owner or applied policy/authority,
+date and source, including an accurate summary when there is no stable link.>
 
 ## Contracts and data
 
@@ -87,10 +85,8 @@ and date. Document date and validation results do not replace user approval.
 
 ## Validation
 
-<Research support needed to choose and approve this architecture, if any. Separately state
-required verification of the resulting system; execution and results belong in tasks.>
-User approval and implementation acceptance are distinct. Do not block approval on
-a verification record that can only exist after implementing the approved choice.
+<Research support needed to choose this architecture, if any; planned system checks,
+applicable requirement revisions, and actual result/verification locators when available.>
 
 ## Migration and rollback
 
@@ -101,7 +97,18 @@ a verification record that can only exist after implementing the approved choice
 <Open questions and conditions for review.>
 ```
 
-TDs/ADRs do not contain phases, task links, or implementation checkboxes. Decision
-dependencies link only to decisions. For `superseded`, specify the reason, date, and
-canonical successor decision, if one exists; if rejected without a replacement, state
-that explicitly. Do not leave two active versions of a contract.
+TDs/ADRs may explain ordered migration, compatibility, and rollback procedures, or link
+the owning runbook, under [documentation purpose](documentation.md#documentation-purpose-and-ownership).
+Scheduling, assignees, progress, and completion of particular work belong in the queue.
+The Decision dependencies field links decisions; other contract/source links keep their
+purpose. For `superseded`, specify the reason, date,
+applicability boundary, and canonical successor decision. Rejected/withdrawn candidates
+retain their disposition and reason; retirement without replacement names its acceptance
+source. Do not leave incompatible accepted versions applying to the same scope.
+
+A proposed replacement names its target decision/revision and links to the still-current
+choice. Keep the candidate separate and explicitly nonbinding, even if its containing
+specification is accepted. Acceptance records the scope and handoff condition before
+supersession becomes effective; rejected/withdrawn alternatives retain their reason.
+Follow the [proposal lifecycle](requirements.md#proposed-replacements); a proposed TD/ADR
+must not silently override an accepted requirement.

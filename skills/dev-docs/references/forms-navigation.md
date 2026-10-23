@@ -1,129 +1,53 @@
-# Navigation and Settings
+# Navigation and settings
 
-Rules: [task tracker](task-tracker.md), [documentation rules](documentation.md).
-Use the appropriate form; examples and placeholders are not project tasks.
-Adapt paths and field language to the project settings and the checks actually selected.
+Use [requirements](requirements.md), [queues](work-queue.md), and
+[governance](documentation.md). New navigation points to useful documentation and canonical work;
+old task entrypoints explicitly route through [conversion](legacy-transition.md).
 
-The project README and instructions link directly to the task index specified in the
-settings (`docs/tasks/index.md` by default); do not create an additional root redirect
-file.
+## Minimal navigation
 
-## Task index — `docs/tasks/index.md`
-
-```md
-# Task index
-
-## Alpha
-
-### Product
-
-| Task | Status |
-| --- | --- |
-| [PRD-001 Sign in to an account](product/PRD-001.md) | `planned` |
-
-### AUTH
-
-| Task | Status |
-| --- | --- |
-| [AUTH-001 Validate sign-in requests](auth/AUTH-001.md) | `backlog` |
-
-## Beta
-
-## RC
-
-## Release
-
-## Next
-
-## History
-```
-
-This is the standard example for a new product, not a mandatory structure. During
-product grooming, the user may rename, combine, extend, or replace delivery groups.
-For an existing product, first determine the actual current state and future sequence
-without labeling old history with invented stages. Within a group, use Product and
-actual technical layer subgroups when needed.
-
-The index is the only roadmap and shows every registered task exactly once. An active
-task belongs to one delivery group; `done`/`cancelled` remains in the last assigned
-group or moves to `History`. `History` is not a stage and does not prove delivery. The
-index contains only the selected group, internal order, links, and compact status
-projection. Use the `Task | Status` table and the same lowercase token as the card by
-default; the settings may select another unambiguous format. Do not add owner,
-acceptance, prerequisites, blocker/progress, or a second milestone registry. Update the
-status and projection in the same batch; strikethrough does not replace the token. The
-`Replaces` relation appears only in the new PRD. Before selecting a sequence, a heading
-is sufficient for an empty project; after selection, create the agreed empty groups
-without sample links.
-
-## Decision indexes
-
-`docs/solutions/index.md`:
+Reuse a README or documentation index instead of creating an extra redirect file.
+Illustrative links below are placeholders for documents that actually exist:
 
 ```md
-# Technical decisions
+# Documentation
 
-- [AUTH decisions](auth/index.md)
+- [Personal preferences contract](../wiki/personal-preferences.md).
+- [Settings API reference](../reference/settings-api.md).
+- [Settings operation and recovery](../operations/settings-sync.md).
+- [Work and completed results](../queue.md).
+- [Accepted architecture choices](../architecture/decisions/index.md).
+- Legacy tasks: historical/unconverted sources only; selected work is captured into
+  requirements and queue entries before continuation.
 ```
 
-`docs/solutions/auth/index.md`:
+Add only existing targets. No empty layer/decision registry is needed.
+Group current contracts, proposals under consideration, and history visibly when those
+routes exist; sections of the same document are enough. Historical links retain their
+baseline, while ordinary execution links resolve to the applicable current owner.
+Search results still require the [state/applicability check](requirements.md#current-contract-and-nonbinding-material).
 
-```md
-# AUTH decisions
+## Multiple queues and views
 
-- [TD-AUTH-001 Request validation contract](TD-AUTH-001.md)
-```
+Canonical entries can be partitioned by capability, team, or work kind. Each work ID has
+one home; other views are links or actual generated projections. Do not manually
+duplicate statuses/dependencies across several queue tables.
+Completed/cancelled work stays visible in history, with its result locator.
 
-`docs/architecture/decisions/index.md`:
+Dependency links cross queues. A blocked entry does not freeze the group.
+Stages/sprints are optional selection/grouping, not requirement IDs or implementation
+proof. Replanning moves work while preserving its identity and links.
 
-```md
-# Architecture decisions
+## Project settings when needed
 
-- [ADR-001 Contract ownership](ADR-001.md)
-```
+Record only choices the project actually uses in an existing settings section:
 
-## Navigation and settings — `docs/development/documentation-index.md`
+- specification/wiki, queue, decision, result, and history locations;
+- selected skill copy or immutable public pointer, when governance adoption was requested;
+- requirement/work ID conventions and prose/metadata language;
+- compatible state tokens and whether any views are actually generated;
+- accepted delivery groups, ownership/area boundaries, and scoped exceptions;
+- actual documentation/parser checks and code-map locator when useful.
 
-```md
-# Documentation index
-
-## Project settings
-
-- Published rule source: <public Git URL at immutable commit SHA/content digest; omit when the full skill is copied into .agents/skills/dev-docs>.
-- Approved scoped exceptions: <links or none>.
-- Prose language: English.
-- Tracker schema: English baseline profile.
-- Task paths: docs/tasks/product and docs/tasks/<layer>; filename: <ID>.md.
-- Decision paths: docs/solutions/<layer> and docs/architecture/decisions.
-- Task status tokens: backlog, planned, in-progress, need-info, blocked, done, cancelled.
-- Roadmap sequence: <chosen groups; for a new product default Alpha, Beta, RC, Release, Next>.
-- Historical task placement: <keep in last assigned delivery group, or move once to History>.
-- Task-index status projection: `Task | Status`; every registered task appears once and matches its canonical card.
-- Decision status tokens: proposed, accepted, superseded.
-- Metadata: one “- Status:”, one “- Owner:”, and one “- Grooming:” per canonical card; `blocked` additionally requires “- Blocker:” and “- Unblock condition:”.
-- Documentation history path: <chosen path; clearly marked *.history.md; not active governance>.
-- Findings: <task cards, or chosen register path>.
-- Temporary migration coverage: <location only for an active full/large migration or policy-required traceability, otherwise none>.
-- Code map: <chosen location when code structure is stable>.
-- Documentation checks: <explicitly selected docs/parser checks and compatible runtime, or manual review>.
-- Constraints: <links to accepted project sources; unknowns remain open questions>.
-
-## Layer registry
-
-| Prefix | Responsibility | Decision index, when present |
-| --- | --- | --- |
-| AUTH | Authentication contract (example only) | docs/solutions/auth/index.md |
-| WEB | Web interface (example only) | docs/solutions/web/index.md |
-
-## Read by question
-
-- What work exists? [Task index](../tasks/index.md).
-- What technical contracts apply? [Technical decisions](../solutions/index.md).
-- What cross-layer rules apply? [Architecture decisions](../architecture/decisions/index.md).
-```
-
-Replace the example registry with actual layers; do not create WEB automatically. The
-registry defines the layer namespace/responsibility; it does not duplicate the owner of
-individual cards or contract text. Before the first decision, the decision index may be
-set to `none` or omitted according to the project format. Add navigation links only to
-documents that exist.
+Do not turn settings into a second policy, requirement catalog, or work plan.
+Preserve accepted source availability and history; no permanent migration-mode field.
