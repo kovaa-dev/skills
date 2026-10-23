@@ -8,6 +8,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 No unreleased changes.
 
+## [1.0.0](https://github.com/kovaa-dev/skills/compare/v0.5.0...v1.0.0) (2026-10-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **dev-docs:** PRD and layer-task authoring is legacy. Convert selected legacy work before continuation, or use migrate for a complete agreed scope.
+
+### Features
+
+* **dev-docs:** adopt requirements and work queues ([#25](https://github.com/kovaa-dev/skills/issues/25)) ([67f2d60](https://github.com/kovaa-dev/skills/commit/67f2d60ee6595585ac758504841d2e0382c70a0a))
+
+
+### Bug Fixes
+
+* brand skill display names ([#23](https://github.com/kovaa-dev/skills/issues/23)) ([a1cfa87](https://github.com/kovaa-dev/skills/commit/a1cfa87198495898963a0733b96b9db52f709f68))
+* **doc-research:** preserve ordinary retrieval and automate reusable evidence memory ([#26](https://github.com/kovaa-dev/skills/issues/26)) ([f5ad04d](https://github.com/kovaa-dev/skills/commit/f5ad04d7e5d9a9eb317ada3127576262f401befe))
+
 ## [0.5.0](https://github.com/kovaa-dev/skills/compare/v0.4.3...v0.5.0) (2026-10-23)
 
 

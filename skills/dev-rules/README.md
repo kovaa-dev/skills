@@ -75,4 +75,4 @@ See the repository [installation guide](https://github.com/kovaa-dev/skills#inst
 
 ## Language and version
 
-The agent-facing instructions are written in English. This skill is included in version `v0.5.0`. <!-- x-release-please-version -->
+The agent-facing instructions are written in English. This skill is included in version `v1.0.0`. <!-- x-release-please-version -->
