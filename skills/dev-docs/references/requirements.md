@@ -50,15 +50,41 @@ observable bounds as draft/questions separate from established accepted meaning.
 "Accepted" future behavior must state its activation/rollout condition; it does not
 silently replace the current contract before that condition holds.
 
-Keep the ID when clarifying or revising the same obligation. Record a semantic revision,
-previous and new meaning, reason, date, acceptance source, applicability, and affected
-checks when the contract changes.
-Editorial corrections need not create a semantic revision. A new independently useful
-obligation gets a new ID; a truly different replacement links to what it supersedes.
+### Updating the current revision
+
+Keep the ID when clarifying or revising the same obligation, including changes to its
+limits, conditions, or required result. A new message, source, implementation approach,
+or amendment is not by itself a new requirement. Create a new ID only for a separately
+meaningful obligation; a genuinely different replacement links to what it supersedes.
+A technical solution change belongs in its decision owner; unchanged product obligations
+keep their IDs and wording.
+
+Apply an agreed change under [decision authority](documentation.md#decision-approval).
+An unaccepted alternative follows [proposals](#proposed-replacements); do not silently
+accept it or ask again for a change already unambiguously authorized.
+
+1. Update the owning requirement's current wording and semantic revision, preserving
+   unaffected conditions and exceptions. Record previous/new meaning, reason, date,
+   acceptance source, applicability, and affected checks. Do not leave the old rule as
+   another current obligation or append an incompatible amendment without reconciling it.
+2. Keep prior wording and results in explicitly historical revision context, with the
+   replacement boundary and a route to the current formulation. Retain old revisions
+   as applicable only for their stated supported versions/modes. The current reading
+   route shows the applicable contract; history must not look like additional current
+   obligations. An inline history block or existing history location is sufficient.
+3. Reconcile affected summaries, shared rationale/decisions, links, checks, and unfinished
+   work. Resolve the proposal that was accepted; reconcile other affected candidates
+   against the new revision without inventing their acceptance or rejection. Do not
+   leave a completed proposal pending or stale copied wording active elsewhere.
+
+Editorial corrections need not create a semantic revision or implementation work.
 
 References in current prose use the stable ID/anchor. Verification and delivery records
-identify the exact revision/baseline they checked. Do not carry an old green result
-forward as proof of a changed requirement. A requirements change may need work; it does
+identify the exact revision/baseline they checked. Reassess implementation/verification
+claims after a semantic change: an old green result or completed delivery does not
+automatically verify the new revision. State uncovered behavior as an evidence or
+implementation gap; reuse existing evidence only with an explicit coverage/applicability
+assessment, retaining the original result's revision and limits. A requirements change may need work; it does
 not mechanically create a new queue entry or reopen a historical completed entry.
 
 ## Recovering requirements from code
@@ -171,9 +197,9 @@ experiment, promising benchmark, or proposal timestamp is not acceptance.
 When the decision is made, first compare the candidate against the then-current target
 revision and preserved obligations; an old baseline must not silently undo intervening
 changes. Record acceptance or rejection/withdrawal at the owning contract/decision.
-For an accepted change, publish the semantic revision or successor, acceptance source,
-scope and activation boundary, then reconcile affected checks, references, and unfinished
-work. Supersede the prior meaning only where/when the accepted handoff applies. Reopening
+For an accepted change, [update the current revision](#updating-the-current-revision)
+or publish a genuinely different successor, with the scope and activation boundary.
+Supersede the prior meaning only where/when the accepted handoff applies. Reopening
 a rejected/withdrawn alternative requires an explicit new review, not incidental retrieval.
 
 ## Retiring stale material

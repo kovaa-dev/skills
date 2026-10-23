@@ -72,6 +72,18 @@ Shared rationale can be a named block without an extra file/ID. A technical choi
 in an existing decision block or [decision form](forms-decisions.md) when independently useful.
 Work to realize this contract belongs in the [queue](forms-technical.md).
 
+## An agreed change to an existing requirement
+
+Apply [current-revision updates](requirements.md#updating-the-current-revision) in the
+owning block. For example, an agreed upload-limit change from 20 MiB to 50 MiB updates
+R-007 to its next revision, retaining other accepted conditions. It does not add another
+current requirement saying 50 MiB beside an unchanged current R-007 saying 20 MiB.
+
+Keep the old 20 MiB wording and its verification in labeled revision history, with any
+remaining supported-version applicability. A test proving the old limit does not by
+itself verify the new one. A separately agreed obligation to include file hashes in a
+result manifest can receive its own ID; it is not another revision of the size limit.
+
 ## A requirement recovered from implementation
 
 Use [code recovery](requirements.md#recovering-requirements-from-code) when reconstructing

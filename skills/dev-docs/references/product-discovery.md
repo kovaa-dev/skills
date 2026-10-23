@@ -81,7 +81,8 @@ Verify the combined end-to-end result, not merely technical sub-results. Capture
 artifact, actual target/version where needed, and verification against applicable
 requirement revisions. User/manual gates follow the active execution policy.
 
-After delivery, use observations to refine the next useful increment. Revise living
-requirements while preserving old verification and completed work. A regression against
+After delivery, use observations to refine the next useful increment. Apply agreed
+changes to the [current requirement revision](requirements.md#updating-the-current-revision),
+keeping old wording, verification, and completed work in their historical scope. A regression against
 an unchanged requirement is repair work, not a reason to duplicate the requirement.
 Use [maintenance](maintenance.md) for significant incoming issues and deferred outcomes.

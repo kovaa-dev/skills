@@ -41,7 +41,8 @@ Do not create new legacy cards or extend that workflow as the default.
    before treating found text as binding; follow retirement/replacement notices.
 5. Do not invent accepted requirements, owners, constraints, implementation evidence,
    approval, or missing historical facts. Preserve unknowns as questions. Capture material
-   new requirements/changes under [ongoing capture](references/requirements.md#questions-during-work).
+   new input under [ongoing capture](references/requirements.md#questions-during-work);
+   agreed changes revise the [current requirement](references/requirements.md#updating-the-current-revision).
    Recover undocumented behavior/constraints through
    [code recovery](references/requirements.md#recovering-requirements-from-code), with explicit provenance.
    Verify [coverage](references/legacy-transition.md#coverage-and-reconciliation) before
