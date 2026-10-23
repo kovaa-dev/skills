@@ -46,6 +46,29 @@ Narrative marker outside the schema.
 
 
 class SchemaTextFidelityTest(unittest.TestCase):
+    def test_named_structural_batch_needs_no_index_and_keeps_parent_conditions(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "source.md"
+            source.write_text(SCHEMA_MARKDOWN, encoding="utf-8")
+            result = run_corpus_raw("normalize-xml-schema", source, "--name", "A", "--name", "Id",
+                                    "--name", "Missing", "--limit", "1")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            first = json.loads(result.stdout)
+            self.assertEqual(first["record_count"], 2)
+            self.assertEqual(first["unmatched_names"], ["Missing"])
+            self.assertEqual(first["records"][0]["name"], "A")
+            self.assertIn("presence=conditional", first["records"][0]["fact_text"])
+            second = run_corpus_raw("normalize-xml-schema", source, "--name", "A", "--name", "Id",
+                                    "--name", "Missing", "--offset", first["next_offset"],
+                                    "--source-hash", first["source_hash"])
+            self.assertEqual(second.returncode, 0, second.stderr)
+            self.assertEqual(json.loads(second.stdout)["records"][0]["attributes"]["use"], "required")
+            self.assertEqual(list(Path(directory).iterdir()), [source])
+            source.write_text(SCHEMA_MARKDOWN + "\nchanged", encoding="utf-8")
+            stale = run_corpus_raw("normalize-xml-schema", source, "--name", "Id",
+                                  "--source-hash", first["source_hash"])
+            self.assertNotEqual(stale.returncode, 0)
+
     def normalize(self, content: str):
         return SCHEMA_IR_MODULE.normalize_xsd_file(
             '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" '

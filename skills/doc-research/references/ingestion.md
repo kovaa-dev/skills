@@ -89,8 +89,11 @@ Use `schema-query` for structural questions, or let an evidence pack include com
 
 ```bash
 scripts/corpus normalize-xml-schema SOURCE.md --include-records --limit 20
+scripts/corpus normalize-xml-schema SOURCE.md --name FIELD --name OTHER_FIELD --max-total-chars 24000
 scripts/corpus schema-query index.sqlite FIELD_NAME --kind element
 ```
+
+Repeat `--name` for an exact-name batch without creating an index. It implies record output, retains every matching declaration across blocks, and reports unmatched names explicitly. `record_count` and continuation offsets refer to the filtered selection; block counts still describe the whole source. Keep the same names and source hash when continuing. This is declared structure, not resolved effective semantics or a substitute for prose conditions.
 
 `schema-query` is a normal bounded retrieval route. Inspect relevant ancestors and definitions before interpreting requiredness: declarations alone do not prove effective semantics. XML text retains mixed-content order, whitespace and literals under XML parsing semantics; record expansion beyond the parser's safety budget fails explicitly rather than silently cutting evidence. Oversized records return `record_fragment` JSON substrings; concatenate fragments before parsing or interpreting the record. Continue with both `next_offset` and `next_start_char`, plus `--expected-fingerprint` for `schema-query` or `--source-hash` for `normalize-xml-schema`. Record offset advances only after the entire record. A pack that cannot include a full schema record exposes a gap and continuation, not a partial fact. Unchanged block hashes and normalizer versions permit IR reuse.
 

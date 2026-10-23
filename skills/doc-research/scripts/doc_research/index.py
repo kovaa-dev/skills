@@ -1340,6 +1340,9 @@ def normalize_xml_schema_payload(args: argparse.Namespace) -> dict[str, object]:
         raise ValueError("--offset must be zero or greater")
     if not 100 <= args.max_total_chars <= 40_000:
         raise ValueError("--max-total-chars must be between 100 and 40000")
+    names = getattr(args, "name", [])
+    if len(names) > 50 or any(not name or len(name) > MAX_FILTER_TEXT for name in names):
+        raise ValueError("Use at most 50 nonempty bounded declaration names")
     before = file_signature(source)
     source_hash = sha256_file(source)
     if getattr(args, "source_hash", None) not in (None, source_hash):
@@ -1351,9 +1354,11 @@ def normalize_xml_schema_payload(args: argparse.Namespace) -> dict[str, object]:
         (block, record)
         for block in normalized.blocks
         for record in block.records
+        if not names or record.name in names
     ]
+    include_records = args.include_records or bool(names)
     selected: list[dict[str, object]] = []
-    if args.include_records:
+    if include_records:
         for block, record in records[args.offset : args.offset + args.limit]:
             item = schema_record_item(block, record)
             selected.append(item)
@@ -1377,13 +1382,16 @@ def normalize_xml_schema_payload(args: argparse.Namespace) -> dict[str, object]:
         "block_count": len(normalized.blocks),
         "record_count": len(records),
         "offset": args.offset,
-        "result_count": len(selected) if args.include_records else 0,
+        "result_count": len(selected) if include_records else 0,
         "characters": 0,
-        "has_more": args.include_records and args.offset + len(selected) < len(records),
+        "has_more": include_records and args.offset + len(selected) < len(records),
         "blocks": block_summaries,
         "warnings": list(normalized.warnings),
     }
-    payload = schema_record_page(payload, selected, args, more_records=args.include_records and args.offset + len(selected) < len(records))
+    if names:
+        payload["names"] = names
+        payload["unmatched_names"] = sorted(set(names) - {record.name for _, record in records})
+    payload = schema_record_page(payload, selected, args, more_records=include_records and args.offset + len(selected) < len(records))
     payload["records"] = payload.pop("results")
     return payload
 

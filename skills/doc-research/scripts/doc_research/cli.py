@@ -110,6 +110,7 @@ def parser() -> argparse.ArgumentParser:
     normalize_xml_schema.add_argument("--offset", type=int, default=0)
     normalize_xml_schema.add_argument("--start-char", type=int, default=0, help="Continue a serialized record fragment")
     normalize_xml_schema.add_argument("--source-hash", help="Reject continuation after source bytes change")
+    normalize_xml_schema.add_argument("--name", action="append", default=[], help="Exact declaration name; repeat to batch structural checks without an index (implies --include-records)")
     normalize_xml_schema.add_argument("--max-total-chars", type=int, default=12000)
     normalize_xml_schema.add_argument("--pretty", action="store_true")
     normalize_xml_schema.set_defaults(

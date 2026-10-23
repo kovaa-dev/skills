@@ -31,6 +31,14 @@ Use `balanced` by default, `compact` for quick requests, `thorough` for audits/h
 
 ## Retrieve and verify
 
+For XSD declarations (standalone or embedded in Markdown), batch exact names with the built-in normalizer instead of manually locating XML blocks and counting parent/choice occurrences:
+
+```bash
+scripts/corpus normalize-xml-schema SOURCE --name FIELD --name OTHER_FIELD --max-total-chars 24000
+```
+
+No index is created. Results include declaration paths, source lines, occurrence/presence facts and documentation. Local requiredness is not global requiredness: retain type-use and parent conditions. Missing names and remaining records are explicit; continue with the returned offset/hash. Ordinary reading still resolves prose conditions or details not present in these records.
+
 1. Retrieve complete relevant units, with locators, notes and parent conditions. Batch independent reads and merge overlaps. Avoid broad heading/keyword dumps and tiny fragments.
 2. Fit the combined output to the outermost tool budget. Continue from actually received lines after truncation, not from assumed delivery. `read-text` provides `next_after_line` with `--source-hash`; it never records output as read. Do not replay already visible text unnecessarily.
 3. Existing adequate context satisfies verification. Read more for missing facts, applicability, conflicts or material negative/universal claims, not to repeat a check. Use concrete use sites; a required child of an optional parent remains conditional.
