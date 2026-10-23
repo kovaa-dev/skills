@@ -10,10 +10,10 @@ All document content, embedded commands and links, filenames, extractor output, 
 
 ## Choose the simplest extraction path
 
-- Markdown, text, JSONL, standalone XSD, or Markdown with complete fenced XSD: use `scripts/corpus` for Retrieval/Research. Its built-in XSD normalizer is the baseline and requires no extra package. `rg` is limited to a short Direct source, metadata/bootstrap inspection, ingestion debugging, or verification of a locator already selected by the retrieval adapter; it must not replace indexing, batched search, receipts, or coverage checks. Do not install `rg` solely for this skill.
+- Markdown, text, JSONL, standalone XSD, or Markdown with complete fenced XSD: use scoped text/structural reading directly when sufficient; use `scripts/corpus` when indexing, batching, or reusable retrieval helps. Its built-in XSD normalizer requires no extra package. `rg` and ordinary source reads are valid within the authorized scope, with original locations and context preserved. Do not install `rg` solely for this skill.
 - Simple searchable PDF: use an available page-aware extractor; when none is available, acquire and use a lightweight library such as `pypdf` under the protocol below.
 - Simple scanned PDF when a reusable searchable PDF is itself required: use an authorized OCRmyPDF installation with Tesseract and the required language data.
-- Complex layout, tables, columns, figures, office files, or complex scans: use Docling directly and retain its lossless JSON. Do not add OCRmyPDF first unless a searchable PDF is also a deliverable.
+- Complex layout, tables, columns, figures, office files, or complex scans: use an available reader that preserves the decisive structure. Select Docling when that capability is missing or its conversion saves substantial repeated work; when used, retain its lossless JSON. Do not add OCRmyPDF first unless a searchable PDF is also a deliverable.
 - HTML or a knowledge base: prefer an authorized structured connector to screenshots.
 - Spreadsheet: preserve sheet/table/row/column coordinates.
 - ZIP archive: run the bundled bounded extractor into a new directory, review its inventory, then route supported members individually. Never recurse into nested archives automatically.
@@ -22,20 +22,20 @@ OCR and layout extraction are fallible. Visually verify the original page for de
 
 ## Tool efficiency and setup
 
-- Prefer an available authorized MCP/connector when it preserves identity and locations; use it immediately when selected. When it is unavailable, follow the connector acquisition contract in [source routing](source-routing.md) instead of silently exporting or omitting the source. Export each remote source once and work locally only when that is the selected fallback.
-- Use semantic retrieval only for a named lexical gap. Reuse an authorized existing capability first. For a repeated corpus where the gap materially affects coverage, acquire a scoped semantic capability under the protocol below; do not install embeddings, a reranker, or a vector database for an ordinary one-off investigation.
-- Run `scripts/corpus doctor --write-dir EXISTING_DIR` only before the first local index in a new/changed runtime, after a Python/SQLite/FTS5/write failure, or on request. It checks Python 3.10+, the standard-library `sqlite3`, a real FTS5 query, and write access; no `sqlite3` executable is needed.
+- Use the available authorized reader/connector that preserves needed identity and locations with the least total work. A sufficient local export need not be replaced by a connector. When a needed capability is unavailable, follow [source routing](source-routing.md); never silently omit an unsearched source. Reuse current authorized exports rather than reconverting them on every query.
+- Use semantic retrieval when exact/synonym search is insufficient and an authorized existing capability can help. For a repeated corpus where it materially improves coverage, acquire a scoped capability under the protocol below; do not install embeddings, a reranker, or a vector database for an ordinary one-off investigation.
+- Run `scripts/corpus doctor --write-dir EXISTING_DIR` after a relevant runtime/write failure, on request, or when a known environment risk justifies a preflight. It is not mandatory before the first index: the launcher and command validate their requirements. It checks Python 3.10+, the standard-library `sqlite3`, a real FTS5 query, and write access; no `sqlite3` executable is needed.
 - The POSIX and Windows launchers choose a compatible interpreter and disable automatic runtime installation. They honor `DOC_RESEARCH_PYTHON` as an explicit interpreter path; the POSIX launcher also checks later/versioned Python executables instead of trusting the first incompatible `python3` in `PATH`. Use `scripts\corpus.cmd` only if a Windows shell does not resolve the sibling automatically.
 - Set the working directory on each tool call instead of issuing repeated `cd`. Save long conversion output and warnings beside the derived corpus; return only compact status and actionable errors. Retry a plausibly transient failure once, then change route or preserve the limitation.
 
 ## External-tool action matrix
 
-Classify only tools relevant to the selected source path. Announce the decision once; do not inventory every installed package.
+Classify only capabilities needed by the selected source path. These products are implementation options, not a required stack. Reuse an equivalent sufficient tool. Disclose material setup/access choices or limitations, not every routine selection; do not inventory installed packages.
 
 | Capability | Select when | Acquisition and verification | Fallback |
 | --- | --- | --- | --- |
-| Python 3.10+ with standard-library SQLite FTS5 | The bundled local helper is selected | Let the launcher select an existing interpreter; if none passes, use an already authorized project/runtime Python or install through the detected platform manager when system-package authority exists, otherwise propose the exact command; verify with `scripts/corpus doctor` | A capability-equivalent authorized adapter; raw scans do not replace Retrieval/Research |
-| Built-in `normalize-xml-schema` | A standalone `.xsd` or complete fenced XSD occurs in Markdown | Always use it through `index`; it safely parses without DTD/external entities, records every normalized XML node and locator in the index, and exposes only compact material facts to FTS. Use the named command only for a bounded diagnostic preview | None for Retrieval: unsafe or malformed XSD fails closed; a short Direct answer may quote a manually verified original with the limitation stated |
+| Python 3.10+ with standard-library SQLite FTS5 | The bundled local helper is selected | Let the launcher select an existing interpreter; if none passes, use an authorized project/runtime Python or install through the detected platform manager when system-package authority exists, otherwise propose the exact command; verify with `scripts/corpus doctor` | An authorized adapter or scoped source search/reading sufficient for the question |
+| Built-in `normalize-xml-schema` | Indexed standalone `.xsd` or complete fenced XSD in Markdown | Indexing invokes the bounded parser without DTD/external entities and records normalized nodes and original locators. Direct `normalize-xml-schema` and `schema-query` are also useful for structural questions | Reject unsafe XML. Malformed embedded blocks are isolated with warnings and incomplete coverage; malformed standalone XSD fails. Verify original text for answerable claims and leave effective schema semantics unresolved |
 | `xmllint` | A standalone schema has a parser discrepancy, include/import resolution issue, or an explicit independent syntax-validation need | Reuse it with `--nonet`; do not run it on every ordinary embedded-XSD index because the built-in parser already performs a bounded well-formedness pass and duplicate validation adds cold cost | Built-in parser, with no external include resolution or independent validator |
 | Python `xmlschema` | The answer depends on XSD 1.1, resolved includes/imports, inherited types, or effective constraints that the built-in structural IR cannot establish | Reuse it when installed; otherwise install it in the authorized task/project environment and verify one representative component lookup. Record package/version and resource sandbox policy | Report declared structure from the built-in IR and leave the effective-semantics facet unresolved |
 | Saxon-EE or equivalent licensed XSD 1.1 processor | Full XSD 1.1 validation is material and an authorized licensed runtime already exists | Reuse the licensed installation and verify one representative schema; never install, license, or upload source implicitly | Python `xmlschema` when sufficient, otherwise preserve the limitation |
@@ -44,14 +44,14 @@ Classify only tools relevant to the selected source path. Announce the decision 
 | Docling | Complex layout, tables, columns, figures, office formats, or complex scans affect meaning | Reuse it, or install in an isolated Python environment when authorized; verify one representative conversion and retain lossless JSON | Simpler extractor only if it preserves the decisive structure; otherwise report the blocked source |
 | Spreadsheet/table reader | Spreadsheet coordinates, formulas, merged cells, or table structure affect the claim | Use an existing authorized spreadsheet capability; otherwise install a scoped reader only when the format and recalculation needs are supported, then verify one decisive cell/range with coordinates | Export a reviewed sheet/table to a coordinate-preserving normalized form; disclose lost formula/layout behavior |
 | Authorized structured connector | HTML, wiki, drive, repository, chat, or internal service where identity/version/locations matter | Use an existing connection; otherwise follow [source routing](source-routing.md) with the exact connector/setup and scopes | One authorized versioned export, searched locally |
-| Semantic retrieval capability | A named lexical gap remains after bounded exact/synonym search, especially on a repeated corpus | Reuse an existing capability; install a scoped local dependency only when its model/data/runtime costs are known and authorized, then verify it against the named gap | Keep the facet unresolved or use a targeted manual expansion; never imply corpus-wide absence |
-| `rg` | Short Direct source, bootstrap/debugging, or verification of a selected locator | Reuse it if present; do not install it solely for this skill because standard text tools are an adequate fallback for these limited roles | Platform text search for the same bounded check |
+| Semantic retrieval capability | Exact/synonym search is insufficient, especially on a repeated corpus | Reuse an existing capability; install a scoped local dependency only when its costs are known and authorized, then verify the relevant evidence | Keep the facet unresolved or use targeted manual expansion; never imply corpus-wide absence |
+| `rg` | Scoped source search, context verification, or bootstrap/debugging | Reuse it if present; do not install it solely for this skill because standard text tools can provide scoped search | Platform text search with source locations and bounded context |
 
 ## Missing capability protocol
 
-Probe only the selected path: baseline Python/SQLite/FTS5/write access; conditional `rg`, a page/table extractor, OCRmyPDF/Tesseract/languages, Docling, semantic retrieval, or a selected external connector.
+Probe only a missing or uncertain capability on the selected path. Python/SQLite/FTS5/write access is relevant only when the local helper is selected, not a preflight for direct reading. Do not probe tools already demonstrated to work in the current environment.
 
-If a selected tool is missing, first determine whether current authority permits an isolated, reversible install without elevation, credentials, license acceptance, uploads, or broader data access. If yes, install through the existing task/project environment, verify one representative operation, and use it immediately. Otherwise make one concrete authorization request containing the affected sources, expected gain, detected platform-specific command/setup action, scope, permissions/data transfer, verification step, and fallback limitation. Do not silently choose the fallback first, stop after installation without using the tool, or repeat the proposal in an unchanged environment.
+If a preferred product is missing but an available method meets the evidence requirements, use that method; installation is not a gate. If the missing capability is needed for correctness or offers a concrete net benefit after setup and verification, acquire it: use an authorized isolated install, verify one representative operation, then use it; otherwise make one concrete authorization request naming sources, expected gain, platform-specific action, permissions/data transfer, verification, and fallback limitation. Continue unaffected work. Do not silently lower evidence quality, install without using the tool, or repeat an unchanged proposal.
 
 ## Docling handoff
 
@@ -85,14 +85,17 @@ The original file remains the source of truth. The generated `index.sqlite` stor
 
 Declared `minOccurs`/`maxOccurs`, `use`, type/base/ref relationships, compositors, facets, documentation, Schematron rules/assertions, and extension error codes survive normalization. `presence` is conservative: `required` means the declaration itself and its known ancestors require it; an element below `choice` or an optional ancestor is `conditional`; an explicit zero minimum is `optional`. It is not a proof of all effective cardinalities across type inheritance, substitution groups, includes/imports, or XSD 1.1 assertions. Select `xmlschema` or a licensed XSD 1.1 processor when those semantics are material.
 
-Normal Retrieval needs no separate schema command: `evidence-pack` searches the compact facts automatically. For ingestion debugging only:
+Use `schema-query` for structural questions, or let an evidence pack include compact schema facts with contextual passages. A bounded normalization preview can help inspect a block:
 
 ```bash
 scripts/corpus normalize-xml-schema SOURCE.md --include-records --limit 20
-scripts/corpus schema-query index.sqlite FIELD_NAME --kind element --purpose adapter-debugging --purpose-reason "inspect normalization"
+scripts/corpus normalize-xml-schema SOURCE.md --name FIELD --name OTHER_FIELD --max-total-chars 24000
+scripts/corpus schema-query index.sqlite FIELD_NAME --kind element
 ```
 
-`schema-query` is bounded and diagnostic; it must not replace `evidence-pack`, task receipts, support/control coverage, or original-locator verification. When the source hash and normalizer version are unchanged, `index` reuses the persisted IR without reparsing. A source or normalizer-version change invalidates the derived index generation.
+Repeat `--name` for an exact-name batch without creating an index. It implies record output, retains every matching declaration across blocks, and reports unmatched names explicitly. `record_count` and continuation offsets refer to the filtered selection; block counts still describe the whole source. Keep the same names and source hash when continuing. This is declared structure, not resolved effective semantics or a substitute for prose conditions.
+
+`schema-query` is a normal bounded retrieval route. Inspect relevant ancestors and definitions before interpreting requiredness: declarations alone do not prove effective semantics. XML text retains mixed-content order, whitespace and literals under XML parsing semantics; record expansion beyond the parser's safety budget fails explicitly rather than silently cutting evidence. Oversized records return `record_fragment` JSON substrings; concatenate fragments before parsing or interpreting the record. Continue with both `next_offset` and `next_start_char`, plus `--expected-fingerprint` for `schema-query` or `--source-hash` for `normalize-xml-schema`. Record offset advances only after the entire record. A pack that cannot include a full schema record exposes a gap and continuation, not a partial fact. Unchanged block hashes and normalizer versions permit IR reuse.
 
 ## Normalized inputs for `scripts/corpus`
 
@@ -103,6 +106,8 @@ For Markdown or text:
 - Markdown headings become section metadata.
 - Form-feed characters split pages.
 - A line such as `<!-- page: 12 -->` sets explicit page metadata for following text.
+
+Physical line locators count LF only; form feeds and Unicode separators do not invent source lines. Chunk text preserves literal whitespace. Exact deduplication compares source text bytes, not a whitespace-normalized approximation.
 
 For JSONL, each non-empty line is an object with this shape:
 
@@ -120,7 +125,9 @@ The helper hashes every normalized input and verifies that its filesystem identi
 
 The disposable working copy uses no on-disk rollback journal: a handled parse, source-consistency, or database failure deletes that copy and leaves the published index untouched. An interrupted process can leave its hidden `.tmp` working file, but cannot publish it. Delta deletion enables SQLite `secure_delete` so removed source text is not retained in free cells of the published database. Before publication the helper restores the normal SQLite journal mode and closes both databases, including on Windows. This does not promise forensic erasure from storage media, backups, snapshots, or operating-system caches. `index` refuses to clear a non-empty index when no supported source files remain, protecting against a temporarily unavailable corpus. Keep authorized originals outside the generated index.
 
-The reusable FTS index and its schema IR, cross-session receipts, and durable research state are separate `index.sqlite`, `receipts.sqlite`, and `research.sqlite` files. Never pass either state database to `index`, or store conclusions in the index. After a rebuild, live fingerprint checks exclude stale receipts by default; `receipts-sync` updates the receipt-store binding and `research-sync` only rebinds investigation state.
+Chunk size is part of index identity: changing it rebuilds affected chunks and changes the generation, even if source bytes are unchanged. Index/pack batches reuse one checked source-path inventory internally; source hashing is not replaced by `mtime` trust. Content-bound passage IDs do not silently resolve to replacement text.
+
+The index, query receipts and research state remain separate. Never pass state databases to `index`. Generation checks exclude stale receipts; `research-sync` also invalidates affected evidence confirmations, without promoting old findings. See [memory contracts](evidence-schema.md).
 
 By default, `index` accepts at most 256 MiB per source and 8 GiB across the corpus. A full build checks for input-size plus headroom; a delta update checks for the existing database snapshot, changed input, and headroom. It creates owner-only (`0600`) database files on POSIX systems. Windows uses the containing directory's ACL, so place sensitive indexes in an appropriately restricted directory. Override size caps only for an authorized, understood corpus. `compare` applies the same per-source limit and also caps normalized comparison units. Inspect exact defaults and overrides with command `--help`.
 

@@ -12,6 +12,36 @@ def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(description=__doc__)
     subparsers = root.add_subparsers(dest="command", required=True)
 
+    read_text = subparsers.add_parser(
+        "read-text", help="Read/search numbered text without an index; optionally read memory first"
+    )
+    read_text.add_argument("source", type=Path)
+    read_text.add_argument("--lines", nargs="+", default=[], help="Inclusive START:END ranges or line numbers")
+    read_text.add_argument("--find", action="append", default=[], help="Case-insensitive literal; repeat for OR; --lines limits search scope")
+    read_text.add_argument("--context", type=int, help="Extra lines around matches (default 3; prose mode 0)")
+    read_text.add_argument("--prose", action="store_true", help="Query-diversified Markdown paragraphs/tables without fenced code; code remains accessible without this flag")
+    read_text.add_argument("--max-chars", type=int, default=24000, help="Entire serialized response, including metadata and newline")
+    read_text.add_argument("--after-line", type=int, default=0, help="Continue after this received source line in the same selection order")
+    read_text.add_argument("--source-hash", help="Reject continuation when source bytes changed")
+    memory = read_text.add_mutually_exclusive_group()
+    memory.add_argument("--memory-dir", type=Path, help="Inspect existing ordinary notes; unknown provenance needs assessment")
+    memory.add_argument("--memory", type=Path, help="Answer note written by save-answer; checks current source bytes")
+    read_text.add_argument("--scope", help="Select an exact key when known; otherwise return candidates for assessment")
+    read_text.add_argument("--memory-offset", type=int, default=0)
+    read_text.add_argument("--memory-hash", help="Required on subsequent answer pages")
+    read_text.set_defaults(handler=("text_reader", "command_read_text"))
+
+    save_answer = subparsers.add_parser("save-answer", help="Upsert answer points with explicit assessments; checks evidence mechanics, not meaning")
+    save_answer.add_argument("source", type=Path)
+    save_answer.add_argument("--memory", type=Path, required=True)
+    save_answer.add_argument("--scope", required=True)
+    save_answer.add_argument("--source-hash", required=True, help="Hash of the snapshot actually researched")
+    body = save_answer.add_mutually_exclusive_group(required=True)
+    body.add_argument("--points", help="JSON object keyed by stable point IDs, or - for UTF-8 stdin; see evidence-schema.md")
+    body.add_argument("--points-file", type=Path, help="Existing prepared JSON; do not create an intermediate file just for this command")
+    save_answer.add_argument("--reviewed", nargs="+", default=[], metavar="ID", help="Updated points actually reviewed in this invocation; required for new/changed confirmations")
+    save_answer.set_defaults(handler=("text_memory", "command_save_answer"))
+
     doctor = subparsers.add_parser(
         "doctor", help="Check Python, SQLite FTS5, and directory write access"
     )
@@ -78,6 +108,9 @@ def parser() -> argparse.ArgumentParser:
     )
     normalize_xml_schema.add_argument("--limit", type=int, default=20)
     normalize_xml_schema.add_argument("--offset", type=int, default=0)
+    normalize_xml_schema.add_argument("--start-char", type=int, default=0, help="Continue a serialized record fragment")
+    normalize_xml_schema.add_argument("--source-hash", help="Reject continuation after source bytes change")
+    normalize_xml_schema.add_argument("--name", action="append", default=[], help="Exact declaration name; repeat to batch structural checks without an index (implies --include-records)")
     normalize_xml_schema.add_argument("--max-total-chars", type=int, default=12000)
     normalize_xml_schema.add_argument("--pretty", action="store_true")
     normalize_xml_schema.set_defaults(
@@ -86,7 +119,7 @@ def parser() -> argparse.ArgumentParser:
 
     schema_query = subparsers.add_parser(
         "schema-query",
-        help="Run a bounded diagnostic query over persisted schema records",
+        help="Search persisted schema records with bounded output and continuation",
     )
     schema_query.add_argument("db", type=Path, help="SQLite index path")
     schema_query.add_argument("query", help="Name, path, documentation, or fact substring")
@@ -95,14 +128,15 @@ def parser() -> argparse.ArgumentParser:
     schema_query.add_argument("--schema", help="Restrict to a schema name substring")
     schema_query.add_argument("--limit", type=int, default=10)
     schema_query.add_argument("--offset", type=int, default=0)
+    schema_query.add_argument("--start-char", type=int, default=0, help="Continue a serialized record fragment")
+    schema_query.add_argument("--expected-fingerprint", help="Index generation returned by the previous page")
     schema_query.add_argument("--max-total-chars", type=int, default=12000)
     schema_query.add_argument(
         "--purpose",
-        choices=("adapter-debugging", "custom-adapter"),
-        required=True,
-        help="Explicit diagnostic use; ordinary retrieval must use evidence-pack",
+        choices=("scoped-search", "adapter-debugging", "custom-adapter"),
+        default="scoped-search",
     )
-    schema_query.add_argument("--purpose-reason", required=True)
+    schema_query.add_argument("--purpose-reason")
     schema_query.add_argument("--pretty", action="store_true")
     schema_query.set_defaults(handler=("index", "command_schema_query"))
 
@@ -253,6 +287,7 @@ def parser() -> argparse.ArgumentParser:
     catalog_search.add_argument("--date")
     catalog_search.add_argument("--limit", type=int, default=8)
     catalog_search.add_argument("--offset", type=int, default=0)
+    catalog_search.add_argument("--continuation", help="Opaque cursor returned by the previous page")
     catalog_search.add_argument("--max-chars", type=int, default=1600)
     catalog_search.add_argument("--max-total-chars", type=int, default=20000)
     catalog_search.add_argument("--snippet-tokens", type=int, default=48)
@@ -292,6 +327,9 @@ def parser() -> argparse.ArgumentParser:
     )
     catalog_get.add_argument("db", type=Path, help="Catalog SQLite database path")
     catalog_get.add_argument("locators", nargs="+")
+    catalog_get.add_argument("--offset", type=int, default=0)
+    catalog_get.add_argument("--start-char", type=int, default=0)
+    catalog_get.add_argument("--expected-fingerprint", help="Expected generation for a single-corpus raw locator")
     catalog_get.add_argument("--max-chars", type=int, default=6000)
     catalog_get.add_argument("--max-total-chars", type=int, default=20000)
     catalog_get.add_argument("--pretty", action="store_true", help="Pretty-print JSON output")
@@ -520,9 +558,9 @@ def parser() -> argparse.ArgumentParser:
     search.add_argument("query", help="Search text or FTS5 expression")
     search.add_argument(
         "--purpose",
-        choices=("named-gap", "adapter-debugging", "custom-adapter"),
-        required=True,
-        help="Explicit lower-level use; ordinary Retrieval must use evidence-pack",
+        choices=("scoped-search", "named-gap", "adapter-debugging", "custom-adapter"),
+        default="scoped-search",
+        help="Optional retrieval purpose; a task receipt is not required for normal search",
     )
     search.add_argument("--task-receipt", type=Path)
     search.add_argument("--gap-facet")
@@ -540,6 +578,7 @@ def parser() -> argparse.ArgumentParser:
     search.add_argument("--date", help="Restrict to an exact document date value")
     search.add_argument("--limit", type=int, default=4)
     search.add_argument("--offset", type=int, default=0, help="Continue at this result offset")
+    search.add_argument("--expected-fingerprint", help="Reject continuation after index generation changes")
     search.add_argument(
         "--max-chars", type=int, default=1600, help="Maximum characters returned per result"
     )
@@ -596,9 +635,8 @@ def parser() -> argparse.ArgumentParser:
     search_many.add_argument("input", type=Path, help="JSON array or object with queries")
     search_many.add_argument(
         "--purpose",
-        choices=("named-gap", "adapter-debugging", "custom-adapter"),
-        required=True,
-        help="Explicit lower-level use; ordinary Retrieval must use evidence-pack",
+        choices=("scoped-search", "named-gap", "adapter-debugging", "custom-adapter"),
+        default="scoped-search",
     )
     search_many.add_argument("--task-receipt", type=Path)
     search_many.add_argument("--gap-facet")
@@ -650,8 +688,8 @@ def parser() -> argparse.ArgumentParser:
     evidence_pack.add_argument(
         "--execution-route",
         choices=EVIDENCE_EXECUTION_ROUTES,
-        required=True,
-        help="Executor route; auto performs deterministic cost routing",
+        default="coordinator-direct",
+        help="Executor route; defaults to inline interpretation",
     )
     evidence_pack.add_argument(
         "--executor",
@@ -670,12 +708,27 @@ def parser() -> argparse.ArgumentParser:
     evidence_pack.add_argument(
         "--pack-output",
         type=Path,
-        help="Write a worker-selected evidence pack here; required for --execution-route auto",
+        help="Write a worker-selected evidence pack here when delegation is selected",
     )
     evidence_pack.add_argument(
         "--routing-profile",
         type=Path,
         help="Optional measured cost profile for deterministic auto routing",
+    )
+    evidence_pack.add_argument(
+        "--parent-context-tokens",
+        type=int,
+        help="Measured parent-context tokens used by deterministic route costing",
+    )
+    evidence_pack.add_argument(
+        "--expected-direct-turns",
+        type=float,
+        help="Expected remaining parent model turns without isolation",
+    )
+    evidence_pack.add_argument(
+        "--expected-delegated-parent-turns",
+        type=float,
+        help="Expected remaining parent turns when a no-history worker is used",
     )
     evidence_pack.add_argument("--chunk-chars", type=int, default=3500)
     evidence_pack.add_argument(
@@ -707,7 +760,7 @@ def parser() -> argparse.ArgumentParser:
     findings_save.add_argument(
         "--execution-route",
         choices=("coordinator-direct", "low-overhead-worker", "coordinator-fallback"),
-        required=True,
+        default="coordinator-direct",
         help="Actual model route that produced the findings",
     )
     findings_save.add_argument("--executor")
@@ -723,17 +776,18 @@ def parser() -> argparse.ArgumentParser:
     get.add_argument("passage_ids", type=int, nargs="+", help="Passage IDs from search results")
     get.add_argument(
         "--purpose",
-        choices=("named-gap", "adapter-debugging", "custom-adapter", "locator-verification"),
-        required=True,
-        help="Explicit lower-level use; ordinary Retrieval must use evidence-pack",
+        choices=("scoped-search", "named-gap", "adapter-debugging", "custom-adapter", "locator-verification"),
+        default="scoped-search",
     )
     get.add_argument("--task-receipt", type=Path)
     get.add_argument("--gap-facet")
     get.add_argument("--purpose-reason")
+    get.add_argument("--around", help="Open matching context initially; explicit --start-char resumes without re-anchoring")
+    get.add_argument("--expected-fingerprint", help="Reject retrieval after index generation changes")
     get.add_argument("--limit", type=int, default=12)
     get.add_argument("--offset", type=int, default=0, help="Continue at this passage offset")
     get.add_argument(
-        "--start-char", type=int, default=0, help="Continue within the passage at --offset"
+        "--start-char", type=int, default=None, help="Continue within the passage at --offset (including 0 for its prefix)"
     )
     get.add_argument("--max-chars", type=int, default=6000, help="Maximum characters per passage")
     get.add_argument("--max-total-chars", type=int, default=20000)

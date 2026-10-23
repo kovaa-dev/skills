@@ -33,6 +33,8 @@ from .common import (
 
 from .research_store import (
     clip_research_record,
+    decode_catalog_scope,
+    evidence_freshness,
     normalized_id_array,
     require_facet,
     require_research_database,
@@ -94,6 +96,12 @@ def write_research_record(
             """,
             (record_id, question, status, next_action, now),
         )
+        if existing is not None and existing["question"] != question:
+            connection.execute(
+                "UPDATE evidence SET verified = 0, status = CASE WHEN status = 'confirmed' "
+                "THEN 'unresolved' ELSE status END, updated_at = ? WHERE facet_id = ?",
+                (now, record_id),
+            )
     elif args.kind == "evidence":
         facet_id = required_record_id(
             record_value(args, existing, "facet", "facet_id"), "--facet"
@@ -113,17 +121,25 @@ def write_research_record(
             if state_values["binding_kind"] == "catalog":
                 if corpus_id is None:
                     raise ValueError("--corpus-id is required for catalog-bound evidence")
+                scoped_ids, scoped_boundaries, _ = decode_catalog_scope(
+                    state_values["catalog_scope_json"]
+                )
+                if corpus_id not in scoped_ids:
+                    raise ValueError("Evidence corpus is outside the research catalog scope")
                 catalog_path = require_catalog_database(
                     Path(str(state_values["catalog_path"]))
                 )
                 with database(catalog_path, readonly=True) as catalog:
-                    if catalog.execute(
-                        "SELECT 1 FROM corpora WHERE corpus_id = ? AND enabled = 1",
+                    corpus = catalog.execute(
+                        "SELECT access_boundary FROM corpora WHERE corpus_id = ? AND enabled = 1",
                         (corpus_id,),
-                    ).fetchone() is None:
+                    ).fetchone()
+                    if corpus is None:
                         raise ValueError(
                             f"Catalog has no enabled corpus with ID: {corpus_id}"
                         )
+                    if scoped_boundaries and corpus["access_boundary"] not in scoped_boundaries:
+                        raise ValueError("Evidence corpus is outside the research catalog scope")
             elif corpus_id is not None:
                 raise ValueError("--corpus-id is only valid for catalog-bound evidence")
         finding = required_research_text(
@@ -162,6 +178,9 @@ def write_research_record(
         confidence = record_value(args, existing, "confidence")
         if confidence is not None and confidence not in CONFIDENCE_VALUES:
             raise ValueError(f"Unsupported confidence: {confidence}")
+        status = str(record_value(args, existing, "status", default="unresolved"))
+        if status not in {"confirmed", "interpretation", "unresolved", "conflicted"}:
+            raise ValueError(f"Unsupported evidence status: {status}")
         verified_raw = record_value(args, existing, "verified", default=0)
         if isinstance(verified_raw, str):
             if verified_raw not in {"true", "false"}:
@@ -171,13 +190,26 @@ def write_research_record(
             verified = int(verified_raw)
             if verified not in {0, 1}:
                 raise ValueError("--verified must be true or false")
+        if existing is not None and args.verified is None:
+            evidence_values = {
+                "facet_id": facet_id, "corpus_id": corpus_id, "finding": finding,
+                "source": source, "source_version": source_version, "source_hash": source_hash,
+                "page": page, "section": section, "passage_id": passage_id,
+                "excerpt": excerpt, "interpretation": interpretation, "confidence": confidence,
+                "status": status,
+            }
+            if any(existing[key] != value for key, value in evidence_values.items()):
+                # Verification belongs to the reviewed evidence, not its mutable ID.
+                verified = 0
+                if status == "confirmed" and args.status is None:
+                    status = "unresolved"
         connection.execute(
             """
             INSERT INTO evidence(
                 evidence_id, facet_id, corpus_id, finding, source, source_version,
                 source_hash, page, section, passage_id, excerpt,
-                interpretation, confidence, verified, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                interpretation, confidence, status, verified, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(evidence_id) DO UPDATE SET
                 facet_id = excluded.facet_id,
                 corpus_id = excluded.corpus_id,
@@ -191,6 +223,7 @@ def write_research_record(
                 excerpt = excluded.excerpt,
                 interpretation = excluded.interpretation,
                 confidence = excluded.confidence,
+                status = excluded.status,
                 verified = excluded.verified,
                 updated_at = excluded.updated_at
             """,
@@ -208,6 +241,7 @@ def write_research_record(
                 excerpt,
                 interpretation,
                 confidence,
+                status,
                 verified,
                 now,
             ),
@@ -504,7 +538,7 @@ def command_research_list(args: argparse.Namespace) -> int:
     summary = args.summary if args.summary is not None else args.kind == "evidence"
     definitions = {
         "facets": ("facets", "facet_id", "status"),
-        "evidence": ("evidence", "evidence_id", "confidence"),
+        "evidence": ("evidence", "evidence_id", "status"),
         "gaps": ("gaps", "gap_id", "status"),
         "conflicts": ("conflicts", "conflict_id", "status"),
     }
@@ -539,8 +573,11 @@ def command_research_list(args: argparse.Namespace) -> int:
     records: list[dict[str, object]] = []
     characters = 0
     output_truncated = False
+    freshness_cache: dict[str, tuple[object, str]] = {}
     for row in candidates:
         item = clip_research_record(research_record(row), args.max_chars)
+        if args.kind == "evidence":
+            item.update(evidence_freshness(dict(state), dict(row), freshness_cache))
         if summary:
             item = summarize_research_record(args.kind, item)
         output_truncated = output_truncated or bool(item.get("truncated_fields"))

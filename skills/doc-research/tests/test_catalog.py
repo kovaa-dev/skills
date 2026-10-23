@@ -242,7 +242,8 @@ class CatalogCliTest(CorpusCliTestCase):
                 run_corpus("catalog-search", catalog, "needle", "--limit", 4).stdout
             )
             self.assertTrue(repeated["receipt_hit"])
-            self.assertTrue(all("text" not in item for item in repeated["results"]))
+            self.assertEqual(repeated["results"], payload["results"])
+            self.assertEqual(repeated["characters"], payload["characters"])
 
             research = root / "research.sqlite"
             self.assertEqual(

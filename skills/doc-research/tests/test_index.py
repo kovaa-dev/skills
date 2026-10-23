@@ -4,6 +4,98 @@ from test_support import *
 
 
 class IndexCliTest(CorpusCliTestCase):
+    def test_jsonl_literal_whitespace_survives_index_dedupe_and_compare(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, db = root / "source.jsonl", root / "index.sqlite"
+            texts = ["  Needle ID=A  B\tC  ", "  Needle ID=A B C  "]
+            source.write_text("\n".join(json.dumps({"text": text}) for text in texts), encoding="utf-8")
+            self.assertEqual(run_corpus("index", source, "--db", db).returncode, 0)
+            found = json.loads(run_corpus("search", db, "Needle", "--dedupe-exact").stdout)
+            self.assertEqual(found["result_count"], 2)
+            opened = json.loads(run_corpus("get", db, *(item["passage_id"] for item in found["results"])).stdout)
+            self.assertEqual({item["text"] for item in opened["results"]}, set(texts))
+            left, right = root / "left.txt", root / "right.txt"
+            left.write_text(texts[0], encoding="utf-8")
+            right.write_text(texts[1], encoding="utf-8")
+            compared = json.loads(run_corpus("compare", left, right).stdout)
+            self.assertFalse(compared["identical"])
+            self.assertFalse(compared["comparison_units_equal"])
+            self.assertIn("ID=A  B\tC", compared["diff"])
+
+    def test_exact_text_physical_lines_and_changed_chunk_configuration(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, db = root / "source.txt", root / "index.sqlite"
+            literal = "ID=A  B\tC"
+            source.write_text("first\f" + literal + "\nthird\u2028fourth\n" + " tail" * 500, encoding="utf-8")
+            first = run_corpus("index", source, "--db", db, "--max-chars", 12000)
+            self.assertEqual(first.returncode, 0, first.stderr)
+            with closing(sqlite3.connect(db)) as connection:
+                row = connection.execute("SELECT rowid,text,line_start,line_end FROM chunks WHERE text LIKE '%ID=%'").fetchone()
+            self.assertIn(literal, row[1])
+            self.assertIn("third\u2028fourth", row[1])
+            self.assertEqual((row[2], row[3]), (1, 3))
+            previous_id = row[0]
+            updated = run_corpus("index", source, "--db", db, "--max-chars", 500)
+            self.assertEqual(updated.returncode, 0, updated.stderr)
+            self.assertEqual(json.loads(updated.stdout)["files_indexed"], 1)
+            stale = json.loads(run_corpus("get", db, previous_id).stdout)
+            self.assertEqual(stale["not_found"], [previous_id])
+            source.write_text("Completely different replacement evidence", encoding="utf-8")
+            self.assertEqual(run_corpus("index", source, "--db", db).returncode, 0)
+            self.assertEqual(json.loads(run_corpus("get", db, previous_id).stdout)["results"], [])
+
+    def test_schema_long_record_continuation_and_generation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, db = root / "schema.xsd", root / "index.sqlite"
+            documentation = "D" * 12000 + " CriticalException"
+            source.write_text('<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="Needle"><xs:annotation><xs:documentation>' + documentation + '</xs:documentation></xs:annotation></xs:element></xs:schema>', encoding="utf-8")
+            self.assertEqual(run_corpus("index", source, "--db", db).returncode, 0)
+            fragments, cursor, fingerprint = [], 0, None
+            for _ in range(80):
+                command = ["schema-query", db, "Needle", "--kind", "element", "--max-total-chars", 1200, "--start-char", cursor]
+                if fingerprint:
+                    command.extend(["--expected-fingerprint", fingerprint])
+                result = run_corpus(*command)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertLessEqual(len(result.stdout), 1200)
+                payload = json.loads(result.stdout)
+                fingerprint = payload["index_fingerprint"]
+                fragments.append(payload["results"][0]["record_fragment"])
+                if not payload["has_more"]:
+                    break
+                self.assertEqual(payload["next_offset"], 0)
+                self.assertGreater(payload["next_start_char"], cursor)
+                cursor = payload["next_start_char"]
+            else:
+                self.fail("Schema continuation did not terminate")
+            record = json.loads("".join(fragments))
+            self.assertEqual(record["documentation"], documentation)
+            source.write_text(source.read_text().replace("CriticalException", "ChangedException"))
+            self.assertEqual(run_corpus("index", source, "--db", db).returncode, 0)
+            rejected = run_corpus("schema-query", db, "Needle", "--expected-fingerprint", fingerprint)
+            self.assertNotEqual(rejected.returncode, 0)
+            self.assertIn("generation changed", rejected.stderr)
+
+    def test_get_around_prefix_cursor_progresses_with_identical_selectors(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, db = root / "source.txt", root / "index.sqlite"
+            source.write_text("background " * 600 + "Needle decisive tail", encoding="utf-8")
+            self.assertEqual(run_corpus("index", source, "--db", db, "--max-chars", 12000).returncode, 0)
+            hit = json.loads(run_corpus("search", db, "Needle").stdout)["results"][0]
+            first = json.loads(run_corpus("get", db, hit["passage_id"], "--around", "Needle", "--max-chars", 800).stdout)
+            self.assertEqual((first["next_offset"], first["next_start_char"]), (0, 0))
+            second = run_corpus("get", db, hit["passage_id"], "--around", "Needle", "--max-chars", 800,
+                                "--offset", first["next_offset"], "--start-char", first["next_start_char"], "--max-total-chars", 1200)
+            self.assertEqual(second.returncode, 0, second.stderr)
+            self.assertLessEqual(len(second.stdout), 1200)
+            page = json.loads(second.stdout)
+            self.assertGreater(page["next_start_char"], 0)
+            self.assertNotEqual(first["results"][0]["text"], page["results"][0]["text"])
+
     def test_single_file_can_be_indexed_and_incrementally_refreshed(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -36,6 +128,8 @@ class IndexCliTest(CorpusCliTestCase):
             self.assertEqual(refresh_payload["files_indexed"], 1)
             found = json.loads(run_corpus("search", database, "changed marker").stdout)
             self.assertEqual(found["result_count"], 1)
+            self.assertEqual(found["results"][0]["line_start"], 7)
+            self.assertEqual(found["results"][0]["line_end"], 9)
 
     def test_info_reports_bounded_index_inventory(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -53,7 +147,7 @@ class IndexCliTest(CorpusCliTestCase):
             first = run_corpus("info", database, "--source-limit", 1)
             self.assertEqual(first.returncode, 0, first.stderr)
             payload = json.loads(first.stdout)
-            self.assertEqual(payload["schema_version"], 2)
+            self.assertEqual(payload["schema_version"], 3)
             self.assertEqual(payload["corpus"], str(corpus.resolve()))
             self.assertEqual(payload["source_count"], 2)
             self.assertEqual(payload["chunk_count"], 2)

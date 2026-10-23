@@ -225,3 +225,10 @@ class IngestionCliTest(CorpusCliTestCase):
                 env=environment,
             )
             self.assertEqual(overridden.returncode, 0, overridden.stderr)
+            # Explicit-interpreter invocation must not parse shell as Python.
+            explicit = subprocess.run(
+                [sys.executable, str(launcher), "doctor", "--write-dir", str(root)],
+                check=False, capture_output=True, text=True,
+            )
+            self.assertEqual(explicit.returncode, 0, explicit.stderr)
+            self.assertTrue(json.loads(explicit.stdout)["python_ok"])

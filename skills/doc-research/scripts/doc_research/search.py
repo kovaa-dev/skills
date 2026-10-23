@@ -1,26 +1,76 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import re
 from pathlib import Path
+from typing import Callable
 
-from .common import MAX_BATCH_QUERIES, MAX_FILTER_TEXT, MAX_QUERY_TEXT, database, emit_json, load_bounded_json, lower_level_purpose_record, optional_research_text, required_record_id, required_research_text
-from .index import bounded_rows, index_fingerprint, like_contains, literal_query, prefix_query, require_current_schema, require_database, search_row_locator, select_search_rows
+from .common import MAX_BATCH_QUERIES, MAX_FILTER_TEXT, MAX_QUERY_TEXT, database, emit_json, load_bounded_json, lower_level_purpose_record, lower_level_task_receipt, optional_research_text, required_record_id, required_research_text
+from .index import bounded_rows, index_fingerprint, iter_source_files, like_contains, literal_query, prefix_query, require_current_schema, require_database, search_row_locator, select_search_rows, validate_output_paths
 from .receipts import lookup_cached_receipt, receipt_cache_id, save_cached_receipt
 from .research_links import link_receipt_to_research, validate_research_receipt_link
-from .common import SQLITE_OPERATIONAL_ERROR
+from .common import SQLITE_OPERATIONAL_ERROR, sqlite3
 
 
 FTS_BOOLEAN_OPERATORS = (" AND ", " OR ", " NOT ", " NEAR ")
 
 
+def register_task_results(args: argparse.Namespace, payload: dict[str, object]) -> None:
+    if getattr(args, "task_receipt", None) is None or getattr(args, "gap_facet", None) is None:
+        return
+    from .evidence_pack import _compact_locators, _write_task_receipt
+
+    receipt = lower_level_task_receipt(args)
+    facet_id = required_record_id(args.gap_facet, "--gap-facet")
+    facet = next((item for item in receipt["facets"] if item["id"] == facet_id), None)
+    if facet is None:
+        raise ValueError(f"Task receipt has no facet {facet_id}")
+    raw_results = payload.get("results", [])
+    flattened = []
+    for result in raw_results:
+        flattened.append(result)
+        flattened.extend(result.get("also_in", []))
+    locators = _compact_locators(flattened)
+    if not locators:
+        return
+    with database(require_database(args.db), readonly=True) as connection:
+        for passage_id, locator in locators.items():
+            row = connection.execute(
+                "SELECT rowid AS passage_id, source_path, source, source_hash, page, "
+                "section, version, date, line_start, line_end FROM chunks WHERE rowid = ?",
+                (passage_id,),
+            ).fetchone()
+            if row is None or row["source_hash"] != locator.get("source_hash"):
+                raise ValueError("Search result is stale for this index")
+            # Use authoritative index metadata, including aliases' line locators.
+            locators[passage_id] = _compact_locators([dict(row)])[passage_id]
+    new_ids = set(locators) - set(facet["passage_ids"])
+    all_ids = {value for item in receipt["facets"] for value in item["passage_ids"]}
+    if len(all_ids | new_ids) > 10_000:
+        raise ValueError("Task receipt exceeds 10000 locators; use a separate investigation scope")
+    if not new_ids:
+        return
+    facet["passage_ids"].extend(passage_id for passage_id in locators if passage_id in new_ids)
+    facet["locators"].extend(locator for passage_id, locator in locators.items() if passage_id in new_ids)
+    gaps = receipt.setdefault("gaps", [])
+    if not any(gap.get("facet_id") == facet_id for gap in gaps):
+        gaps.append({"facet_id": facet_id, "reason": "new-evidence-needs-review"})
+    receipt["next_mode"] = "named-gap"
+    _write_task_receipt(Path(args.task_receipt), receipt)
+
+
 def resolved_query_mode(query: str, requested_mode: str) -> str:
     if requested_mode != "auto":
         return requested_mode
-    padded = f" {query.upper()} "
+    # FTS operators are uppercase; ordinary title words such as "and" are not
+    # a request to interpret surrounding punctuation as an FTS expression.
+    padded = f" {query} "
     if any(operator in padded for operator in FTS_BOOLEAN_OPERATORS):
         return "fts"
-    if '"' in query or "(" in query or ")" in query:
+    # Parentheses alone commonly belong to titles and section identifiers.
+    if '"' in query or re.search(r"\bNEAR\s*\(", query):
         return "fts"
     if "*" in query:
         return "prefix"
@@ -28,7 +78,7 @@ def resolved_query_mode(query: str, requested_mode: str) -> str:
 
 
 def deduplicate_batch_snippets(
-    payload: dict[str, object], seen_passages: set[tuple[object, object]]
+    payload: dict[str, object], seen_passages: set[tuple[object, object, object]]
 ) -> int:
     raw_results = payload.get("results")
     if not isinstance(raw_results, list):
@@ -44,7 +94,8 @@ def deduplicate_batch_snippets(
         passage_id = result.get("passage_id")
         source_hash = result.get("source_hash")
         text = result.get("text")
-        key = (source_hash, passage_id)
+        # The same passage can expose different evidence for different queries.
+        key = (source_hash, passage_id, text)
         if passage_id is not None and isinstance(text, str):
             if key in seen_passages:
                 removed_characters += len(text)
@@ -64,7 +115,77 @@ def deduplicate_batch_snippets(
     return duplicate_count
 
 
-def search_payload(args: argparse.Namespace) -> dict[str, object]:
+def _attach_content_hashes(results: list[dict[str, object]], rows: list[sqlite3.Row]) -> None:
+    by_id = {row["passage_id"]: row for row in rows}
+    for result in results:
+        text = str(by_id[result["passage_id"]]["full_text"] or "")
+        result["_content_hash"] = hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _response_size(payload: dict[str, object], pretty: bool = False) -> int:
+    options = {"indent": 2} if pretty else {"separators": (",", ":")}
+    return len(json.dumps(payload, ensure_ascii=False, **options)) + 1
+
+
+def _bound_search_response(
+    payload: dict[str, object], args: argparse.Namespace, positions: Callable[[], list[int]]
+) -> dict[str, object]:
+    """Bound the complete wire response, preserving locator identities and raw offsets."""
+    results = payload["results"]
+    original_count = len(results)
+    raw_positions = None
+
+    def fits() -> bool:
+        if _response_size(payload, args.pretty) > args.max_total_chars:
+            return False
+        envelope = getattr(args, "_response_envelope", None)
+        return envelope is None or _response_size(envelope(payload), args.pretty) <= args._response_limit
+
+    def update() -> None:
+        nonlocal raw_positions
+        payload["result_count"] = len(results)
+        payload["characters"] = sum(len(item.get("text", "")) for item in results)
+        if len(results) < original_count:
+            if raw_positions is None:
+                raw_positions = positions()
+            payload["has_more"] = True
+            payload["next_offset"] = args.offset + raw_positions[len(results)]
+        if any(item.get("text_truncated") for item in results):
+            payload["text_truncated"] = True
+
+    update()
+    while not fits():
+        if not results:
+            raise ValueError("--max-total-chars is too small for search response metadata")
+        last = results[-1]
+        original_text = last.get("text", "")
+        last["text_truncated"] = True
+        last["text"] = original_text[:1]
+        update()
+        if fits():
+            low, high = 1, len(original_text)
+            while low < high:
+                middle = (low + high + 1) // 2
+                last["text"] = original_text[:middle]
+                update()
+                if fits():
+                    low = middle
+                else:
+                    high = middle - 1
+            last["text"] = original_text[:low]
+            update()
+            return payload
+        if len(results) == 1:
+            raise ValueError("--max-total-chars is too small for one search result and its metadata")
+        results.pop()
+        update()
+    return payload
+
+
+def search_payload(
+    args: argparse.Namespace, *, include_content_hash: bool = False,
+    expected_fingerprint: str | None = None,
+) -> dict[str, object]:
     db_path = require_database(args.db)
     if (args.research_db is None) != (args.facet_id is None):
         raise ValueError(
@@ -160,10 +281,11 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
 
     sql = f"""
         SELECT rowid AS passage_id,
-               bm25(chunks, 0.0, 3.0, 0.0, 0.0, 5.0, 0.0, 0.0, 2.0, 1.0) AS score,
+               bm25(chunks, 0.0, 3.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 2.0, 1.0) AS score,
                source_path, source, source_hash, page, section, version, date,
+               line_start, line_end,
                text AS full_text,
-               snippet(chunks, 8, '', '', ' … ', {args.snippet_tokens}) AS text
+               snippet(chunks, 10, '', '', ' … ', {args.snippet_tokens}) AS text
         FROM chunks
         WHERE {' AND '.join(conditions)}
         ORDER BY score, rowid
@@ -176,6 +298,10 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
     try:
         with database(db_path, readonly=True) as connection:
             require_current_schema(connection)
+            fingerprint = index_fingerprint(connection)
+            expected = expected_fingerprint or getattr(args, "expected_fingerprint", None)
+            if expected is not None and expected != fingerprint:
+                raise ValueError("Index fingerprint changed; restart search with the current index")
             corpus_row = connection.execute(
                 "SELECT value FROM metadata WHERE key = 'corpus_root'"
             ).fetchone()
@@ -183,7 +309,12 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
                 raise ValueError("Index database has no corpus binding")
             corpus_root = Path(corpus_row["value"])
             if args.receipts_db is not None:
-                fingerprint = index_fingerprint(connection)
+                if not args.read_only_receipts:
+                    validate_output_paths(
+                        corpus_root, [args.receipts_db, args.research_db],
+                        [db_path, getattr(args, "input", None), getattr(args, "task_receipt", None)],
+                        source_paths=getattr(args, "_source_paths", None),
+                    )
                 receipt_identity = dict(filters)
                 receipt_identity.update(
                     {
@@ -219,25 +350,65 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
                                 facet_id,
                             )
                         references = cached["result_refs"]
-                        if not isinstance(references, list):
-                            raise ValueError("Cached receipt references are not a list")
+                        if not isinstance(references, list) or len(references) > 50 or any(
+                            not isinstance(reference, dict)
+                            or not isinstance(reference.get("passage_id"), int)
+                            or isinstance(reference.get("passage_id"), bool)
+                            for reference in references
+                        ):
+                            raise ValueError("Cached receipt references are invalid")
+                        ids = [reference["passage_id"] for reference in references]
+                        # Receipts retain locators only; reconstruct snippets under the
+                        # caller's current bounds without repeating candidate selection.
+                        cached_rows = connection.execute(
+                            sql.split("WHERE", 1)[0]
+                            + "WHERE chunks MATCH ? AND rowid IN ("
+                            + ",".join("?" for _ in ids)
+                            + ") ORDER BY score, rowid",
+                            [query, *ids],
+                        ).fetchall() if ids else []
+                        results, characters, truncated = bounded_rows(
+                            cached_rows, args.max_chars, args.max_chars * 50
+                        )
+                        if include_content_hash:
+                            _attach_content_hashes(results, cached_rows)
+                        aliases_by_id = {
+                            reference["passage_id"]: reference.get("also_in")
+                            for reference in references
+                        }
+                        for result in results:
+                            if aliases_by_id.get(result["passage_id"]):
+                                result["also_in"] = aliases_by_id[result["passage_id"]]
+                        next_offset = cached["next_offset"]
                         cache_payload: dict[str, object] = {
+                            "index_fingerprint": fingerprint,
+                            "purpose": lower_level_purpose_record(args),
                             "query": raw_query,
                             "mode": mode,
                             "filters": filters,
                             "offset": args.offset,
-                            "result_count": len(references),
-                            "characters": 0,
-                            "has_more": cached["next_offset"] is not None,
-                            "results": references,
+                            "result_count": len(results),
+                            "characters": characters,
+                            "has_more": next_offset is not None,
+                            "results": results,
                             "receipt_hit": True,
                             "receipt_id": cached_receipt_id,
                         }
-                        if cached["next_offset"] is not None:
-                            cache_payload["next_offset"] = cached["next_offset"]
+                        if next_offset is not None:
+                            cache_payload["next_offset"] = next_offset
+                        if truncated:
+                            cache_payload["text_truncated"] = True
                         if args.mode == "auto":
                             cache_payload["requested_mode"] = "auto"
-                        return cache_payload
+                        def cached_positions():
+                            # Cached locator pages omit raw filtered/duplicate positions.
+                            # Recover them only if the current wire budget drops hits.
+                            raw_rows = connection.execute(sql, parameters).fetchall()
+                            return select_search_rows(
+                                raw_rows, args.limit, args.dedupe_exact,
+                                args.max_per_source, candidate_limit,
+                            )[1]
+                        return _bound_search_response(cache_payload, args, cached_positions)
             rows = connection.execute(sql, parameters).fetchall()
     except SQLITE_OPERATIONAL_ERROR as exc:
         raise ValueError(f"Invalid FTS query or index: {exc}") from exc
@@ -255,15 +426,20 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
         args.max_per_source,
         candidate_limit,
     )
+    receipt_next_advance = next_advance
     results, characters, output_truncated = bounded_rows(
-        selected_rows, args.max_chars, args.max_total_chars
+        selected_rows, args.max_chars, args.max_chars * 50
     )
+    if include_content_hash:
+        _attach_content_hashes(results, selected_rows)
     for index, result in enumerate(results):
         aliases = duplicate_locators.get(index)
         if aliases:
             result["also_in"] = aliases
     has_more = filtered_has_more or len(selected_rows) > len(results)
     payload: dict[str, object] = {
+        "index_fingerprint": fingerprint,
+        "purpose": lower_level_purpose_record(args),
         "query": raw_query,
         "mode": mode,
         "filters": filters,
@@ -304,7 +480,7 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
             "has_more": filtered_has_more,
         }
         if filtered_has_more:
-            receipt_payload["next_offset"] = args.offset + next_advance
+            receipt_payload["next_offset"] = args.offset + receipt_next_advance
         else:
             receipt_payload.pop("next_offset", None)
         if args.research_db is not None and facet_id is not None:
@@ -338,11 +514,12 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
     elif args.receipts_db is not None:
         payload["receipt_hit"] = False
         payload["receipt_persisted"] = False
-    return payload
+    return _bound_search_response(payload, args, lambda: selected_positions)
 
 def command_search(args: argparse.Namespace) -> int:
     purpose = lower_level_purpose_record(args)
     payload = search_payload(args)
+    register_task_results(args, payload)
     payload["purpose"] = purpose
     emit_json(payload, args.pretty)
     return 0
@@ -382,6 +559,7 @@ def command_search_many(args: argparse.Namespace) -> int:
         "facet_id",
         "receipt_id",
         "refresh",
+        "gap_facet",
     }
     normalized: list[dict[str, object]] = []
     for index, item in enumerate(items):
@@ -406,6 +584,7 @@ def command_search_many(args: argparse.Namespace) -> int:
             "date",
             "facet_id",
             "receipt_id",
+            "gap_facet",
         ):
             if field in item and item[field] is not None and not isinstance(item[field], str):
                 raise ValueError(f"Batch query {index} field {field} must be a string")
@@ -419,10 +598,34 @@ def command_search_many(args: argparse.Namespace) -> int:
 
     selected = normalized[args.query_offset :]
     outputs: list[dict[str, object]] = []
-    characters = 0
-    processed = 0
-    seen_passages: set[tuple[object, object]] = set()
+    seen_passages: set[tuple[object, object, object]] = set()
     duplicate_snippets_removed = 0
+    source_paths = getattr(args, "_source_paths", None)
+    if source_paths is None and args.receipts_db is not None and not args.read_only_receipts:
+        with database(require_database(args.db), readonly=True) as connection:
+            corpus_row = connection.execute(
+                "SELECT value FROM metadata WHERE key = 'corpus_root'"
+            ).fetchone()
+            if corpus_row is None:
+                raise ValueError("Index database has no corpus binding")
+            source_paths = list(iter_source_files(Path(corpus_row["value"])))
+
+    def batch_response(values, duplicate_count):
+        more = args.query_offset + len(values) < len(normalized)
+        result = {
+            "purpose": purpose,
+            "query_offset": args.query_offset,
+            "query_count": len(values),
+            "characters": sum(_response_size(value) - 1 for value in values),
+            "has_more": more,
+            "results": values,
+        }
+        if duplicate_count:
+            result["duplicate_snippets_removed"] = duplicate_count
+        if more:
+            result["next_query_offset"] = args.query_offset + len(values)
+        return result
+
     for item in selected:
         namespace = argparse.Namespace(
             db=args.db,
@@ -446,33 +649,34 @@ def command_search_many(args: argparse.Namespace) -> int:
             read_only_receipts=args.read_only_receipts,
             dedupe_exact=args.dedupe_exact,
             max_per_source=args.max_per_source,
-            pretty=False,
+            pretty=args.pretty,
+            task_receipt=getattr(args, "task_receipt", None),
+            gap_facet=item.get("gap_facet", getattr(args, "gap_facet", None)),
+            input=args.input,
+            _source_paths=source_paths,
+            _response_envelope=lambda value: batch_response([*outputs, value], duplicate_snippets_removed),
+            _response_limit=args.max_total_chars,
         )
-        payload = search_payload(namespace)
-        duplicate_snippets_removed += deduplicate_batch_snippets(
-            payload, seen_passages
-        )
-        encoded = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-        if outputs and characters + len(encoded) > args.max_total_chars:
-            break
-        if not outputs and len(encoded) > args.max_total_chars:
-            raise ValueError("--max-total-chars is too small for one query result")
+        lower_level_purpose_record(namespace)
+        try:
+            payload = search_payload(namespace)
+        except ValueError as exc:
+            if outputs and "--max-total-chars is too small" in str(exc):
+                break
+            raise
+        trial_seen = set(seen_passages)
+        removed = deduplicate_batch_snippets(payload, trial_seen)
+        trial = batch_response([*outputs, payload], duplicate_snippets_removed + removed)
+        if _response_size(trial, args.pretty) > args.max_total_chars:
+            if outputs:
+                break
+            raise ValueError("--max-total-chars is too small for one query result and its envelope")
+        register_task_results(namespace, payload)
         outputs.append(payload)
-        characters += len(encoded)
-        processed += 1
-
-    has_more = args.query_offset + processed < len(normalized)
-    result: dict[str, object] = {
-        "purpose": purpose,
-        "query_offset": args.query_offset,
-        "query_count": len(outputs),
-        "characters": characters,
-        "has_more": has_more,
-        "results": outputs,
-    }
-    if duplicate_snippets_removed:
-        result["duplicate_snippets_removed"] = duplicate_snippets_removed
-    if has_more:
-        result["next_query_offset"] = args.query_offset + processed
+        seen_passages = trial_seen
+        duplicate_snippets_removed += removed
+    result = batch_response(outputs, duplicate_snippets_removed)
+    if _response_size(result, args.pretty) > args.max_total_chars:
+        raise ValueError("--max-total-chars is too small for batch response metadata")
     emit_json(result, args.pretty)
     return 0

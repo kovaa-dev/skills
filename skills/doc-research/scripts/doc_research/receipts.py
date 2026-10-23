@@ -341,6 +341,8 @@ def lookup_cached_receipt(
     expected_mode: str,
     expected_filters: dict[str, object],
 ) -> dict[str, object] | None:
+    if not receipt_db.exists() and not receipt_db.is_symlink():
+        return None
     store_path = require_receipt_database(receipt_db)
     with database(store_path, readonly=True) as connection:
         validate_receipt_store_connection(connection, index_db, corpus_root)
@@ -374,6 +376,8 @@ def save_cached_receipt(
     receipt_id: str,
     payload: dict[str, object],
 ) -> str:
+    if not receipt_db.exists() and not receipt_db.is_symlink():
+        initialize_receipt_store(receipt_db, corpus_root, index_db)
     store_path = require_receipt_database(receipt_db)
     references = receipt_references(payload["results"])
     now = utc_now()
