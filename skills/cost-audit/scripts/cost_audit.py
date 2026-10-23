@@ -61,6 +61,8 @@ class Metrics:
     events_in_window: int = 0
     events_without_timestamp: int = 0
     user_turns: int = 0
+    assistant_messages: int = 0
+    model_usage_steps: int = 0
     model_calls: int = 0
     tool_calls: int = 0
     tool_errors: int | None = None
@@ -155,17 +157,26 @@ def timestamp(value: Any) -> datetime | None:
     return parsed.astimezone(timezone.utc)
 
 
-def cutoff_for(value: str) -> datetime | None:
+def cutoff_for(value: str, reference: datetime | None = None) -> datetime | None:
     if value.lower() == "all":
         return None
     match = re.fullmatch(r"(\d+)([dh])", value.lower())
     if match:
         count = int(match.group(1))
         delta = timedelta(days=count) if match.group(2) == "d" else timedelta(hours=count)
-        return datetime.now(timezone.utc) - delta
+        return (reference or datetime.now(timezone.utc)) - delta
     parsed = timestamp(value)
     if parsed is None:
         raise argparse.ArgumentTypeError("--since must be 'all', Nd, Nh, or an ISO timestamp")
+    return parsed
+
+
+def upper_bound_for(value: str | None) -> datetime:
+    if value is None:
+        return datetime.now(timezone.utc)
+    parsed = timestamp(value)
+    if parsed is None:
+        raise argparse.ArgumentTypeError("--until must be an ISO timestamp")
     return parsed
 
 
@@ -174,12 +185,14 @@ def iter_jsonl(path: Path) -> Iterator[dict[str, Any]]:
         for line in handle:
             if not line.strip():
                 continue
+            line_bytes = len(line.encode("utf-8", errors="replace"))
             try:
                 value = json.loads(line)
             except json.JSONDecodeError:
-                yield {"__malformed__": True}
+                yield {"__malformed__": True, "__line_bytes__": line_bytes}
                 continue
             if isinstance(value, dict):
+                value["__line_bytes__"] = line_bytes
                 yield value
 
 
@@ -247,8 +260,14 @@ def belongs_to_project(project_path: str | None, project_root: Path) -> bool:
     return candidate == project_root or project_root in candidate.parents
 
 
-def in_window(value: datetime | None, cutoff: datetime | None) -> bool:
-    return cutoff is None or (value is not None and value >= cutoff)
+def in_window(
+    value: datetime | None,
+    cutoff: datetime | None,
+    until: datetime,
+) -> bool:
+    if value is None:
+        return False
+    return (cutoff is None or value >= cutoff) and value <= until
 
 
 def percentile(values: list[int], fraction: float) -> int | None:
@@ -380,6 +399,7 @@ def parse_claude(
     events: Iterable[dict[str, Any]],
     metrics: Metrics,
     cutoff: datetime | None,
+    until: datetime,
 ) -> None:
     messages: dict[str, dict[str, int | None]] = {}
     anonymous_usage: list[dict[str, int | None]] = []
@@ -387,7 +407,9 @@ def parse_claude(
     call_names: dict[str, str] = {}
     seen_results: set[str] = set()
     seen_user_ids: set[str] = set()
+    seen_assistant_ids: set[str] = set()
     metrics.tool_errors = 0
+    metrics.bytes = 0
     metrics.tool_error_observability = "complete"
     metrics.usage_semantics = "component_sum_includes_cache_fields"
 
@@ -396,9 +418,10 @@ def parse_claude(
             metrics.malformed_events += 1
             continue
         when = event_time(event)
-        inside = in_window(when, cutoff)
-        update_event_times(metrics, when, inside)
-        if cutoff is not None and when is None:
+        inside = in_window(when, cutoff, until)
+        if when is None or when <= until:
+            update_event_times(metrics, when, inside)
+        if when is None:
             metrics.events_without_timestamp += 1
         event_type = str(event.get("type", ""))
         subtype = str(event.get("subtype", "")).lower()
@@ -408,6 +431,7 @@ def parse_claude(
             metrics.project_key = safe_key(project_path)
         if not inside:
             continue
+        metrics.bytes += int_or_none(event.get("__line_bytes__")) or 0
         metrics.events_in_window += 1
         if "compact" in event_type.lower() or "compact" in subtype:
             metrics.compactions += 1
@@ -439,6 +463,11 @@ def parse_claude(
         if role == "assistant" or event_type == "assistant":
             usage = message.get("usage")
             message_id = message.get("id") or event.get("uuid")
+            assistant_id = str(message_id or "")
+            if not assistant_id or assistant_id not in seen_assistant_ids:
+                metrics.assistant_messages += 1
+                if assistant_id:
+                    seen_assistant_ids.add(assistant_id)
             if isinstance(usage, dict):
                 normalized = {
                     "input_tokens": usage_value(usage, "input_tokens"),
@@ -476,7 +505,8 @@ def parse_claude(
                     )
 
     usage_rows = [*messages.values(), *anonymous_usage]
-    metrics.model_calls = len(usage_rows)
+    metrics.model_usage_steps = len(usage_rows)
+    metrics.model_calls = metrics.model_usage_steps or metrics.assistant_messages
     for key in (
         "input_tokens",
         "cache_read_tokens",
@@ -529,6 +559,13 @@ def normalized_codex_usage(value: dict[str, Any]) -> dict[str, int | None]:
     }
 
 
+def codex_usage_signature(values: dict[str, int | None]) -> tuple[int | None, ...]:
+    reported_total = values.get("reported_total_tokens")
+    if reported_total is not None:
+        return (reported_total,)
+    return tuple(values.get(key) for key in USAGE_KEYS)
+
+
 def merge_max(target: dict[str, int], values: dict[str, int | None]) -> None:
     for key, value in values.items():
         if value is not None:
@@ -540,15 +577,19 @@ def parse_codex(
     events: Iterable[dict[str, Any]],
     metrics: Metrics,
     cutoff: datetime | None,
+    until: datetime,
 ) -> None:
     seen_calls: Counter[str] = Counter()
     call_names: dict[str, str] = {}
     seen_results: set[str] = set()
     cumulative_before: dict[str, int] = {}
     cumulative_in_window: dict[str, int] = {}
+    first_in_window_usage: dict[str, tuple[int, int | None]] = {}
     seen_assistant_items: set[str] = set()
     seen_user_items: set[str] = set()
+    last_cumulative_signature: tuple[int | None, ...] | None = None
     saw_event_before_window = False
+    metrics.bytes = 0
     metrics.usage_semantics = "reported_total_and_input_include_cached_input"
 
     for event in events:
@@ -556,9 +597,10 @@ def parse_codex(
             metrics.malformed_events += 1
             continue
         when = event_time(event)
-        inside = in_window(when, cutoff)
-        update_event_times(metrics, when, inside)
-        if cutoff is not None and when is None:
+        inside = in_window(when, cutoff, until)
+        if when is None or when <= until:
+            update_event_times(metrics, when, inside)
+        if when is None:
             metrics.events_without_timestamp += 1
         if cutoff is not None and when is not None and when < cutoff:
             saw_event_before_window = True
@@ -574,16 +616,31 @@ def parse_codex(
             metrics.compactions += 1
 
         total, latest = nested_usage(event)
-        if total:
-            target = cumulative_in_window if inside else cumulative_before
-            merge_max(target, normalized_codex_usage(total))
-        if inside and latest:
-            latest_input = usage_value(latest, "input_tokens")
-            if latest_input is not None:
-                metrics.input_samples.append(latest_input)
+        if total and when is not None and when <= until:
+            normalized_total = normalized_codex_usage(total)
+            normalized_latest = normalized_codex_usage(latest) if latest else {}
+            signature = codex_usage_signature(normalized_total)
+            is_new_sample = any(value is not None for value in signature) and (
+                signature != last_cumulative_signature
+            )
+            if is_new_sample:
+                last_cumulative_signature = signature
+            if inside:
+                merge_max(cumulative_in_window, normalized_total)
+                for key, value in normalized_total.items():
+                    if value is not None and key not in first_in_window_usage:
+                        first_in_window_usage[key] = (value, normalized_latest.get(key))
+                if is_new_sample:
+                    metrics.model_usage_steps += 1
+                    latest_input = normalized_latest.get("input_tokens")
+                    if latest_input is not None:
+                        metrics.input_samples.append(latest_input)
+            elif cutoff is not None and when is not None and when < cutoff:
+                merge_max(cumulative_before, normalized_total)
 
         if not inside:
             continue
+        metrics.bytes += int_or_none(event.get("__line_bytes__")) or 0
         metrics.events_in_window += 1
 
         if event_type == "response_item":
@@ -595,7 +652,7 @@ def parse_codex(
                     if item_id:
                         seen_user_items.add(item_id)
                 elif role == "assistant" and (not item_id or item_id not in seen_assistant_items):
-                    metrics.model_calls += 1
+                    metrics.assistant_messages += 1
                     if item_id:
                         seen_assistant_items.add(item_id)
             elif payload_type in {"function_call", "custom_tool_call", "local_shell_call"}:
@@ -630,15 +687,33 @@ def parse_codex(
                 )
                 add_tool_output(metrics, value, error)
 
+    metrics.model_calls = metrics.model_usage_steps or metrics.assistant_messages
     if cumulative_in_window:
-        if cutoff is not None and saw_event_before_window and not cumulative_before:
-            metrics.usage_window_coverage = "unavailable"
-        else:
-            for key in USAGE_KEYS:
-                if key not in cumulative_in_window:
+        available_fields = 0
+        unavailable_fields = 0
+        for key in USAGE_KEYS:
+            if key not in cumulative_in_window:
+                continue
+            baseline: int | None = None
+            if key in cumulative_before:
+                baseline = cumulative_before[key]
+            elif cutoff is not None and saw_event_before_window:
+                unavailable_fields += 1
+                continue
+            else:
+                first_total, first_latest = first_in_window_usage[key]
+                if first_total == 0:
+                    baseline = 0
+                elif first_latest is not None:
+                    baseline = max(0, first_total - first_latest)
+                else:
+                    unavailable_fields += 1
                     continue
-                baseline = cumulative_before.get(key, 0) if cutoff is not None else 0
-                setattr(metrics, key, max(0, cumulative_in_window[key] - baseline))
+            setattr(metrics, key, max(0, cumulative_in_window[key] - baseline))
+            available_fields += 1
+        if unavailable_fields:
+            metrics.usage_window_coverage = "partial" if available_fields else "unavailable"
+        else:
             metrics.usage_window_coverage = "complete"
     metrics.tool_error_observability = "unavailable" if metrics.tool_calls else "complete"
     metrics.tool_errors = None if metrics.tool_calls else 0
@@ -665,6 +740,7 @@ def parse_session(
     provider: str,
     include_locator: bool,
     cutoff: datetime | None = None,
+    until: datetime | None = None,
     probe: SessionProbe | None = None,
 ) -> Metrics:
     stat = path.stat()
@@ -680,13 +756,16 @@ def parse_session(
         project_path=session_probe.project_path,
         locator=resolved if include_locator else None,
     )
+    upper_bound = until or datetime.now(timezone.utc)
     if detected == "claude":
-        parse_claude(path, iter_jsonl(path), metrics, cutoff)
+        parse_claude(path, iter_jsonl(path), metrics, cutoff, upper_bound)
     elif detected == "codex":
-        parse_codex(path, iter_jsonl(path), metrics, cutoff)
+        parse_codex(path, iter_jsonl(path), metrics, cutoff, upper_bound)
     else:
         metrics.malformed_events += sum(1 for _ in iter_jsonl(path))
     first = timestamp(metrics.session_first_event_at)
+    if metrics.window_last_event_at is not None:
+        metrics.modified_at = metrics.window_last_event_at
     metrics.window_starts_after_session_start = bool(
         cutoff is not None and first is not None and first < cutoff
     )
@@ -835,6 +914,8 @@ def aggregate(metrics: list[Metrics]) -> dict[str, Any]:
         "sessions": len(metrics),
         "bytes": sum(item.bytes for item in metrics),
         "user_turns": sum(item.user_turns for item in metrics),
+        "assistant_messages": sum(item.assistant_messages for item in metrics),
+        "model_usage_steps": sum(item.model_usage_steps for item in metrics),
         "model_calls": sum(item.model_calls for item in metrics),
         "tool_calls": sum(item.tool_calls for item in metrics),
         "tool_errors": (
@@ -880,6 +961,8 @@ def aggregate(metrics: list[Metrics]) -> dict[str, Any]:
             "sessions": len(group),
             "workload_tokens": sum(group_workload) if group_workload else None,
             "workload_tokens_coverage_sessions": len(group_workload),
+            "assistant_messages": sum(item.assistant_messages for item in group),
+            "model_usage_steps": sum(item.model_usage_steps for item in group),
             "model_calls": sum(item.model_calls for item in group),
             "tool_calls": sum(item.tool_calls for item in group),
             "observed_tool_errors": sum(item.observed_tool_errors for item in group),
@@ -895,7 +978,10 @@ def aggregate(metrics: list[Metrics]) -> dict[str, Any]:
 
 
 def sessions_command(args: argparse.Namespace) -> dict[str, Any]:
-    cutoff = cutoff_for(args.since)
+    until = upper_bound_for(args.until)
+    cutoff = cutoff_for(args.since, until)
+    if cutoff is not None and until < cutoff:
+        raise ValueError("--until cannot be before --since")
     discovered = discover_sessions(args.input, args.include_archived)
     mtime_eligible = [
         path
@@ -938,12 +1024,13 @@ def sessions_command(args: argparse.Namespace) -> dict[str, Any]:
                 args.provider,
                 args.include_locators,
                 cutoff=cutoff,
+                until=until,
                 probe=probe,
             )
         except (OSError, TypeError, UnicodeError, ValueError):
             parse_failures += 1
             continue
-        if cutoff is not None and metrics.events_in_window == 0:
+        if metrics.events_in_window == 0:
             no_events_in_window += 1
             continue
         parsed.append(metrics)
@@ -957,7 +1044,7 @@ def sessions_command(args: argparse.Namespace) -> dict[str, Any]:
     else:
         project_mode = "project_root"
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "kind": "session_cost_inventory",
         "generated_at": iso_utc(datetime.now(timezone.utc)),
         "privacy": {
@@ -967,7 +1054,9 @@ def sessions_command(args: argparse.Namespace) -> dict[str, Any]:
         },
         "scope": {
             "since": args.since,
-            "time_filter_basis": "event_timestamps_with_file_mtime_prefilter",
+            "since_resolved": iso_utc(cutoff) if cutoff is not None else None,
+            "until": iso_utc(until),
+            "time_filter_basis": "bounded_event_timestamps_with_file_mtime_lower_prefilter",
             "provider": args.provider,
             "include_archived": bool(args.include_archived),
             "project_mode": project_mode,
@@ -1159,6 +1248,8 @@ def new_bucket(turn: int) -> dict[str, Any]:
         "turn": turn,
         "first_event_at": None,
         "last_event_at": None,
+        "assistant_messages": 0,
+        "model_usage_steps": 0,
         "model_calls": 0,
         "tool_calls": 0,
         "opaque_wrapper_calls": 0,
@@ -1252,6 +1343,7 @@ def inspect_activity(
     path: Path,
     provider: str,
     cutoff: datetime | None,
+    until: datetime,
     maximum: int,
 ) -> dict[str, Any]:
     buckets: dict[int, dict[str, Any]] = {}
@@ -1259,6 +1351,8 @@ def inspect_activity(
     seen_call_ids: set[str] = set()
     seen_result_ids: set[str] = set()
     seen_usage_ids: set[str] = set()
+    seen_assistant_ids: set[str] = set()
+    last_cumulative_signature: tuple[int | None, ...] | None = None
     turn = 0
 
     def current_bucket(when: datetime | None) -> dict[str, Any]:
@@ -1270,7 +1364,17 @@ def inspect_activity(
         if event.get("__malformed__"):
             continue
         when = event_time(event)
-        if not in_window(when, cutoff):
+        total, latest = nested_usage(event)
+        new_usage_sample = False
+        if provider == "codex" and total and when is not None and when <= until:
+            normalized_total = normalized_codex_usage(total)
+            signature = codex_usage_signature(normalized_total)
+            new_usage_sample = any(value is not None for value in signature) and (
+                signature != last_cumulative_signature
+            )
+            if new_usage_sample:
+                last_cumulative_signature = signature
+        if not in_window(when, cutoff, until):
             continue
         event_type = str(event.get("type", ""))
         payload = event.get("payload") if isinstance(event.get("payload"), dict) else {}
@@ -1282,7 +1386,11 @@ def inspect_activity(
                 turn += 1
             bucket = current_bucket(when)
             if payload.get("role") == "assistant":
-                bucket["model_calls"] += 1
+                assistant_id = str(payload.get("id") or payload.get("call_id") or "")
+                if not assistant_id or assistant_id not in seen_assistant_ids:
+                    bucket["assistant_messages"] += 1
+                    if assistant_id:
+                        seen_assistant_ids.add(assistant_id)
         elif provider == "claude" and (message.get("role") == "user" or event_type == "user"):
             content = message.get("content", event.get("content"))
             blocks = content if isinstance(content, list) else []
@@ -1297,8 +1405,10 @@ def inspect_activity(
         if "compact" in combined or "compact" in str(event.get("subtype", "")).lower():
             bucket["compactions"] += 1
 
-        total, latest = nested_usage(event)
-        if provider == "codex" and latest:
+        if provider == "codex" and new_usage_sample:
+            bucket["model_usage_steps"] += 1
+            bucket["model_calls"] += 1
+        if provider == "codex" and new_usage_sample and latest:
             for target, keys in (
                 ("input_tokens", ("input_tokens",)),
                 ("cache_read_tokens", ("cached_input_tokens", "cache_read_tokens")),
@@ -1350,10 +1460,15 @@ def inspect_activity(
             blocks = content if isinstance(content, list) else []
             if message.get("role") == "assistant" or event_type == "assistant":
                 usage_id = str(message.get("id") or event.get("uuid") or "")
+                if not usage_id or usage_id not in seen_assistant_ids:
+                    bucket["assistant_messages"] += 1
+                    if usage_id:
+                        seen_assistant_ids.add(usage_id)
                 usage = message.get("usage")
                 if isinstance(usage, dict) and (not usage_id or usage_id not in seen_usage_ids):
                     if usage_id:
                         seen_usage_ids.add(usage_id)
+                    bucket["model_usage_steps"] += 1
                     bucket["model_calls"] += 1
                     context = sum(
                         value or 0
@@ -1389,6 +1504,10 @@ def inspect_activity(
                         seen_result_ids.add(result_id)
                     record_bucket_output(bucket, block, bool(block.get("is_error")))
 
+    if not any(bucket["model_usage_steps"] for bucket in buckets.values()):
+        for bucket in buckets.values():
+            bucket["model_calls"] = bucket["assistant_messages"]
+
     populated = [
         bucket
         for bucket in buckets.values()
@@ -1423,13 +1542,23 @@ def inspect_command(args: argparse.Namespace) -> dict[str, Any]:
     path = Path(args.session).expanduser().resolve()
     if not path.is_file():
         raise ValueError(f"not a file: {path}")
-    cutoff = cutoff_for(args.since)
+    until = upper_bound_for(args.until)
+    cutoff = cutoff_for(args.since, until)
+    if cutoff is not None and until < cutoff:
+        raise ValueError("--until cannot be before --since")
     probe = probe_session(path, args.provider)
     if probe.provider == "unknown":
         raise ValueError("unsupported session format")
-    metrics = parse_session(path, args.provider, False, cutoff=cutoff, probe=probe)
+    metrics = parse_session(
+        path,
+        args.provider,
+        False,
+        cutoff=cutoff,
+        until=until,
+        probe=probe,
+    )
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "kind": "bounded_session_inspection",
         "generated_at": iso_utc(datetime.now(timezone.utc)),
         "privacy": {
@@ -1437,9 +1566,14 @@ def inspect_command(args: argparse.Namespace) -> dict[str, Any]:
             "tool_arguments_emitted": False,
             "locator_emitted": False,
         },
-        "scope": {"since": args.since, "provider": probe.provider},
+        "scope": {
+            "since": args.since,
+            "since_resolved": iso_utc(cutoff) if cutoff is not None else None,
+            "until": iso_utc(until),
+            "provider": probe.provider,
+        },
         "session": metrics.public(False),
-        "activity": inspect_activity(path, probe.provider, cutoff, args.max_buckets),
+        "activity": inspect_activity(path, probe.provider, cutoff, until, args.max_buckets),
     }
 
 
@@ -1451,6 +1585,7 @@ def parser() -> argparse.ArgumentParser:
     sessions.add_argument("--input", action="append", default=[], help="JSONL file or directory")
     sessions.add_argument("--provider", choices=("auto", "claude", "codex"), default="auto")
     sessions.add_argument("--since", default="7d", help="all, Nd, Nh, or ISO timestamp")
+    sessions.add_argument("--until", help="Inclusive ISO timestamp; defaults to command start")
     project_scope = sessions.add_mutually_exclusive_group()
     project_scope.add_argument("--project-root", help="Include sessions whose cwd is under this root")
     project_scope.add_argument("--all-projects", action="store_true")
@@ -1472,6 +1607,7 @@ def parser() -> argparse.ArgumentParser:
     inspect.add_argument("session", help="Selected JSONL session file")
     inspect.add_argument("--provider", choices=("auto", "claude", "codex"), default="auto")
     inspect.add_argument("--since", default="all", help="all, Nd, Nh, or ISO timestamp")
+    inspect.add_argument("--until", help="Inclusive ISO timestamp; defaults to command start")
     inspect.add_argument("--max-buckets", type=int, default=20)
     inspect.add_argument("--pretty", action="store_true")
     return root

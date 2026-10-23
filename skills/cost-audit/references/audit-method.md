@@ -32,15 +32,15 @@ Keep provider-native values and a normalized view. Never silently force unlike m
 Recommended normalized fields are:
 
 - input, cache-read, cache-write, output, reasoning, and reported-total tokens;
-- model calls and user turns;
+- provider usage steps, assistant messages, normalized model calls, and user turns;
 - tool calls by tool, tool errors, exact repeated calls, and calls per user turn;
 - compactions and large tool-result count with the selected size threshold;
 - peak input/context when reported;
 - session start/end, provider, project key, and pseudonymous session key.
 
-When a provider reports cumulative usage, take the latest or maximum cumulative value rather than summing snapshots. When duplicate message records share a stable message ID, count that message once and keep the maximum reported usage for it. Explain any provider-specific ambiguity.
+When a provider reports cumulative usage, take the latest or maximum cumulative value rather than summing snapshots. Deduplicate unchanged cumulative snapshots and count each distinct increment as a provider usage step. Keep assistant-message counts separate. The normalized `model_calls` field uses usage steps when available and falls back to assistant messages only when usage events are absent. When duplicate message records share a stable message ID, count that message once and keep the maximum reported usage for it. Explain any provider-specific ambiguity.
 
-For a bounded time window, subtract the last cumulative sample before the cutoff from the last sample inside the window. Sum message-level usage only for messages completed inside the window. If an older session has no usable pre-window baseline, mark window usage unavailable rather than charging its lifetime usage to the window. File modification time may prefilter candidates but cannot define token usage for the period.
+For a bounded time window, capture one inclusive upper bound before scanning and reuse it for the inventory, all inspections, and repeated measurements. Anchor relative lower bounds to that fixed upper bound. Exclude events without a usable timestamp from bounded metrics and report their count; they cannot be assigned safely to the snapshot. Subtract the last cumulative sample before the cutoff from the last sample inside the window. Sum message-level usage only for messages completed inside the window. If an older session has no usable pre-window baseline, mark window usage unavailable rather than charging its lifetime usage to the window. At the start of a log with no earlier events, infer an inherited baseline per field only when `first cumulative - matching latest usage` is available; a nonzero field without matching latest usage remains unavailable. File modification time may prefilter candidates but cannot define token usage for the period.
 
 Flag windows that begin after the session started. Their first included turn may be partial, so calls-per-turn and first-call comparisons need that boundary caveat even when token deltas are complete.
 
@@ -117,7 +117,7 @@ Use hierarchy only to classify an instruction as an ancestor, descendant, or unr
 
 ## Bounded session inspection
 
-After selection, inspect turn-level aggregates rather than reading the session transcript. Retain only first/last and anomalous buckets when the sequence exceeds the output cap. Useful bucket fields are provider-native input/cache/output values, model and tool calls, opaque wrappers, result characters, observed errors, repeated-call signatures, and compactions.
+After selection, inspect turn-level aggregates rather than reading the session transcript. Use the inventory's exact upper bound. Retain only first/last and anomalous buckets when the sequence exceeds the output cap. Useful bucket fields are provider-native input/cache/output values, usage steps, assistant messages, normalized model and tool calls, opaque wrappers, result characters, observed errors, repeated-call signatures, and compactions.
 
 Hashed call signatures support repeat comparison but are pseudonymous, not anonymous. They prove equality of normalized calls within the audit, not that a repeat was unnecessary. Reopen raw content only for one named unresolved mechanism and never reproduce it in the report.
 

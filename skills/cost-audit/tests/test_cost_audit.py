@@ -23,6 +23,13 @@ def write_jsonl(path: Path, events: list[dict]) -> None:
 
 
 class CostAuditTests(unittest.TestCase):
+    def test_relative_since_is_anchored_to_the_fixed_upper_bound(self) -> None:
+        until = datetime(2026, 10, 20, 11, 0, tzinfo=timezone.utc)
+
+        cutoff = COST_AUDIT.cutoff_for("7d", until)
+
+        self.assertEqual(cutoff, datetime(2026, 10, 13, 11, 0, tzinfo=timezone.utc))
+
     def test_claude_usage_is_deduplicated_and_payloads_are_hidden(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "claude-session.jsonl"
@@ -51,11 +58,17 @@ class CostAuditTests(unittest.TestCase):
             write_jsonl(
                 path,
                 [
-                    {"type": "user", "uuid": "u1", "message": {"role": "user", "content": "private"}},
+                    {
+                        "type": "user",
+                        "uuid": "u1",
+                        "timestamp": "2026-10-20T09:59:00Z",
+                        "message": {"role": "user", "content": "private"},
+                    },
                     assistant,
                     assistant,
                     {
                         "type": "user",
+                        "timestamp": "2026-10-20T10:01:00Z",
                         "message": {
                             "role": "user",
                             "content": [
@@ -72,6 +85,8 @@ class CostAuditTests(unittest.TestCase):
             )
             metrics = COST_AUDIT.parse_session(path, "claude", include_locator=False)
             public = metrics.public()
+            self.assertEqual(metrics.assistant_messages, 1)
+            self.assertEqual(metrics.model_usage_steps, 1)
             self.assertEqual(metrics.model_calls, 1)
             self.assertEqual(metrics.cache_read_tokens, 900)
             self.assertEqual(metrics.tool_calls, 1)
@@ -89,6 +104,7 @@ class CostAuditTests(unittest.TestCase):
                 [
                     {
                         "type": "assistant",
+                        "timestamp": "2026-10-20T10:00:00Z",
                         "message": {
                             "id": "message-1",
                             "role": "assistant",
@@ -121,10 +137,12 @@ class CostAuditTests(unittest.TestCase):
                 [
                     {
                         "type": "response_item",
+                        "timestamp": "2026-10-20T10:00:00Z",
                         "payload": {"type": "message", "id": "u1", "role": "user", "content": "hidden"},
                     },
                     {
                         "type": "event_msg",
+                        "timestamp": "2026-10-20T10:01:00Z",
                         "payload": {
                             "info": {
                                 "total_token_usage": {
@@ -133,12 +151,18 @@ class CostAuditTests(unittest.TestCase):
                                     "output_tokens": 20,
                                     "total_tokens": 120,
                                 },
-                                "last_token_usage": {"input_tokens": 100},
+                                "last_token_usage": {
+                                    "input_tokens": 100,
+                                    "cached_input_tokens": 80,
+                                    "output_tokens": 20,
+                                    "total_tokens": 120,
+                                },
                             }
                         },
                     },
                     {
                         "type": "event_msg",
+                        "timestamp": "2026-10-20T10:02:00Z",
                         "payload": {
                             "info": {
                                 "total_token_usage": {
@@ -147,7 +171,12 @@ class CostAuditTests(unittest.TestCase):
                                     "output_tokens": 50,
                                     "total_tokens": 300,
                                 },
-                                "last_token_usage": {"input_tokens": 150},
+                                "last_token_usage": {
+                                    "input_tokens": 150,
+                                    "cached_input_tokens": 120,
+                                    "output_tokens": 30,
+                                    "total_tokens": 180,
+                                },
                             }
                         },
                     },
@@ -159,6 +188,170 @@ class CostAuditTests(unittest.TestCase):
             self.assertEqual(metrics.cache_read_tokens, 200)
             self.assertEqual(metrics.peak_input_tokens, 150)
             self.assertEqual(metrics.user_turns, 1)
+
+    def test_codex_removes_inherited_baseline_and_counts_usage_steps(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "codex-inherited.jsonl"
+            first_usage = {
+                "type": "event_msg",
+                "timestamp": "2026-10-20T10:02:00Z",
+                "payload": {
+                    "info": {
+                        "total_token_usage": {
+                            "input_tokens": 1_000,
+                            "cached_input_tokens": 800,
+                            "output_tokens": 100,
+                            "total_tokens": 1_100,
+                        },
+                        "last_token_usage": {
+                            "input_tokens": 100,
+                            "cached_input_tokens": 80,
+                            "output_tokens": 10,
+                            "total_tokens": 110,
+                        },
+                    }
+                },
+            }
+            write_jsonl(
+                path,
+                [
+                    {
+                        "type": "response_item",
+                        "timestamp": "2026-10-20T10:01:00Z",
+                        "payload": {"type": "message", "id": "a1", "role": "assistant"},
+                    },
+                    first_usage,
+                    first_usage,
+                    {
+                        "type": "event_msg",
+                        "timestamp": "2026-10-20T10:03:00Z",
+                        "payload": {
+                            "info": {
+                                "total_token_usage": {
+                                    "input_tokens": 1_250,
+                                    "cached_input_tokens": 1_000,
+                                    "output_tokens": 150,
+                                    "total_tokens": 1_400,
+                                },
+                                "last_token_usage": {
+                                    "input_tokens": 250,
+                                    "cached_input_tokens": 200,
+                                    "output_tokens": 50,
+                                    "total_tokens": 300,
+                                },
+                            }
+                        },
+                    },
+                ],
+            )
+
+            metrics = COST_AUDIT.parse_session(path, "codex", include_locator=False)
+
+            self.assertEqual(metrics.input_tokens, 350)
+            self.assertEqual(metrics.cache_read_tokens, 280)
+            self.assertEqual(metrics.output_tokens, 60)
+            self.assertEqual(metrics.reported_total_tokens, 410)
+            self.assertEqual(metrics.assistant_messages, 1)
+            self.assertEqual(metrics.model_usage_steps, 2)
+            self.assertEqual(metrics.model_calls, 2)
+            self.assertEqual(metrics.input_samples, [100, 250])
+            self.assertEqual(metrics.usage_window_coverage, "complete")
+
+    def test_codex_does_not_guess_baseline_without_matching_latest_field(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "codex-missing-latest.jsonl"
+            write_jsonl(
+                path,
+                [
+                    {
+                        "type": "event_msg",
+                        "timestamp": "2026-10-20T10:00:00Z",
+                        "payload": {
+                            "info": {
+                                "total_token_usage": {
+                                    "input_tokens": 1_000,
+                                    "output_tokens": 100,
+                                },
+                                "last_token_usage": {"output_tokens": 10},
+                            }
+                        },
+                    },
+                    {
+                        "type": "event_msg",
+                        "timestamp": "2026-10-20T10:01:00Z",
+                        "payload": {
+                            "info": {
+                                "total_token_usage": {
+                                    "input_tokens": 1_250,
+                                    "output_tokens": 150,
+                                },
+                                "last_token_usage": {
+                                    "input_tokens": 250,
+                                    "output_tokens": 50,
+                                },
+                            }
+                        },
+                    },
+                ],
+            )
+
+            metrics = COST_AUDIT.parse_session(path, "codex", include_locator=False)
+
+            self.assertIsNone(metrics.input_tokens)
+            self.assertEqual(metrics.output_tokens, 60)
+            self.assertEqual(metrics.usage_window_coverage, "partial")
+
+    def test_codex_until_excludes_later_events(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "codex-until.jsonl"
+            write_jsonl(
+                path,
+                [
+                    {
+                        "type": "event_msg",
+                        "timestamp": "2026-10-20T10:00:00Z",
+                        "payload": {
+                            "info": {
+                                "total_token_usage": {"input_tokens": 100, "total_tokens": 100},
+                                "last_token_usage": {"input_tokens": 100, "total_tokens": 100},
+                            }
+                        },
+                    },
+                    {
+                        "type": "event_msg",
+                        "timestamp": "2026-10-20T12:00:00Z",
+                        "payload": {
+                            "info": {
+                                "total_token_usage": {"input_tokens": 900, "total_tokens": 900},
+                                "last_token_usage": {"input_tokens": 800, "total_tokens": 800},
+                            }
+                        },
+                    },
+                    {
+                        "type": "event_msg",
+                        "payload": {
+                            "info": {
+                                "total_token_usage": {"input_tokens": 950, "total_tokens": 950},
+                                "last_token_usage": {"input_tokens": 50, "total_tokens": 50},
+                            }
+                        },
+                    },
+                ],
+            )
+            until = datetime(2026, 10, 20, 11, 0, tzinfo=timezone.utc)
+
+            metrics = COST_AUDIT.parse_session(
+                path, "codex", include_locator=False, until=until
+            )
+
+            self.assertEqual(metrics.input_tokens, 100)
+            self.assertEqual(metrics.reported_total_tokens, 100)
+            self.assertEqual(metrics.model_usage_steps, 1)
+            self.assertEqual(metrics.window_last_event_at, "2026-10-20T10:00:00Z")
+            self.assertEqual(metrics.session_last_event_at, "2026-10-20T10:00:00Z")
+            self.assertEqual(metrics.modified_at, "2026-10-20T10:00:00Z")
+            self.assertEqual(metrics.events_without_timestamp, 1)
+            self.assertLess(metrics.bytes, path.stat().st_size)
 
     def test_codex_window_subtracts_pre_window_cumulative_usage(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -368,7 +561,12 @@ class CostAuditTests(unittest.TestCase):
                                         "input_tokens": tokens,
                                         "output_tokens": 0,
                                         "total_tokens": tokens,
-                                    }
+                                    },
+                                    "last_token_usage": {
+                                        "input_tokens": tokens,
+                                        "output_tokens": 0,
+                                        "total_tokens": tokens,
+                                    },
                                 }
                             },
                         },
@@ -453,6 +651,70 @@ class CostAuditTests(unittest.TestCase):
             self.assertEqual(report["session"]["opaque_wrapper_calls"], 1)
             self.assertLessEqual(report["activity"]["selected_activity_buckets"], 1)
 
+    def test_sessions_and_inspect_emit_the_requested_upper_bound(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "bounded.jsonl"
+            write_jsonl(
+                path,
+                [
+                    {
+                        "type": "session_meta",
+                        "timestamp": "2026-10-20T10:00:00Z",
+                        "payload": {"cwd": directory},
+                    },
+                    {
+                        "type": "event_msg",
+                        "timestamp": "2026-10-20T10:01:00Z",
+                        "payload": {
+                            "info": {
+                                "total_token_usage": {"input_tokens": 10, "total_tokens": 10},
+                                "last_token_usage": {"input_tokens": 10, "total_tokens": 10},
+                            }
+                        },
+                    },
+                ],
+            )
+            until = "2026-10-20T11:00:00Z"
+            sessions_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "sessions",
+                    "--input",
+                    str(path),
+                    "--since",
+                    "all",
+                    "--until",
+                    until,
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            inspect_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "inspect",
+                    str(path),
+                    "--since",
+                    "all",
+                    "--until",
+                    until,
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            sessions_report = json.loads(sessions_result.stdout)
+            inspect_report = json.loads(inspect_result.stdout)
+            self.assertEqual(sessions_report["scope"]["until"], until)
+            self.assertEqual(inspect_report["scope"]["until"], until)
+            self.assertEqual(sessions_report["totals"]["model_usage_steps"], 1)
+            self.assertEqual(inspect_report["session"]["model_usage_steps"], 1)
+            self.assertEqual(inspect_report["activity"]["buckets"][0]["model_usage_steps"], 1)
+
     def test_cli_rejects_invalid_sampling_limits(self) -> None:
         result = subprocess.run(
             [
@@ -470,6 +732,24 @@ class CostAuditTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 2)
         self.assertIn("cannot exceed", result.stderr)
+
+    def test_cli_rejects_window_with_until_before_since(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPT),
+                "sessions",
+                "--since",
+                "2026-10-20T11:00:00Z",
+                "--until",
+                "2026-10-20T10:00:00Z",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("cannot be before", result.stderr)
 
 
 if __name__ == "__main__":

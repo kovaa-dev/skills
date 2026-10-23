@@ -19,11 +19,15 @@ The optional standard-library helper aggregates supported local JSONL sessions w
 python scripts/cost_audit.py sessions --since 7d --pretty
 python scripts/cost_audit.py sessions --project-root PROJECT_ROOT --since 7d --pretty
 python scripts/cost_audit.py sessions --input PATH --all-projects --pretty
-python scripts/cost_audit.py inspect SESSION_JSONL --since 7d --max-buckets 20 --pretty
+python scripts/cost_audit.py inspect SESSION_JSONL --since 7d --until SNAPSHOT_UNTIL --max-buckets 20 --pretty
 python scripts/cost_audit.py docs --root PROJECT_ROOT --cwd WORKING_DIRECTORY --pretty
 ```
 
-The exact Python launcher is environment-specific. The helper writes JSON only to standard output and creates no database. Raw file locators are hidden unless `--include-locators` is explicitly supplied. Token coverage and byte-based proxy coverage remain separate; incomplete error visibility is emitted as `null` with `partial` or `unavailable` observability metadata. The `docs` report retains nested Git worktrees, labels the one containing `--cwd`, and calculates document totals and exact duplicates independently for each worktree.
+The exact Python launcher is environment-specific. The helper writes JSON only to standard output and creates no database. Session inventory and inspection use schema version 2. `sessions` captures an inclusive upper event-time bound at command start and emits it as `scope.until`; reuse that exact value for every inspection or repeated inventory in the same audit. Relative lower bounds such as `7d` are anchored to this fixed upper bound. Reported session bytes and modification time are bounded to included events, so an active log cannot change proxy selection after the snapshot boundary.
+
+For Codex cumulative counters, the helper subtracts an observed pre-window sample when available. At the start of a log it removes an inherited baseline only when the first cumulative value can be reconciled with the matching `last_token_usage` field; otherwise that field remains `null` and coverage is `partial` or `unavailable`. Repeated cumulative snapshots are deduplicated. `model_usage_steps` counts distinct provider usage increments, `assistant_messages` counts message records, and compatibility field `model_calls` prefers usage steps with a message-count fallback.
+
+Raw file locators are hidden unless `--include-locators` is explicitly supplied. Token coverage and byte-based proxy coverage remain separate; incomplete error visibility is emitted as `null` with `partial` or `unavailable` observability metadata. The `docs` report retains nested Git worktrees, labels the one containing `--cwd`, and calculates document totals and exact duplicates independently for each worktree.
 
 ## Package layout
 
