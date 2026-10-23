@@ -31,11 +31,15 @@ Use a provider/runtime summary or structured session API when it offers equivale
 ```text
 python scripts/cost_audit.py sessions --since 7d --pretty
 python scripts/cost_audit.py sessions --project-root PROJECT_ROOT --since 7d --pretty
-python scripts/cost_audit.py inspect SESSION_JSONL --since 7d --max-buckets 20 --pretty
+python scripts/cost_audit.py inspect SESSION_JSONL --since 7d --until SNAPSHOT_UNTIL --max-buckets 20 --pretty
 python scripts/cost_audit.py docs --root PROJECT_ROOT --cwd WORKING_DIRECTORY --pretty
 ```
 
-The launcher is illustrative; use a compatible local Python. `sessions` filters usage by event time, keeps provider totals separate, and reports token and missing-usage proxy coverage separately. It selects costly sessions plus material anomaly representatives without a fixed minimum. Use `--include-locators` only to open selected sessions locally, then run `inspect`; never copy locators into the report. `inspect` emits bounded turn-level metrics and hashed repeat signatures, never message or payload content. Treat `null` as unavailable, not zero, and respect visibility/coverage fields.
+The launcher is illustrative; use a compatible local Python. Run `sessions` first and retain its exact `scope.until` as `SNAPSHOT_UNTIL`. Pass that value to every `inspect` and repeated `sessions` command in the same audit; relative `--since` values are anchored to it. Do not compare runs with different upper bounds.
+
+`sessions` filters usage by the bounded event-time window, keeps provider totals separate, and reports token and missing-usage proxy coverage separately. It selects costly sessions plus material anomaly representatives without a fixed minimum. Use `--include-locators` only to open selected sessions locally, then run `inspect`; never copy locators into the report. `inspect` emits bounded turn-level metrics and hashed repeat signatures, never message or payload content. Treat `null` as unavailable, not zero, and respect visibility/coverage fields. Distinguish `assistant_messages` from `model_usage_steps`; `model_calls` uses provider usage steps when available and falls back to assistant messages only when usage events are absent.
+
+When `docs` encounters nested Git worktrees under the selected root, retain them all but use per-worktree totals and duplicate groups. Do not treat byte-identical files in different worktrees as duplicates within one instruction set.
 
 ## Workflow
 
