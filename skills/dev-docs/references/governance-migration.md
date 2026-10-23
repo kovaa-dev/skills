@@ -1,188 +1,87 @@
-# Rule consolidation during migration
+# One-shot migration to requirements and work queues
 
-This is a mandatory part of `migrate` when the scope includes a transition to the
-documentation system. Use together with the [policy](documentation.md) and
-[bootstrap](documentation-system-template.md). The goal is one active rule in one
-canonical source, not a new set alongside old, scattered rules. The skill defines source
-responsibilities; specific project paths are recorded in the documentation index. Adoption
-of the shared rules is completed by [verification of the selected source](adoption.md);
-until then, preserve the existing rules and any changes to the current migration task/PR
-that were explicitly agreed.
+Use this action only for an explicit request to migrate the selected scope. It replaces
+the former task-schema consolidation/hard-renaming workflow. Ordinary selected work
+uses [on-touch conversion](legacy-transition.md); both routes produce the same
+[requirements](requirements.md) and [queue](work-queue.md) model.
 
-## 1. Find existing rules
+## Scope and recoverability
 
-First find instructions and reading routes, then inventory every document in the agreed
-scope: root and nested AGENTS/RULES, README/CONTRIBUTING,
-product/marketing/backend/frontend/operations docs, PRD/tasks/TD/ADR, specs, runbooks,
-research/verification records, indexes, templates, TODO/backlog, agent instructions, and check
-settings. A full audit/migrate covers every document in the repository; an
-affected-scope audit covers every related type, without excluding a directory because of
-its name. Do
-not treat filenames as a guarantee: a rule, task status, decision, or backlog item may be
-hidden in a spec, marketing document, report, or README.
-Treat higher-level instructions as external constraints and do not edit them without
-separate permission. Do not treat a complete project-local copy of the skill as a
-duplicate when the user selected that adoption method; paraphrased local policies remain
-candidates for cleanup. Do not read every document in full, one after another: inventory
-and headings/search cover each file in scope, after which only targeted sections and
-related sources are read. This progressive scan does not permit excluding a document type
-from a full audit.
+Agree or infer the exact authorized scope from the request: one capability, a backlog,
+or the whole documentation system. Do not turn a local request into a repository-wide
+migration. A full migration covers every source type in that scope, regardless of
+directory: legacy tasks/PRDs, specifications, decisions, research, findings, checklists,
+README/runbooks, indexes, and relevant agent instructions/templates/validators.
 
-Separate documentation rules from product requirements, implementation contracts,
-examples, and historical records. Before comparing rules with one another, perform an
-affected-scope consistency check of related PRD/tasks/TD/ADR/settings according to the
-policy's “Project documentation consistency check” section. Do not move its
-product/contract conflicts into the governance mapping or resolve them automatically.
-Checks expose actual tool constraints but do not automatically become accepted rules. The
-presence of old text does not prove that it remains current; consider its acceptance source
-and scope.
+Inventory files/headings and follow targeted locators, rather than reading every source
+in full before locating relevant content. Preserve a recoverable immutable revision,
+patch, or exact copy before destructive replacement. Use copy/move plus targeted edits
+where they retain original content safely. Do not recreate historical sources from memory.
 
-## 2. Map meaning and scope
+## Perform the transition
 
-Maintain a compact mapping from each source to its canonical destination in the existing
-migration task. Create separate migration coverage only for an explicitly full/large
-migration, compliance, or required traceability. Keep `Relation to canonical`—unique rule,
-exact duplicate, semantic duplicate, supplement, conflict, historical/inapplicable
-record—separate from `Disposition`—accepted, open, rejected, unmapped—and store the
-reason separately. Do not copy complete rule text or task statuses: the mapping is
-temporary migration control data, not research support, a verification record, policy, or roadmap.
+1. **Classify and reconcile.** Separate obligations, rationale/decisions, questions,
+   work, source facts, and verification. Check accepted contracts for conflicts before
+   consolidating; expose both formulations and resolve only the affected choices under
+   [decision governance](documentation.md#decision-approval).
+2. **Map meaning to destinations.** Each obligation has one canonical specification/ID;
+   each independently useful remaining outcome has one queue entry. Reuse already
+   converted records and stable IDs. Several old cards may share a requirement; a card
+   may contribute several obligations and results. Do not mechanically turn old task
+   IDs/checklist lines into requirements or rename all history.
+3. **Move content, not dependencies on old docs.** Preserve accepted scope, applicability,
+   implementation prerequisites, cross-cutting constraints, questions, rationale,
+   technical choices, acceptance sources, and verification. New records are sufficient
+   for ordinary execution without old tasks. Historical provenance may link to preserved
+   sources but must not be required to understand the current contract.
+4. **Build usable queues and history.** Import remaining work with actual readiness,
+   priority, accountable owner when known, exact waits, and result/acceptance locators.
+   Preserve completed/cancelled outcomes with their actual dates/results/limits.
+   Do not label historical work current production verification, reopen done, or lose
+   unfinished work inside an archive. Queues may be partitioned with global IDs and
+   cross-queue waits; avoid duplicate canonical entries.
+5. **Retire old operational routing.** Mark legacy sources as historical/converted and
+   replace active entrypoints with requirements/queues. Preserve old links through
+   clear redirects/aliases when needed. Rewrite affected templates, bootstrap, local
+   rule copies, and parser routing so new work does not regenerate legacy tasks.
+   Keep explicit on-touch routing for every residual unconverted record.
+6. **Verify the entire agreed scope.** Reconcile source-to-destination coverage,
+   requirement/work graph integrity, all relevant exceptions/questions/results, current
+   versus historical applicability, and affected links/checks. List residual sources and
+   unresolved conflicts; a partial conversion is not a completed full migration.
 
-After completion, every open/unmapped item must be resolved or explicitly left as
-remaining migration scope. Collapse a separate mapping into a compact closure summary in
-the migration task/PR and delete it after a checkpoint and user permission. Preserve it as
-historical migration record only when required by an external audit, compliance, repository policy,
-or explicitly accepted long-term traceability; ordinary work neither reads nor updates it.
+Progress and a compact source-to-requirement/work/result mapping belong with the migration
+work's result. A temporary detailed coverage file is appropriate for a full/large
+transition or required audit traceability; do not create a permanent second tracker.
+After verification condense it into a closure summary, or preserve it as an explicitly
+historical artifact when policy requires. Delete sources/coverage only within granted
+cleanup authority and after verified recovery.
 
-Compare semantic duplicates by their conditions, exceptions, and normative strength.
-Different wording does not necessarily mean different rules, and similar wording does not
-prove duplication. Preserve a local clarification for a narrower scope as a scoped rule;
-do not remove it as a conflict with a general rule. Do not generalize a restriction from
-one layer to the entire project.
+## Governance and enforcement
 
-## 3. Prepare independent migration tasks
+When the request also adopts/updates this skill, preserve unique project settings and
+scoped exceptions, and use [adoption](adoption.md). Keep one active rule source per
+responsibility. Product contracts stay in specifications, work state in queues, and
+accepted technical choices in their decision owners; none are copied into the skill.
 
-Check existing TODO/backlog/findings and every identified remediation result for real
-dependencies. An independent task has one verifiable outcome, one layer owner, explicit
-prerequisites/acceptance, and does not require simultaneous writing to another owner's
-canonical source. Group non-blocking tasks into parallel-ready tracks; in a read-only audit,
-show a proposed task map, and when migration writes are authorized, create or update the
-canonical cards. Do not split a small sequential migration or create tasks merely to
-increase the number of workers.
+Update agent instructions, hooks, CI, Git, and delivery automation only under the active
+project-work authority. Do not silently disable a validator; adapt its affected schema
+and verify migrated samples and remaining legacy readers. Governance-source adoption
+and backlog conversion are distinct outcomes; one does not imply the other.
 
-Shared indexes, cross-layer contracts, migration coverage, and final conflict resolution remain
-a separate shared boundary. Create an integration task only when reconciling them has its
-own verifiable outcome and does not fit in a single incoming task. It depends on all
-required tracks, owns only the shared boundary, verifies the combined result, and does not
-copy the status/acceptance of child tasks. If an ordinary merge and coordinator review are
-sufficient, no separate card is needed.
+Independent batches may be planned when they have their own outcomes and safe write
+boundaries. A joint integration result is work only if it needs independent acceptance.
+Migration planning does not authorize launching agents.
 
-The task graph describes permitted independence but does not grant authority to start work
-in parallel. Agents, branches/worktrees, disjoint write scopes, feedback, and integration
-review follow the active project-work policy; this skill provides the execution workflow
-with canonical tasks, sources, dependencies, and acceptance.
+## Completion and old action names
 
-## 4. Resolve conflicts with the user
+The migration is complete only when every source in the declared scope has a verified
+destination or an explicit agreed historical/inapplicable disposition, no active legacy
+contract or hidden remaining work is left, and ordinary work starts from the new model.
+Archived old task documents may remain as history; their continued existence is not
+an operational legacy tracker. Do not claim a larger migration than was performed.
 
-For every incompatible pair, show the original wording and links, scopes, practical effects,
-the recommended option, and alternatives. Do not automatically choose the old rule, the
-skill wording, or the later record. Continue to follow higher-level instructions; a request
-for agreement does not permit bypassing them. Record acceptance of a new project rule with
-its source/date according to the policy.
-
-Until a conflict is resolved, do not replace disputed rules with new accepted text and do
-not delete sources. Mark the relevant part of the migration as blocked. Independent,
-non-conflicting parts may be migrated; do not declare the entire transition complete.
-
-## 5. Assign content to canonical sources
-
-| Content | Canonical destination after transition |
-| --- | --- |
-| Requirements ownership, granularity, agreement, write mode | documentation.md in the skill |
-| Rules for IDs, tasks, statuses, dependencies, and PRD contents | task-tracker.md in the skill; the cards themselves remain in the project |
-| Rules for bugs, findings, the support queue, and release | maintenance.md in the skill; the records remain in the project |
-| Grooming and product formation | product-discovery.md in the skill |
-| Adoption and migration | adoption.md, documentation-system-template.md, and this workflow in the skill |
-| Paths, layers, language, selected checks, and scoped project settings | Project settings in the documentation index |
-| Forms | forms files in the skill; completed documents remain in the project |
-| Details of the selected validator | Compatibility reference in the skill; tool settings remain in the project |
-
-Preserve each unique, applicable project-specific behavior as an agreed setting or
-scoped exception, with rationale and links to the applicable shared rules. A substantial,
-standalone exception may have a separate local document, but not a copy of the policy.
-Propose a generally useful rule as a separate change to the source skill; migrating one
-project does not authorize changing published rules for everyone. Product requirements and
-engineering contracts remain in PRD/TD/ADR and do not move into the documentation policy.
-Make required changes to AGENTS/RULES, handoff, hooks, and CI only under the active
-project-work policy. This skill defines the required docs pointer/settings but does not own
-the agent entrypoint or delivery automation.
-
-## Hard migration: names and IDs of historical documents
-
-Hard migration runs only on explicit request and may rename already closed tasks and
-product stages/PRDs without changing historical facts. For the transition, propose one
-consistent renaming plan for the entire selected scope: active and already closed tasks,
-product stages/PRDs, TD/ADR, research, reports, and all other documents. Closed status
-alone does not exclude a document from the new naming system. First show the user a batch
-of old path/ID/title → new path/ID/title mappings with reasons; apply only the agreed batch,
-and do not rename all history merely because `migrate` was started. Do not require an ID
-for a free-form document when the new methodology specifies only a stable path for its
-type.
-
-Renaming changes representation, not historical facts:
-
-- preserve the exact original content in an accessible revision/patch/checkpoint before
-  making changes;
-- use move/rename and targeted replacements; do not recreate content from memory;
-- update the filename, H1, structural IDs, and prefixes of local subtasks consistently;
-  do not combine an identifier change with a new task or new technical decision;
-- preserve owners, dates, historical statuses, checkbox states, the meaning of scope and
-  acceptance, results, and verification records; do not reopen closed tasks;
-- do not change commit hashes, commit messages, PR numbers/URLs, or their remote history;
-- do not rewrite IDs inside quotations, logs, command output, or other original source material:
-  they are source facts. Link them to the new record through the old→new mapping;
-- update current inbound links, dependencies, indexes, and anchors. List external links
-  that cannot be fixed and provide an agreed way to resolve old names through the
-  mapping/preserved revision instead of leaving a second active document;
-- verify uniqueness of new IDs, non-reuse of old IDs, absence of cycles and lost records,
-  preservation of acceptance sources and verification records, and consistency of the dependency graph.
-
-Do not mechanically give an old stage a PRD ID when its meaning does not correspond to a
-product outcome. For an incompatible type, ambiguous split, or historical status, propose
-a transformation or explicit exception to the user. Do not present merging/splitting
-multiple outcomes as a simple rename. The transformation map lives in temporary migration
-coverage until hard migration is complete; afterward, it is collapsed or preserved as a
-historical migration record under the rules above and never becomes a second task tracker.
-A historical decision with `accepted` status may remain active: exclude obsolete rules
-from reading routes, not every document with an old date.
-
-## 6. Remove active duplicates and verify the result
-
-Create a checkpoint before making changes. In agreed files, replace migrated normative
-sections with precise links or remove the redundant copy. Removing duplicates is included
-in the explicitly authorized scope of such consolidation; invoking `init` once or making a
-general audit request does not grant this permission. If the specific cleanup scope has
-not been authorized, first propose a list of files/sections. Do not delete entire files
-without separate permission; preserve other rules and user changes.
-
-Update docs/task templates and parser rules so they do not generate old rules. Make
-changes to agent instructions, hooks/CI/handoff under the active project-work policy; do
-not silently disable checks for the migration.
-Do not rewrite historical meaning or original source material. Perform renaming according to the
-section above; exclude only obsolete rules from the current-rule route while preserving
-accessible history and links to decisions that remain active.
-
-Repeat the consistency/type check for every document in the original scope and search for
-normative wording. Verify that every file is classified by its actual purpose; task
-status/checklists do not remain in specs/README/marketing; the task index shows every
-registered task exactly once and its status projection matches the canonical cards;
-PRD/task/TD/ADR use the agreed ID-based naming; and a descriptive source does not pretend
-to be a card.
-For every rule, verify its destination, preservation of conditions/exceptions, absence of
-an active copy, and working links to the old location. For the task graph, verify the
-absence of cycles and hidden shared-write dependencies; an integration task exists only
-where its outcome is genuinely required. Verify the route from AGENTS/RULES to the
-canonical section and the absence of a second policy in templates. List unavailable
-sources, unresolved conflicts, and remaining scope. Search and lint do not prove semantic
-equivalence: separately compare the source rules with the result. Migration is complete
-only after coverage of the entire agreed scope has been verified, not after reference
-files have been copied.
+A request called "migrate hard", an old task-schema migration, or a consolidation aimed
+at adopting this model uses the steps above. Identifier/filename renaming alone does
+not satisfy it. Historical ID reassignment is not a default; if specifically requested,
+preserve all historical facts, original locators, and incoming resolution separately.

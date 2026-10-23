@@ -12,7 +12,7 @@ A collection of independent Agent Skills for cost auditing, adaptive task orches
 | `cost-audit` | Evidence-based audit of agent session and instruction overhead with a minimal remediation plan. | [`skills/cost-audit/`](skills/cost-audit/) |
 | `orchestra` | Cost-aware routing that discovers or safely acquires useful tools and delegates bounded work. | [`skills/orchestra/`](skills/orchestra/) |
 | `doc-research` | Evidence-grounded research across large document collections with bounded retrieval and traceable citations. | [`skills/doc-research/`](skills/doc-research/) |
-| `dev-docs` | Product discovery, PRDs, technical tasks, decisions, roadmaps, maintenance, and documentation governance. | [`skills/dev-docs/`](skills/dev-docs/) |
+| `dev-docs` | Requirements, specifications, lean queues, verified results, and incremental or one-shot migration from legacy tasks. | [`skills/dev-docs/`](skills/dev-docs/) |
 | `dev-rules` | Engineering execution covering scope, implementation, validation, Git, pull requests, agents, and handoffs. | [`skills/dev-rules/`](skills/dev-rules/) |
 
 The skills are independent and can be installed separately. None requires another: each integrates through the sources, policies, and tools already selected by the target project.

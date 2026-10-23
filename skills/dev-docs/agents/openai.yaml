@@ -1,4 +1,4 @@
 interface:
   display_name: "kovaa: dev docs"
-  short_description: "Product documentation and task governance"
-  default_prompt: "Use $dev-docs to maintain the affected product documentation, requirements, tasks, and decisions in the project's existing structure without duplicating sources of truth."
+  short_description: "Requirements, work queues, and legacy conversion"
+  default_prompt: "Use $dev-docs to maintain specifications, requirements, lean work queues, and results; convert selected legacy tasks before continuing, and use migrate for an explicit one-shot transition."

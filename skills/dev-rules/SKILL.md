@@ -15,9 +15,9 @@ description: >-
 
 ## Responsibility
 
-This skill defines **how to perform** engineering work. Requirements, the PRD, task
-tracker, TD/ADR, decision-making, and documentation history belong in the project's
-canonical product and documentation sources. Do not copy their governance rules here
+This skill defines **how to perform** engineering work. Requirements, specifications,
+work queues, decisions, and documentation history belong in the project's canonical
+product and documentation sources. Do not copy their governance rules here
 or create documents solely to satisfy this skill.
 
 The method for adopting project-work rules is defined by the
@@ -95,22 +95,21 @@ or when there is a known conflict or contract-compatibility risk.
 
 Read the project's applicable canonical product/documentation sources and do not
 reinterpret their product meaning. A separate documentation skill is not required: use
-the project PRD/tasks and accepted TD/ADR when they exist, then treat the user's latest
-explicit decision and shipped behavior as the preservation default. If sources are
+the project's canonical requirements/work records and accepted decisions, then treat
+the user's latest explicit decision and shipped behavior as the preservation default. If sources are
 missing or conflict, ask; do not declare the code an accepted invariant or invent your
 own contract.
 
-When work uses a tracker with the `dev-docs` lifecycle, implementation may start from
-an entire PRD or a technical task. `backlog` first undergoes grooming and acceptance;
-`need-info` waits for an answer, and `blocked` waits for its stated unblock condition.
-For `planned`, do not repeat grooming: provide a short execution brief covering what
-will be done, the observable result, what remains unchanged, checks, and the manual
-path, then obtain explicit confirmation to start. The initial request may already
-confirm that same brief. After confirmation, update the selected PRD/task and its index
-projection to `in-progress`; in a whole-PRD workstream, children move to `in-progress`
-only as work on them actually begins. A new question after start moves the owning card
-to `need-info`; an unmet adjacent prerequisite moves it to `blocked`. The tracker owns
-reasons and return-state semantics; do not duplicate them here.
+Use the lifecycle and canonical records defined by the active documentation policy.
+When that policy is dev-docs, PRD/layer-task tracking is legacy: before continuing
+selected legacy work or an uncaptured requirement, follow its on-touch conversion and
+resume from the resulting specification/requirement and queue entry. Do not duplicate
+its migration or status schema here, require a separate init, or create new legacy cards.
+For ready/planned work, restore the expected result, affected/preserved contracts,
+checks, and delivery target in a short execution brief. The initial user request may
+already authorize that same work; do not ask again merely for a state transition.
+New questions and unmet prerequisite results follow the documentation policy's
+need-info/blocked meanings; ordinary reversible details remain executor decisions.
 
 Before coding, state `Source: <user-explicit or canonical link>` and, for new or changed
 user-facing behavior, briefly define:
@@ -143,7 +142,7 @@ accepted contract is confirmed:
 - a new UI surface, actor, or user workflow;
 - a new category of data/owner/permission/retention or a public/versioned contract;
 - a new operational topology: a standalone process, queue, scheduler, or state machine
-  not required by the accepted technical task;
+  not required by the accepted work contract;
 - a second/parallel adapter or pipeline, a new ownership boundary, or duplicate
   storage/projection/implementation;
 - a dependency/runtime default with a material maintenance/resource/compatibility
@@ -338,7 +337,7 @@ deploy.
 
 ## 8. Git, commits, and PR
 
-Explicit confirmation of the execution brief and transition of the selected PRD/task
+Explicit confirmation of the execution brief and transition of the selected work
 to `in-progress` grant task-scoped authority to create/use a branch and, when needed,
 an isolated worktree, make coherent commits, push, and create/update a PR without
 separate questions for each action. Equivalent authority may come from a direct request
@@ -393,8 +392,9 @@ sources manually.
 ## 9. Handoff and context
 
 A handoff is needed only for an actual transfer/pause between sessions, agents, or
-worktrees. Durable scope, task status, acceptance, decisions, and delivery state remain
-in the canonical task/PR/Git; the handoff does not copy them or become a second source.
+worktrees. Durable scope, work status, acceptance, decisions, and delivery state remain
+in the canonical requirements/work records and PR/Git; the handoff does not copy them
+or become a second source.
 
 In a project that permits parallel work, a single tracked mutable pointer such as
 `current.md` is prohibited: there is no global "current" workstream. For a transfer
@@ -436,7 +436,8 @@ expanded, and actual blockers have been named. Keep manual acceptance pending un
 user replies. If the work implements or changes a
 documented contract, perform the applicable project closure reconciliation before
 `done` and a ready PR; if no separate procedure is defined, compare the result directly
-with the canonical PRD/task/TD/ADR. Any unresolved discrepancy is a blocker.
+with the canonical requirements/specifications and accepted decisions. Any unresolved
+discrepancy is a blocker.
 Do not copy that documentation governance here. Do not require the entire product phase
 to close for a single request.
 

@@ -1,7 +1,7 @@
 # Technical and Architectural Decisions
 
-Rules: [task tracker](task-tracker.md), [documentation rules](documentation.md).
-Use the appropriate form; examples and placeholders are not project tasks.
+Rules: [requirements](requirements.md) and [work queues](work-queue.md), [documentation rules](documentation.md).
+Use the appropriate form; examples are not project decisions. Legacy tasks follow [on-touch conversion](legacy-transition.md).
 Adapt paths and field language to the project settings and the checks actually selected.
 
 ## TD — `docs/solutions/auth/TD-AUTH-001.md`
@@ -40,7 +40,7 @@ and date. Document date and validation results do not replace user approval.
 
 <Research support needed to choose and approve this decision, if any; numeric thresholds
 only when justified. Separately state how the implemented contract must be verified;
-implementation steps, acceptance and results belong in technical task cards.>
+requirement acceptance belongs in specifications; execution is queued and results belong in artifacts.>
 User approval accepts the decision, not its implementation. Do not require a finished
 implementation to approve its contract; investigate essential unknowns separately.
 
@@ -88,7 +88,7 @@ and date. Document date and validation results do not replace user approval.
 ## Validation
 
 <Research support needed to choose and approve this architecture, if any. Separately state
-required verification of the resulting system; execution and results belong in tasks.>
+required verification of the resulting system; execution is queued and verification belongs with the resulting artifact/specification.>
 User approval and implementation acceptance are distinct. Do not block approval on
 a verification record that can only exist after implementing the approved choice.
 
@@ -101,7 +101,7 @@ a verification record that can only exist after implementing the approved choice
 <Open questions and conditions for review.>
 ```
 
-TDs/ADRs do not contain phases, task links, or implementation checkboxes. Decision
+TDs/ADRs do not contain phases, execution checklists, or a second work queue. Decision
 dependencies link only to decisions. For `superseded`, specify the reason, date, and
 canonical successor decision, if one exists; if rejected without a replacement, state
 that explicitly. Do not leave two active versions of a contract.

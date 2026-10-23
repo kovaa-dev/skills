@@ -1,31 +1,29 @@
-# Migration coverage
+# Requirement and queue migration coverage
 
-Rules — [migration](governance-migration.md), [documentation policy](documentation.md).
-Use this form only for a full/large migration, compliance, or explicitly required
-traceability. A small migration keeps a compact mapping in its migration task or PR.
-Adapt paths and field language to the project settings.
+Use [one-shot migration](governance-migration.md) for a full selected scope and
+[on-touch conversion](legacy-transition.md) for ordinary work. The former task-schema
+migration is legacy; the destination is always specifications, queues, and results.
 
-`docs/development/migration-coverage.md` is a temporary control file, not a task,
-roadmap, research artifact, or verification record. `Relation to canonical` describes
-the source's relationship to the destination; `Disposition` records the accepted action.
+A small conversion keeps its mapping in the old-source notice or work result.
+Use detailed temporary coverage only for full/large migration or required audit traceability.
 
 ```md
 # Migration coverage
 
-| Source/version/range | Requirement or question | Canonical destination/new ID | Relation to canonical | Disposition | Rationale / continuation task |
+| Source/version/range | Meaning/type | Specification/requirement | Work/result destination | Disposition | Reason or remaining question |
 | --- | --- | --- | --- | --- | --- |
-| <source and exact range> | <meaning> | <canonical link> | <unique/exact duplicate/semantic duplicate/addition/conflict/historical or not applicable> | <accepted/open/rejected/unmapped> | <reason and task link if unresolved> |
+| <exact source> | <obligation/decision/work/verification/question> | <canonical locator or not applicable> | <Q/result/history locator or not applicable> | <converted/shared/historical/open> | <reason and exact remaining scope> |
 
-## Checkpoints and remaining scope
+## Recoverability and completion
 
-- Preserved source: <recoverable version/copy/patch>.
-- Current chunk: <explicit boundaries and coverage checks>.
-- Not migrated: <source ranges and continuation task links>.
-- Completion: <compact closure location; remove this file after approval, or state the required retention policy>.
+- Preserved source: <immutable revision, exact copy, or patch>.
+- Current scope: <source boundaries and acceptance>.
+- Remaining: <unconverted ranges, conflicts, or unavailable sources>.
+- Verification: <coverage, links, graph, history, and meaning checks actually completed>.
+- Final location: <condensed result, or justified historical retention>.
 ```
 
-At completion, resolve every `open` or `unmapped` item or list it as remaining scope.
-Consolidate the result into the migration task/PR closure and delete the temporary file
-after a checkpoint and user approval. Retain it only when an external audit, compliance,
-repository policy, or explicit traceability decision requires a historical migration record;
-ordinary work does not read or update it.
+Source-to-destination mapping must account for questions, exceptions, dependencies,
+and completed/cancelled outcomes, not merely renamed files. Repeated entry reuses existing
+destinations. Do not mark open/unmapped material migrated or preserve a permanent second
+tracker. Cleanup/deletion follows explicit authority and verified recovery.
