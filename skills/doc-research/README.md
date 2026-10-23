@@ -96,4 +96,4 @@ For a global installation, add `--global`. See the repository [installation guid
 
 ## Language and version
 
-The agent-facing instructions are written in English. This skill is included in version `v0.4.3`. <!-- x-release-please-version -->
+The agent-facing instructions are written in English. This skill is included in version `v0.5.0`. <!-- x-release-please-version -->
