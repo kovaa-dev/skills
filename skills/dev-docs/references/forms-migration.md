@@ -1,31 +1,38 @@
-# Migration coverage
+# Requirement and queue migration coverage
 
-Rules — [migration](governance-migration.md), [documentation policy](documentation.md).
-Use this form only for a full/large migration, compliance, or explicitly required
-traceability. A small migration keeps a compact mapping in its migration task or PR.
-Adapt paths and field language to the project settings.
+Use [one-shot migration](governance-migration.md) for a full selected scope and
+[on-touch conversion](legacy-transition.md) for ordinary legacy conversion. The former task-schema
+migration is legacy; the destination is always specifications, queues, and results.
 
-`docs/development/migration-coverage.md` is a temporary control file, not a task,
-roadmap, research artifact, or verification record. `Relation to canonical` describes
-the source's relationship to the destination; `Disposition` records the accepted action.
+Use the shared [coverage protocol](legacy-transition.md#coverage-and-reconciliation).
+A small conversion keeps the same accounting inline in the old-source notice or work result;
+a detailed temporary table is for full/large migration or required traceability.
+Rows identify meaningful units/conditions, not merely filenames; group only when each
+contributing meaning and destination remains checkable.
 
 ```md
 # Migration coverage
 
-| Source/version/range | Requirement or question | Canonical destination/new ID | Relation to canonical | Disposition | Rationale / continuation task |
-| --- | --- | --- | --- | --- | --- |
-| <source and exact range> | <meaning> | <canonical link> | <unique/exact duplicate/semantic duplicate/addition/conflict/historical or not applicable> | <accepted/open/rejected/unmapped> | <reason and task link if unresolved> |
+| Source/baseline/range or new input | Meaning unit/type | Canonical destination and revision | Disposition/reason | Check or remaining gap |
+| --- | --- | --- | --- | --- |
+| <exact source unit/version, including relevant exception/condition> | <short semantic label, no copied contract> | <R/revision, decision/question, documentation, Q/result/history locator> | <captured/shared/historical/residual; accepted reason where needed> | <two-way meaning check or exact unresolved source/question> |
+| <new input source/date during work> | <new/changed obligation or pending question> | <updated/new canonical locator and state> | <captured/proposed/question; do not attribute it to the old baseline> | <capture check or next needed answer> |
 
-## Checkpoints and remaining scope
+## Recoverability and completion
 
-- Preserved source: <recoverable version/copy/patch>.
-- Current chunk: <explicit boundaries and coverage checks>.
-- Not migrated: <source ranges and continuation task links>.
-- Completion: <compact closure location; remove this file after approval, or state the required retention policy>.
+- Preserved source: <immutable revision, exact copy, or patch>.
+- Current scope: <checked baseline/ranges and acceptance>.
+- New/changed inputs: <sources and canonical destinations, or none identified>.
+- Remaining: <unconverted/unread/unmapped ranges, conflicts, or unavailable sources>.
+- Verification: <forward/reverse meaning checks, source delta, links, graph, and history checks actually completed>.
+- Final location: <checked mapping/baseline/dispositions in the condensed result or linked history>.
 ```
 
-At completion, resolve every `open` or `unmapped` item or list it as remaining scope.
-Consolidate the result into the migration task/PR closure and delete the temporary file
-after a checkpoint and user approval. Retain it only when an external audit, compliance,
-repository policy, or explicit traceability decision requires a historical migration record;
-ordinary work does not read or update it.
+Source-to-destination mapping must account for questions, exceptions, dependencies,
+and completed/cancelled outcomes, not merely renamed files. Repeated entry reuses existing
+destinations. A partial-source notice identifies converted ranges and residual active
+legacy sections under [on-touch conversion](legacy-transition.md#convert-before-continuing).
+Completion follows the [coverage criterion](legacy-transition.md#coverage-and-reconciliation):
+unread or unmapped source meaning remains incomplete; captured open questions may stay
+unresolved. Do not preserve a permanent second tracker. Cleanup/deletion follows explicit
+authority and verified recovery.

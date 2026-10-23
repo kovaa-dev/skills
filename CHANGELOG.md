@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 No unreleased changes.
 
+## [0.5.0](https://github.com/kovaa-dev/skills/compare/v0.4.3...v0.5.0) (2026-10-23)
+
+
+### Features
+
+* add research, cost audit, and orchestra skills ([#20](https://github.com/kovaa-dev/skills/issues/20)) ([d822429](https://github.com/kovaa-dev/skills/commit/d822429b8b5aada0401299816f853d14481058b1))
+
+
+### Bug Fixes
+
+* **cost-audit:** keep session evidence bounded and reproducible ([#22](https://github.com/kovaa-dev/skills/issues/22)) ([04b280a](https://github.com/kovaa-dev/skills/commit/04b280a21f1678a2c549a7a3f80b32ca17b6e5a3))
+
 ## [0.4.3](https://github.com/kovaa-dev/skills/compare/v0.4.2...v0.4.3) (2026-10-21)
 
 

@@ -1,122 +1,47 @@
-# Incoming Bugs, Findings, and Ideas
+# Incoming work and questions
 
-Rules: [task tracker](task-tracker.md), [documentation rules](documentation.md).
-Use the appropriate form; examples and placeholders are not project tasks.
-Adapt paths and field language to the project settings and the checks actually selected.
+Use [maintenance](maintenance.md), [requirements](requirements.md), and
+[queues](work-queue.md). These forms replace old bug/layer/PRD card examples.
+Convert selected existing cards through [on-touch transition](legacy-transition.md).
 
-## Short intake forms
+## Bug
 
-This is a minimal registration, not an implementation-ready specification. See the
-[maintenance rules](maintenance.md) for triage, severity, and planning rules. Replace
-example IDs with available IDs from actual layers. Grooming before `planned` assigns
-an owner, accepts the nearest task's verifiable outcome, dependencies, and priority,
-and records the acceptance source. For an
-investigation, the outcome may be an answer to a specific question rather than a
-finished product solution. Full design is unnecessary for registration. If an
-applicable contract exists, link to it; a TD/ADR is needed only for a genuine technical
-choice.
-
-### Bug
+A minimal canonical queue entry can be:
 
 ```md
-# WEB-001 <Observed defect>
+###### Q-004
 
-- Status: backlog
-- Type: bug
-- Owner: unassigned
-- Grooming: incomplete
-- Source: <report/source and date>
-- Dependencies: none
-- Severity: <critical/high/medium/low/unknown + research support for impact>
-- Priority: <project priority or pending triage + rationale>
-
-## Reproduction
-
-<Version/environment, prerequisites, steps, expected and actual behavior.>
-<Frequency, affected users, workaround; omit personal data and secrets.>
-
-## Open questions
-
-<What remains unconfirmed; distinguish cause hypothesis from observed behavior.>
-
-## Scheduling decision and next step
-
-<Queue placement rationale, or explicit deferral reason and review trigger.>
-<Next action and responsible triage owner. Queue itself contains only task links.>
-
-## Acceptance
-
-- [ ] WEB-001.1 Original reproduction no longer fails.
-- [ ] WEB-001.2 Regression/validation result follows the active project-work policy;
-      record the chosen check and any explicit blocker/exception without copying that policy.
-
-## Verification
-
-Pending; record actual checks and any manual-only validation limitation.
+**Restore preference propagation after reconnect** · backlog · bug · severity: <known or unknown>.
+Contract/reproduction: <link to the existing requirement and owning failure scenario>.
+Next result: reproduce and restore the agreed behavior.
+Scheduling: <priority/deferral reason and review trigger when deferred>.
 ```
 
-### Technical finding or debt
+Place environment, reproduction, hypotheses, and verification under
+[work-context ownership](documentation.md#work-context-and-results). Link an existing
+requirement when violated; documentation/source-only corrections need no invented R-ID.
+
+## Research or technical finding
 
 ```md
-# WEB-002 <Observation to investigate>
+###### Q-005
 
-- Status: backlog
-- Type: investigation
-- Owner: unassigned
-- Grooming: incomplete
-- Source: <review/measurement/report and date>
-- Dependencies: none
-
-## Observation and impact
-
-<Observed facts and research support, affected boundary and known impact.>
-<Hypothesis, separately labeled; for known maintenance work use type maintenance.>
-
-## Open questions
-
-<What needs checking and how to confirm or reject the hypothesis.>
-
-## Next step
-
-<Next check and triage owner; priority and decision before planned.>
-
-## Acceptance
-
-- [ ] WEB-002.1 Investigation conclusion has reproducible support.
-- [ ] WEB-002.2 Remaining fixes have linked open tasks, or no action is justified.
-
-## Investigation result
-
-Pending; investigation completion does not mean remediation completion.
+**Determine why idle preferences generate excess traffic** · backlog · research.
+Question: <link to the owning investigation section>.
+Result: reproducible conclusion and any separately needed remediation.
 ```
 
-### Product idea
+The question section preserves observation versus hypothesis, known impact, method/criteria,
+and material unknowns. No TD/ADR or fictional product requirement is needed merely to start
+research. A separately completed investigation leaves significant unresolved fixes visible.
 
-```md
-# PRD-001 <Potential user outcome>
+## Product idea
 
-- Status: backlog
-- Type: idea
-- Owner: unassigned
-- Grooming: incomplete
-- Source: <request/interview and date>
-- Product dependencies: none
+Capture a requested idea as a draft/proposed obligation or an open question in its
+appropriate owner under [documentation purpose](documentation.md#documentation-purpose-and-ownership).
+Preserve source, potential value, known boundaries, and open questions without inventing
+acceptance or a predetermined implementation. Add queue work only when a concrete
+discovery/delivery result is assigned or meets the registration threshold.
 
-## Problem and potential value
-
-<Who has the problem, context, desired benefit; hypothesis, not accepted scope.>
-
-## Open questions and next step
-
-<What to learn, how to test value, responsible triage owner.>
-
-## Technical tasks
-
-Not decomposed; technical scope follows validation of the product choice.
-```
-
-This minimal backlog PRD may be registered before product grooming; it is not an
-accepted product contract. Grooming refines the same card into a feature/improvement
-with verifiable acceptance and an acceptance source, after which selected work may become
-`planned`; do not create a duplicate merely because its type changes. A product phase is optional, but the roadmap
-must link to the task.
+Groom the specification and work separately. A draft can remain while research is ready;
+an accepted obligation can remain unimplemented while delivery is blocked.

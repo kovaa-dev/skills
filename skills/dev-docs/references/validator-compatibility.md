@@ -1,66 +1,40 @@
-# Optional validator compatibility profile
+# Validator compatibility during the transition
 
-This is a reference for a legacy constrained parser, not a mandatory format for every
-project and not a bundle of executable tools. Scripts are not shipped with the skill.
-Apply it only if the project already has them or has explicitly chosen to adopt them.
-Do not assume where their source files are located. If they are unavailable, do not suggest
-a nonexistent command; use the project's checks or a minimal manual check.
+The canonical schemas are [requirements](requirements.md) and [work queues](work-queue.md).
+Old task/PRD parsers are **legacy readers**, not a reason to continue authoring the old
+model. Use [on-touch conversion](legacy-transition.md) for selected work and
+[migration](governance-migration.md) for an explicit one-shot transition.
 
-## Tracker profile
+The skill does not ship project validators. Inspect actual tools/configuration before
+naming commands, assuming paths, or claiming automation. Do not install another tracker
+or runtime merely for compatibility.
 
-The existing optional `check-tracker.mjs` is a constrained Markdown parser,
-not a universal governance engine. The compatible profile uses:
+## Adapt real enforcement
 
-- the `docs/tasks`, `docs/solutions`, and `docs/architecture/decisions` directories;
-- exactly three-digit numbers and prefixes made of uppercase ASCII letters/digits;
-- `- Status:`, `- Grooming:`, `- Dependencies:`, `- Product dependencies:`, and
-  `- Decision dependencies:`; dependencies are inline Markdown links or `none`;
-- the PRD section `## Technical tasks` for composition links;
-- `## Open questions` for backlog items without a decision, `## Needs information` for
-  `need-info`, `## Closure` for PRDs and technical tasks, `## Verification` for bugs,
-  and `## Investigation result` for investigation records; `blocked` requires both `- Blocker:` and
-  `- Unblock condition:`;
-- `index.md` / `backlog.md` as navigation filenames; the entry point is `docs/tasks/index.md`.
+An existing parser may assume docs/tasks, PRD-NNN/layer IDs, card files, composition
+headings, fixed status fields, or an index mirroring card state. Scope those checks to
+remaining legacy sources while adapting affected samples and checks for:
 
-For the fully English `dev-docs` profile, use the English schema tokens listed above. Update
-`check-tracker.mjs`, its tests, every parser fixture, and all copied task/decision templates and
-cards atomically; replace the legacy dependency sentinel with `none`. Until those changes are
-complete, a parser configured for legacy tokens is not compatible with the English profile.
-Example prose and non-schema headings may vary. Other paths and number lengths require adapting
-the check; the normative rules remain unchanged. The check
-does not prove that research support is genuine, requirements are complete, the owner is correct, or an
-accepted decision exists.
+- specification requirement IDs/anchors, revision/applicability, and real links;
+- one canonical work entry, cross-queue references, and result/history links;
+- prerequisite versus reference/supersedes/rationale relationships and self/cycle checks;
+- historical verification versus proof of the current requirement revision;
+- converted notices and the route to new canonical owners.
 
+Do not force new requirements or queues into legacy cards, silently disable CI, or
+claim that Markdown computes reverse links/readiness. Update parser assumptions,
+fixtures, and callers together when that enforcement change is authorized.
+A stale parser that makes the transition impossible is an explicit blocker to resolve,
+not permission to continue affected implementation without capture.
 
-## Checks and portability limits
+## Limits and portability
 
-The Markdown bundle is portable without runtime tooling. The example paths represent the selected profile,
-not a universal structure for every repository. When paths change, update the
-links in snippets/cards and the configuration of the selected checks.
+Keep project-specific paths, number length, languages, retired paths, and ignored
+directories configurable. Another repository's source checker is not automatically
+portable. If an existing root TODO redirect is required by an obsolete parser, adapt
+the requirement rather than creating an unnecessary competing entrypoint.
 
-The existing `check-docs.mjs` is **not fully generic**: it hardcodes
-`ignoredDirectories` and `retiredReferences`, including obsolete architecture paths
-from the source repository. Before enabling it, review these lists for the new project,
-history handling, Markdown fences/anchors, and the root location. Do not declare
-another repository's retired paths forbidden in a new project by default.
-
-`check-tracker.mjs` fixes the directories, ID regex, fields, headings, and navigation format;
-it also includes special handling for DOC. It does not validate the full meaning of the governance rules.
-Preserve the compatible profile or adapt the parser and tests. Node.js checks
-require a compatible Node runtime; configure package scripts/CI separately.
-After copying and adapting the checks, run them from the target repository root:
-
-```sh
-node scripts/check-docs.mjs
-node scripts/check-tracker.mjs
-node --test scripts/tests/check-docs.test.mjs scripts/tests/check-tracker.test.mjs
-```
-
-Run only checks that have been copied. Before claiming portability, test
-a small fixture for the new project containing its prefixes, a PRD, a technical task,
-a technical decision (TD)/architecture decision record (ADR), and links. A successful lint does not confirm that acceptance was actually met,
-the migration is complete, or product constraints have been accepted; those require review.
-
-Older parser versions may require a root-level TODO file. When adopting such
-a tool, remove that requirement and test a fixture without a redirect
-instead of creating an unnecessary file solely for compatibility.
+Use the project's actual checks. Verify a representative converted requirement,
+cross-queue wait, completed result, and residual legacy redirect when applicable.
+Structural validation does not prove accepted meaning, factual truth, complete migration,
+or product/security behavior; compare source and destination semantics separately.

@@ -1,5 +1,7 @@
 # Bounded research handoff
 
+Use the [requirements](requirements.md) and [work-queue](work-queue.md) model; selected legacy research tasks first follow [conversion](legacy-transition.md).
+
 Use this contract when a documentation question or product decision requires source-heavy
 research that is outside documentation maintenance itself. The executor may be a person,
 an available research capability, or a later session; do not assume any particular tool is
@@ -30,5 +32,5 @@ Accept a result when it contains:
 
 The result is research support, not an accepted requirement or decision. Link the bounded result
 from its owning question; do not copy the corpus, search log, receipts, or internal research state
-into product/task/decision documents. Record any resulting choice through the normal acceptance
+into specifications, queues, or decisions. Record any resulting choice through the normal acceptance
 source of its canonical owner.

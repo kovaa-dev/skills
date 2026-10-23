@@ -1,63 +1,72 @@
 # dev-docs
 
-`dev-docs` is an agent skill for product discovery, documentation governance, and file-based task tracking without duplicating sources of truth.
+An agent skill for product and technical documentation: sourced system descriptions,
+references and guides, living requirements, lean work queues, decisions, and verified results.
 
-It turns an idea or an existing product state into a sequence of usable increments while keeping requirements, technical work, decisions, maintenance, and documentation consistent.
+PRD/product-task and layer-task tracking is officially legacy. Before continuing selected
+legacy work, the agent captures its affected contract and remaining work into the new
+scheme. Existing historical records remain available; unrelated backlog is not migrated
+implicitly.
 
 ## When to use it
 
-Use `dev-docs` for:
+- Groom desired behavior, constraints, acceptance, and material open questions.
+- Maintain descriptions, API references, guides/runbooks, and specifications in their owners.
+- Plan code, research, documents, data, and other outcomes in lean queues.
+- Recover undocumented requirements from code with explicit source paths and inspected baseline.
+- Analyze affected and preserved contracts, prerequisites, and conflicting obligations.
+- Keep proposed replacements distinct from current contracts; retire stale routes with
+  explicit successor/history notices.
+- Register significant bugs, findings, and assigned ideas without duplicating requirements.
+- Convert selected legacy material before continuing ordinary authorized work.
+- Perform an explicitly requested one-shot migration or governance-source update.
 
-- ongoing maintenance of existing project documentation without init or migration;
-- product discovery and staged grooming;
-- PRDs and user-visible product outcomes;
-- technical tasks organized by ownership layer;
-- technical and architecture decisions;
-- roadmap and backlog maintenance;
-- bug, engineering finding, and product idea intake;
-- documentation-consistency audits and controlled migrations;
-- adopting or updating documentation rules in a repository.
+## How the transition works
 
-## Why use it
+**Ordinary work:** capture the selected legacy requirement/task first, preserve its meaning
+and history, link converted sections to their new owners, then continue from those records.
+Unconverted sections of a shared source remain explicitly active until their own conversion.
+Repeated entry reuses the same IDs and mapping. No init or complete backlog migration is required.
+[Coverage reconciliation](references/legacy-transition.md#coverage-and-reconciliation) makes
+existing meaning, destinations, new inputs, and remaining gaps explicit. Newly received
+requirements/questions use ongoing capture directly in their owning documents.
 
-- **Lifecycle coverage:** connects discovery, PRDs, technical decomposition, decisions, roadmap state, maintenance, audit, and migration instead of generating one isolated artifact.
-- **Vertical Slice Development:** starts with the smallest end-to-end product slice that can be used and evaluated, then expands the same working product through independently useful features instead of completing isolated technical layers up front.
-- **Just-in-time decisions:** grooms selected backlog work into `planned`, then uses a short confirmed execution brief—not repeated grooming—before `in-progress`.
-- **Context-efficient by design:** routes the agent through indexes, canonical links, and targeted references so unrelated product history, backlog, and technical documentation do not need to be loaded for the current question.
-- **Explicit ownership:** keeps research support, acceptance sources, verification records, requirements, decisions, tasks, and statuses in their distinct canonical roles while keeping indexes navigational.
-- **Existing-project support:** maintains affected documents in their existing structure and formats without requiring init or migration. It can also establish the current product state and build a forward roadmap without inventing historical stages; adoption and consolidation are separate requests.
-- **Tool independence:** works with Markdown files and project-defined paths, layers, checks, and issue trackers; it does not require a particular execution skill or runtime.
+**One-shot migrate:** convert the entire agreed scope, including active and completed
+work, decisions, questions, acceptance sources, and verification. Reconcile the reading
+routes and actual validators. Former task-schema/hard-renaming migrations use this
+workflow; renaming files alone does not accomplish it.
 
-## Scope boundaries
-
-`dev-docs` governs product and documentation continuity; it is neither a code-execution framework nor a general-purpose corpus research engine. It prepares durable product contracts, technical work, decisions, and roadmap state, and can exchange bounded research request/result packets with any available authorized research process.
-
-It does not require strict TDD, a particular agent orchestration model, or an autonomous report-to-PR loop. It also does not bundle executable validators: optional parser compatibility is documented separately and applies only when a project explicitly adopts compatible tooling.
+Requirements describe obligations; queues describe work. A bug can create new repair work
+against the same unchanged requirement. Research can produce an accepted negative
+conclusion without implementing a product requirement. Multiple queue views preserve
+one canonical work entry and cross-queue waits.
 
 ## Example prompts
 
-```text
-While implementing this change, use dev-docs to keep the affected documentation and existing tasks current. Preserve the project's structure and formats; do not init or migrate its documentation system.
-
-Use dev-docs to shape this idea into the smallest usable Alpha. Start with overall grooming and do not write project files until we agree on the direction.
-
-Groom backlog PRD-012 using the results of completed PRDs, record the accepted result, and move it to planned. When it is selected for implementation, present a short execution brief before in-progress rather than repeating grooming.
-
-Audit documentation consistency and the task tracker. Report conflicting formulations, duplicated rules, broken canonical ownership, missing roadmap entries, and independent remediation tracks. Keep the audit read-only; do not treat it as factual corpus research or product/code certification.
-```
+- "Continue this legacy task. First capture its requirements and remaining work under
+  dev-docs, preserve its history, and resume from the new canonical records."
+- "Groom cross-device preferences. Keep accepted requirements distinct from implementation
+  questions and prepare only the nearest useful research or delivery outcome."
+- "Migrate this project's selected backlog and specifications to requirements and lean
+  queues in one operation, preserving completed results and unresolved questions."
+- "Audit conflicts and change impact in this area. Keep the audit read-only and show
+  affected obligations, applicability, verification gaps, and proposed resolutions."
 
 ## Contents
 
-- `SKILL.md` — the agent-facing entry point, action routing, and safety boundaries.
-- `references/documentation.md` — documentation ownership, decision approval, consistency, and granularity.
-- `references/product-discovery.md` — staged product discovery and just-in-time grooming.
-- `references/research-handoff.md` — tool-neutral request/result contract for source-heavy questions.
-- `references/task-tracker.md` — PRDs, technical tasks, statuses, dependencies, and roadmap rules.
-- `references/maintenance.md` — bugs, findings, ideas, support work, and releases.
-- `references/adoption.md` and `references/governance-migration.md` — adoption, audit, migration, and update workflows.
-- `references/forms-*.md` — optional document and task templates.
+- [SKILL.md](SKILL.md): material/owner route, mandatory on-touch conversion, and actions.
+- [Requirements](references/requirements.md): identity, revisions, rationale, applicability,
+  dependencies, conflicts, and impact.
+- [Work queues](references/work-queue.md): readiness, multiple queues, result/history, and targets.
+- [On-touch transition](references/legacy-transition.md): ordinary incremental conversion.
+- [One-shot migration](references/governance-migration.md): full agreed scope.
+- [Governance](references/documentation.md), [grooming](references/product-discovery.md),
+  [maintenance](references/maintenance.md), and [forms](references/documentation-registers-template.md).
+  Governance covers documentation purpose, decision acceptance, and work-context placement.
+- [Legacy recognition](references/task-tracker.md): compatibility reader, not old authoring rules.
 
-`SKILL.md` and the applicable reference files are authoritative. This README only explains the purpose and layout of the skill.
+The skill ships Markdown guidance, not a tracker runtime or implicit automation. It
+does not require PR-based delivery or replace the active engineering/deployment policy.
 
 ## Independence
 
@@ -80,8 +89,8 @@ npx skills update dev-docs
 npx skills remove dev-docs
 ```
 
-See the repository [installation guide](../../README.md#install-with-npx-skills) for project/global scope, reproducible commit-pinned sources, telemetry, and Codex plugin installation.
+See the repository [installation guide](https://github.com/kovaa-dev/skills#install-with-npx-skills) for project/global scope, reproducible commit-pinned sources, telemetry, and Codex plugin installation.
 
 ## Language and version
 
-The agent-facing instructions and baseline tracker schema are written in English. This skill is included in version `v0.4.3`. <!-- x-release-please-version -->
+The agent-facing instructions and baseline tracker schema are written in English. This skill is included in version `v0.5.0`. <!-- x-release-please-version -->

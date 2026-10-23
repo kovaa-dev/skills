@@ -1,3 +1,4 @@
 .DS_Store
 .serena/
+.venv/
 __pycache__/

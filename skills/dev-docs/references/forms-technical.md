@@ -1,81 +1,66 @@
-# Technical task
+# Work entries and result artifacts
 
-Rules — [tracker](task-tracker.md), [documentation policy](documentation.md).
-Use the applicable form; examples and placeholders are not project tasks.
-Adapt paths and field language to the project settings and the checks actually selected.
+Use [work queues](work-queue.md), [requirements](requirements.md), and
+[governance](documentation.md). This replaces the legacy technical-task form.
+Selected old layer tasks first follow [on-touch conversion](legacy-transition.md).
 
-## Technical task — `docs/tasks/auth/AUTH-001.md`
+## Lean canonical queue entries
+
+Illustrative docs/queue.md. These entries share one owner/context where appropriate.
+Link the relevant contract, documentation, or result question. A short acceptance/context
+note is sufficient when useful; follow [work-context placement](documentation.md#work-context-and-results)
+for longer material.
 
 ```md
-# AUTH-001 Validate sign-in requests
+# Work queue
 
-- Status: backlog
-- Owner: <technical owner>
-- Grooming: incomplete
-- Source: <technical requirement source and date>
-- Decisions: [TD-AUTH-001 Request validation contract](../../solutions/auth/TD-AUTH-001.md)
-- Dependencies: none
-- Parallel with: <optional task links; omit when none>
-- Integration: <optional integration-task link; omit when none>
+Owner: <known accountable owner>. Updated: <actual date when useful>.
 
-## Result and scope
+## Open work
 
-<Independently verifiable technical result and non-goals.>
-Contract details remain in the linked decision, not copied here.
+###### Q-001
 
-## Open questions
+**[Establish a usable preferences representation](wiki/personal-preferences.md#representation-question)** · ready · research.
+Result: an accepted experiment/conclusion sufficient to choose the representation.
 
-<Unresolved contract questions and required investigation.>
-The linked proposal must be accepted before implementing it as a contract.
+###### Q-002
 
-## Work and acceptance
+**[Deliver cross-device preferences](wiki/personal-preferences.md#r-002)** · blocked.
+Waits for: [Q-001](#q-001), the accepted representation result.
+Target: <agreed application/environment or other destination>.
 
-- [ ] AUTH-001.1 <Implementation step and verifiable acceptance (numeric only when justified).>
-- [ ] AUTH-001.2 <Contract/regression checks and expected result.>
+## Completed work
 
-## Migration and rollback
+###### Q-003
 
-<Applicable procedure, or explicit not-applicable rationale.>
-
-## Next step
-
-<Concrete next action.>
-
-## Closure
-
-Pending; for ordinary work, record one observable result, the current canonical source for the
-contract/decision when applicable, the closure reconciliation result, and the
-verification/manual path. Add environment/date/version/artifacts only for a durable verification record required by the
-tracker. Explicitly state any mandatory checks not run, unresolved documentation differences, and
-remaining limitations.
+**<Prior independently useful result>** · done · <known completion date>.
+Result: <exact result/verification locator and historical limits>.
 ```
 
-Before `planned`, replace the grooming metadata with
-`- Grooming: completed YYYY-MM-DD; source: <approval>`. For `blocked`, add both
-`- Blocker: <linked task/artifact/event and reason>` and
-`- Unblock condition: <observable result>`; a child relationship is not itself a
-blocker. For `need-info`, explicitly record the question, impact, recommendation,
-alternatives, and answer owner in the card.
+Set ready only when actual scope, acceptance, inputs, authority, and owner are sufficient.
+Use project tokens such as planned where they already represent readiness. Do not fill
+dates, acceptance, current verification, or owner from the illustrative text.
 
-The `Parallel with` and `Integration` fields are conditional; omit them from an ordinary task. Use them
-only for an agreed audit/migration task graph; parallel execution means there is no
-blocking dependency, not that an agent starts automatically. An integration task must have
-its own result and depend on every track it actually integrates.
+Local steps can remain an executor plan. Use another work entry only for a result with
+independent planning/acceptance or a real prerequisite supplied to other work.
+The same entry may implement several requirements and produce code, documents, or data.
 
-Record prerequisites in `- Dependencies:` as links to technical tasks.
-The source field may link to a specific PRD requirement. One technical task
-may be used by `0..N` PRDs; the owning PRD contains the composition, while the backlink registry, stage
-codes, and queue are not copied into the technical task. Each task must still appear in
-the roadmap exactly once. If shared work has different delivery boundaries or
-independent acceptance, split it.
+## Result or investigation section
 
-A standalone technical task without a PRD must explain its source, observable result,
-impact, and acceptance. It is permitted for migration, dependency/runtime updates, debt/
-refactoring, security, reliability/performance, observability/operations, CI/tooling,
-investigation, platform capabilities, or removal of an obsolete system. If the work is
-needed only for one feature, link it to that feature's PRD; if it changes the user-facing contract, create
-or update the PRD. Do not create a fictitious PRD.
+Use an existing relevant result/documentation section or a separate artifact when its
+content is independently useful; a repair or execution brief needs no new file by default:
 
-If no technical decision (TD) or architecture decision record (ADR) is needed, remove the decisions field; link to an existing contract when
-applicable. Keep the research question and verification plan in the task. Do not create
-a decision merely to move a task into active work.
+```md
+## Representation result
+
+Question and acceptance: <link to the owning question>.
+Inputs/baseline: <reproducible source/version and actual constraints>.
+Method: <enough to repeat the significant check>.
+Result: <observed behavior/measurements and artifact locators>.
+Conclusion: <supported answer, limits, and unresolved issues>.
+Requirements checked: <IDs/revisions, including preserved contracts>.
+Delivery: <actual target/version or not delivered, as applicable>.
+```
+
+A report may establish infeasibility and still complete the investigation. It does not
+make the product requirement implemented. Long logs and retries do not belong in the queue.

@@ -27,11 +27,13 @@ Changes that alter the meaning of both `dev-docs` and `dev-rules` should be revi
 
 ## Development and validation
 
-Run the same local checks used by CI:
+Use Python 3.12 or newer and install the pinned validation dependencies in your
+development environment (for example, a virtual environment). Run the same checks as CI:
 
 ```bash
-python3 scripts/validate.py
-DISABLE_TELEMETRY=1 npx --yes skills@1.5.26 add . --list
+python3 -m pip install -r scripts/requirements-validation.txt
+python3 -m unittest discover -s scripts -p 'test_*.py'
+python3 scripts/validate.py --check-cli
 ```
 
 The release-policy check uses Release Please 17.3.0, matching the engine bundled in the pinned release action. Keep that test dependency aligned when upgrading the action. Install it outside the repository so validation does not scan its files:
@@ -44,7 +46,17 @@ node --test scripts/release-policy.test.cjs
 rm -rf "$RELEASE_POLICY_DEPS"
 ```
 
-The validator checks frontmatter, names, descriptions, local Markdown links and anchors, fenced blocks, machine-local paths, manifests, and the skills.sh grouping.
+The validator checks YAML metadata, names, descriptions, local Markdown links and anchors,
+fenced blocks, machine-local paths, manifests, and the skills.sh grouping. Skill links
+must stay within their distributable folder. In a Git checkout, Markdown checks include
+tracked and new nonignored files; untracked ignored local artifacts are excluded. An exported
+repository checks root Markdown and skill folders; an isolated skill checks its own tree.
+The tests also copy each skill into an isolated installation and check its links.
+
+`--check-cli` runs `skills@1.5.26` with telemetry disabled and requires the exact expected
+skill names and count, rather than trusting its exit code. That pinned CLI has no JSON
+mode for `--list`; an unrecognized output format fails validation. Update the discovery
+check when upgrading the CLI. Omit the flag to run only static checks without Node.js.
 
 ## Releases
 

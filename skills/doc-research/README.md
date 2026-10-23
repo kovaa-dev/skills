@@ -123,8 +123,8 @@ Install into the current project with the open-source [`skills`](https://github.
 npx skills add kovaa-dev/skills --skill doc-research
 ```
 
-For a global installation, add `--global`. See the repository [installation guide](../../README.md#install-with-npx-skills) for agent selection, reproducible commit-pinned sources, telemetry, and plugin installation.
+For a global installation, add `--global`. See the repository [installation guide](https://github.com/kovaa-dev/skills#install-with-npx-skills) for agent selection, reproducible commit-pinned sources, telemetry, and plugin installation.
 
 ## Language and version
 
-The agent-facing instructions are written in English. This skill is included in version `v0.4.3`. <!-- x-release-please-version -->
+The agent-facing instructions are written in English. This skill is included in version `v0.5.0`. <!-- x-release-please-version -->

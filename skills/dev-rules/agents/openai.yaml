@@ -1,0 +1,4 @@
+interface:
+  display_name: "kovaa: dev rules"
+  short_description: "Reliable engineering execution and delivery"
+  default_prompt: "Use $dev-rules to execute this engineering task within the existing product contract, with explicit scope, proportional validation, and safe Git delivery."

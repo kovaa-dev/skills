@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
-"""Validate the distributable Agent Skills repository without third-party packages."""
+"""Validate repository metadata, Markdown, skill packages, and optional CLI discovery."""
 
 from __future__ import annotations
 
+import argparse
 import json
+import os
 import re
+import subprocess
 import sys
 from pathlib import Path
-from urllib.parse import unquote
+from urllib.parse import unquote, urlsplit
+
+import yaml
+from markdown_it import MarkdownIt
+from markdown_it.token import Token
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = ROOT / "skills"
@@ -19,68 +26,44 @@ SEMVER_RE = re.compile(
 )
 CYRILLIC_RE = re.compile(r"[А-Яа-яЁё]")
 LOCAL_PATH_RE = re.compile(r"(?:/Users/[^/<\s]+|/home/[^/<\s]+|[A-Za-z]:\\Users\\[^\\<\s]+)")
-LINK_RE = re.compile(r"(?<!!)\[[^]]*\]\(([^)]+)\)")
-HEADING_RE = re.compile(r"^#{1,6}\s+(.+?)\s*#*$")
-FENCE_RE = re.compile(r"^\s*(```+|~~~+)")
+FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---(?:\n|$)", re.DOTALL)
 ACTION_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
-class ValidationError(Exception):
-    """Raised when one or more repository checks fail."""
-
-
 def github_slug(value: str) -> str:
-    value = re.sub(r"<[^>]+>", "", value)
-    value = re.sub(r"[`*_~]", "", value).strip().lower()
+    value = value.strip().lower()
     value = re.sub(r"[^\w\- ]", "", value, flags=re.UNICODE)
     return value.replace(" ", "-")
 
 
-def visible_markdown_lines(text: str, path: Path, errors: list[str]) -> list[str]:
-    visible: list[str] = []
-    fence_char: str | None = None
-    for line in text.splitlines():
-        match = FENCE_RE.match(line)
-        if match:
-            marker = match.group(1)[0]
-            if fence_char is None:
-                fence_char = marker
-            elif fence_char == marker:
-                fence_char = None
-            continue
-        if fence_char is None:
-            visible.append(line)
-    if fence_char is not None:
-        errors.append(f"{path.relative_to(ROOT)}: unclosed fenced block")
-    return visible
+def yaml_mapping(text: str, path: Path, errors: list[str]) -> dict:
+    try:
+        data = yaml.safe_load(text)
+    except yaml.YAMLError as exc:
+        errors.append(f"{path.relative_to(ROOT)}: invalid YAML: {exc}")
+        return {}
+    if not isinstance(data, dict):
+        errors.append(f"{path.relative_to(ROOT)}: YAML must contain a mapping")
+        return {}
+    return data
 
 
 def parse_frontmatter(path: Path, errors: list[str]) -> tuple[str, str]:
     text = path.read_text(encoding="utf-8")
-    match = re.match(r"^---\n(.*?)\n---\n", text, re.DOTALL)
+    match = FRONTMATTER_RE.match(text)
     if not match:
         errors.append(f"{path.relative_to(ROOT)}: missing YAML frontmatter")
         return "", ""
 
-    block = match.group(1)
-    name_match = re.search(r"^name:\s*(\S+)\s*$", block, re.MULTILINE)
-    description_match = re.search(
-        r"^description:\s*(?:>-\s*\n((?:[ \t]+.*(?:\n|$))+)|([^\n]+))",
-        block,
-        re.MULTILINE,
-    )
-    if not name_match:
-        errors.append(f"{path.relative_to(ROOT)}: missing frontmatter name")
-    if not description_match:
-        errors.append(f"{path.relative_to(ROOT)}: missing frontmatter description")
-
-    name = name_match.group(1) if name_match else ""
-    if description_match:
-        raw_description = description_match.group(1) or description_match.group(2) or ""
-        description = " ".join(line.strip() for line in raw_description.splitlines()).strip()
-    else:
+    data = yaml_mapping(match.group(1), path, errors)
+    name, description = data.get("name"), data.get("description")
+    if not isinstance(name, str) or not name.strip():
+        errors.append(f"{path.relative_to(ROOT)}: frontmatter name must be a nonempty string")
+        name = ""
+    if not isinstance(description, str) or not description.strip():
+        errors.append(f"{path.relative_to(ROOT)}: frontmatter description must be a nonempty string")
         description = ""
-    return name, description
+    return name, " ".join(description.split())
 
 
 def validate_skills(errors: list[str]) -> list[str]:
@@ -111,15 +94,68 @@ def validate_skills(errors: list[str]) -> list[str]:
             )
         if not (directory / "README.md").is_file():
             errors.append(f"skills/{directory.name}: README.md is missing")
+        interface_file = directory / "agents" / "openai.yaml"
+        if not interface_file.is_file():
+            errors.append(f"skills/{directory.name}: agents/openai.yaml is missing")
+            continue
+        data = yaml_mapping(interface_file.read_text(encoding="utf-8"), interface_file, errors)
+        interface = data.get("interface")
+        if not isinstance(interface, dict):
+            errors.append(f"{interface_file.relative_to(ROOT)}: interface must be a mapping")
+            continue
+        display_name = interface.get("display_name")
+        if not isinstance(display_name, str) or not display_name:
+            errors.append(
+                f"{interface_file.relative_to(ROOT)}: interface.display_name must be a nonempty string"
+            )
+        elif not display_name.startswith("kovaa: ") or display_name != display_name.lower():
+            errors.append(
+                f"{interface_file.relative_to(ROOT)}: display_name must be lowercase and start with 'kovaa: '"
+            )
     return sorted(name for name in names if name)
 
 
-def validate_markdown(errors: list[str]) -> None:
-    markdown_files = sorted(ROOT.rglob("*.md"))
-    visible_by_path: dict[Path, list[str]] = {}
-    headings_by_path: dict[Path, set[str]] = {}
+def markdown_files() -> list[Path]:
+    try:
+        top = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"], cwd=ROOT, capture_output=True, text=True
+        )
+    except FileNotFoundError:
+        top = None
+    if top and top.returncode == 0 and Path(top.stdout.strip()).resolve() == ROOT:
+        result = subprocess.run(
+            ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z", "--", "*.md"],
+            cwd=ROOT, capture_output=True, text=True, check=True,
+        )
+        return sorted({
+            ROOT / name for name in result.stdout.split("\0")
+            if name and (ROOT / name).is_file()
+        })
+    # An exported repository has no Git ignore state; inspect its distribution trees.
+    if (ROOT / "SKILL.md").is_file():
+        return sorted(ROOT.rglob("*.md"))
+    return sorted((*ROOT.glob("*.md"), *(ROOT / "skills").rglob("*.md")))
 
-    for path in markdown_files:
+
+def inline_text(tokens: list[Token]) -> str:
+    parts: list[str] = []
+    for token in tokens:
+        if token.children:
+            parts.append(inline_text(token.children))
+        elif token.type in {"text", "code_inline"}:
+            parts.append(token.content)
+        elif token.type in {"softbreak", "hardbreak"}:
+            parts.append(" ")
+    return "".join(parts)
+
+
+def validate_markdown(errors: list[str]) -> int:
+    files = markdown_files()
+    links_by_path: dict[Path, list[str]] = {}
+    headings_by_path: dict[Path, set[str]] = {}
+    parser = MarkdownIt("commonmark")
+
+    for path in files:
         text = path.read_text(encoding="utf-8")
         relative = path.relative_to(ROOT)
         if CYRILLIC_RE.search(text):
@@ -127,29 +163,74 @@ def validate_markdown(errors: list[str]) -> None:
         local_path = LOCAL_PATH_RE.search(text)
         if local_path:
             errors.append(f"{relative}: machine-local absolute path {local_path.group(0)!r}")
-        visible = visible_markdown_lines(text, path, errors)
-        visible_by_path[path.resolve()] = visible
-        headings_by_path[path.resolve()] = {
-            github_slug(match.group(1))
-            for line in visible
-            if (match := HEADING_RE.match(line))
-        }
+        body = FRONTMATTER_RE.sub("", text, count=1) if path.name == "SKILL.md" else text
+        tokens = parser.parse(body)
+        headings: set[str] = set()
+        links: list[str] = []
+        for index, token in enumerate(tokens):
+            if token.type == "fence" and token.map:
+                # A closed fence spans its body lines plus opening and closing lines.
+                if token.map[1] - token.map[0] < token.content.count("\n") + 2:
+                    errors.append(f"{relative}: unclosed fenced block")
+            if token.type == "heading_open":
+                slug = github_slug(inline_text(tokens[index + 1].children or []))
+                anchor, suffix = slug, 0
+                while anchor in headings:
+                    suffix += 1
+                    anchor = f"{slug}-{suffix}"
+                headings.add(anchor)
+            pending = list(token.children or [])
+            while pending:
+                child = pending.pop()
+                pending.extend(child.children or [])
+                if child.type == "link_open":
+                    links.append(child.attrGet("href") or "")
+                elif child.type == "image":
+                    links.append(child.attrGet("src") or "")
+        links_by_path[path] = links
+        headings_by_path[path.resolve()] = headings
 
-    for resolved_path, lines in visible_by_path.items():
-        path = Path(resolved_path)
-        for line in lines:
-            for raw_target in LINK_RE.findall(line):
-                target = raw_target.strip().split()[0]
-                if target.startswith(("http://", "https://", "mailto:", "<")):
-                    continue
-                target = unquote(target.strip("<>"))
-                path_part, _, fragment = target.partition("#")
-                destination = (path.parent / path_part).resolve() if path_part else path.resolve()
-                if not destination.exists():
-                    errors.append(f"{path.relative_to(ROOT)}: missing link target {target}")
-                elif fragment and destination.suffix == ".md":
-                    if fragment not in headings_by_path.get(destination, set()):
-                        errors.append(f"{path.relative_to(ROOT)}: missing anchor {target}")
+    for path, links in links_by_path.items():
+        relative = path.relative_to(ROOT)
+        boundary = ROOT
+        if len(relative.parts) > 2 and relative.parts[0] == "skills":
+            boundary = ROOT / "skills" / relative.parts[1]
+        for target in links:
+            url = urlsplit(target)
+            if url.scheme or url.netloc:
+                continue
+            destination = (path.parent / unquote(url.path)).resolve() if url.path else path.resolve()
+            if not destination.is_relative_to(boundary):
+                errors.append(f"{relative}: link leaves distributable package: {target}")
+            elif not destination.exists():
+                errors.append(f"{relative}: missing link target {target}")
+            elif url.fragment and destination.suffix == ".md":
+                if unquote(url.fragment) not in headings_by_path.get(destination, set()):
+                    errors.append(f"{relative}: missing anchor {target}")
+    return len(files)
+
+
+def validate_cli(skill_names: list[str], errors: list[str]) -> None:
+    try:
+        result = subprocess.run(
+            ["npx", "--yes", "skills@1.5.26", "add", ".", "--list"],
+            cwd=ROOT, capture_output=True, text=True, timeout=120,
+            env={**os.environ, "DISABLE_TELEMETRY": "1", "NO_COLOR": "1"},
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        errors.append(f"skills CLI discovery failed: {exc}")
+        return
+    output = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", result.stdout + result.stderr)
+    # The pinned CLI has no JSON mode for --list. Fail closed on an output change.
+    found = re.search(r"Found (\d+) skills?\b", output)
+    names = sorted(re.findall(
+        r"^│ {4}([a-z0-9]+(?:-[a-z0-9]+)*)\s*$", output, re.MULTILINE
+    ))
+    if result.returncode or not found or int(found.group(1)) != len(skill_names) or names != sorted(skill_names):
+        errors.append(
+            f"skills CLI: expected {sorted(skill_names)!r}, discovered {names!r} "
+            f"(exit {result.returncode})\n{output}"
+        )
 
 
 def validate_workflows(errors: list[str]) -> None:
@@ -333,6 +414,9 @@ def validate_manifests(skill_names: list[str], errors: list[str]) -> None:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check-cli", action="store_true", help="also verify exact discovery with skills@1.5.26")
+    args = parser.parse_args()
     errors: list[str] = []
     for required in (
         "README.md",
@@ -348,16 +432,18 @@ def main() -> int:
             errors.append(f"{required}: required repository file is missing")
 
     skill_names = validate_skills(errors)
-    validate_markdown(errors)
+    markdown_count = validate_markdown(errors)
     validate_workflows(errors)
     validate_manifests(skill_names, errors)
+    if args.check_cli and not errors:
+        validate_cli(skill_names, errors)
 
     if errors:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
         return 1
 
-    print(f"Validated {len(skill_names)} skills and {len(list(ROOT.rglob('*.md')))} Markdown files.")
+    print(f"Validated {len(skill_names)} skills and {markdown_count} Markdown files.")
     return 0
 
 
