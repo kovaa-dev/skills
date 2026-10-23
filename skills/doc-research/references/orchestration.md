@@ -40,7 +40,7 @@ Explicit routes support tests and recorded execution: `coordinator-warm` require
 
 ## Ownership and task boundaries
 
-The coordinator owns the question, authorized corpus, final synthesis, and one analytical state owner, including a simple note when sufficient. Helpers own only their own structured state; ordinary notes and useful direct source reads need no helper. Batch independent search/read operations when this avoids model roundtrips without losing context; dependent refinement remains sequential. Apply the entrypoint's save trigger before a handoff, including after direct work.
+The coordinator owns the question, authorized corpus, final synthesis, and one analytical state owner, including a simple note when sufficient. Helpers own only their own structured state; ordinary notes and useful direct source reads need no helper. Batch independent search/read operations when this avoids model roundtrips without losing context; dependent refinement remains sequential. Apply the entrypoint's memory contract before completion or handoff on every route, including direct work; workers return new state to the owner rather than creating competing notes.
 
 Delegate only a bounded independent interpretation, source partition, specialized extraction, or material verification when the task and environment authorize it. Use the smallest useful worker set; never start one worker per passage or routine lookup. Parallelism can reduce latency but does not establish token savings. Keep one writer per task receipt or research store, and do not maintain competing copies of findings and conflicts.
 

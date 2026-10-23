@@ -13,10 +13,10 @@ These actions are mandatory when triggered. Preserve working search, tools, note
 
 | When | Required action |
 | --- | --- |
-| Current evidence/findings are available | Reuse after checking question, scope, identity/generation, and limitations. Retrieve only missing/changed material. |
+| Every task, before retrieval | Check relevant known memory; reuse current evidence/findings after checking question, scope, identity/generation, and limitations. Retrieve only missing/changed material. |
 | Independent operations can share a call without losing evidence | Batch them; refine dependent queries after reading results. |
 | Decisive context or a variant is missing | Expand the selected unit, continue, or change the query/tool before concluding. |
-| Repeat/continuation/handoff is expected and storage is authorized | Ensure minimal current findings and unresolved state are saved before finishing, on every route; write only missing/changed state. |
+| New search results or analytical state, with storage authorized | Persist compact search outcomes, findings, and unresolved state on every route; write only missing/changed state. Do not predict whether the user will return. |
 | A method repeatedly fails, truncates evidence, or requires state repair | Switch to the simplest sufficient authorized route; do not weaken evidence/access checks. |
 
 Indexing, JSON plans, ledgers, setup checks, installation, and delegation are mechanisms, not universal prerequisites. Safety, permission, validity, and conflict preservation are never optional.
@@ -35,13 +35,15 @@ Size alone never requires an index. Scoped `rg`, source reads, existing tools, `
 
 ## Freshness, memory, and context isolation
 
+Memory is part of every Direct, Retrieval, and Research task, including apparently one-off questions. Before searching, check relevant state in the known store or designated artifact folder, not the machine. An absent store is a miss, not a setup gate. After searching, record query/scope, source generation, result locators, coverage limits and continuation; use the existing receipt store or a compact note for non-helper searches. Batch writes instead of adding a model turn per query, and flush new search/analysis state before completion or handoff. Do not duplicate helper receipts in notes or persist raw search output.
+
 Storage and model context are independent: a no-history session can reuse saved memory. An unchanged verified repeat needs no new search or passage reopen. A changed question, scope, or generation requires checking affected evidence and completeness, not restarting everything.
 
-Durable writes require a persistence request or established write authority for the location, not mere filesystem writability. Without authority, answer normally and provide a needed resume block labeled not persisted.
+Durable writes require a persistence request or established write authority for the location, not mere filesystem writability. Use an established authorized location without asking about future reuse. If authority or a suitable location is absent, or saving fails, answer normally, disclose that memory was not persisted, and provide the compact resume block. Never bypass an explicit no-storage restriction.
 
 Use the existing analytical store or a small Markdown/JSON note; helper receipts/Research databases are alternatives, not prerequisites. Keep question/scope, source identity and hash/authoritative version, supported findings with original locators, conditions/exceptions, unresolved ambiguities/conflicts, and a needed next action. Update affected items in place, not repeated answers or competing ledgers. Unchanged memory needs no rewrite, validation timestamp, or extra save check. Verify actual writes and report the location. Never create an index just to save a note.
 
-On resume, inspect known state or the designated memory folder, not the machine. A matching hash proves freshness, not correctness; recheck unknown provenance, disputes, or new details. Simple notes need no reference or conversion. Read [evidence schema](references/evidence-schema.md) only for helper state/commands.
+A matching hash proves freshness, not correctness; recheck unknown provenance, disputes, or new details. Simple notes need no reference or conversion. Read [evidence schema](references/evidence-schema.md) only for helper state/commands.
 
 ## Retrieve and verify
 
@@ -49,7 +51,7 @@ On resume, inspect known state or the designated memory folder, not the machine.
 2. Read enough of the matching unit: headings, conditions, definitions, parent context, and relevant table/schema structure. Initial budgets are adjustable; resource ceilings require continuation, not incomplete conclusions.
 3. Verify semantic coverage. Lexical hits, query roles, candidate counts, and structural declarations are not proof of completeness. Check definitions **and concrete use sites**: these may strengthen requirements or exclude participants. A required child inside an optional parent is not universally required.
 4. Examine contrary evidence/exceptions for universal, negative, disputed, or high-risk claims. Reuse a current completed check rather than repeat it ceremonially.
-5. Apply the memory trigger. Edit ordinary notes normally; use helpers for their own structured state. Retain the same conditions and unresolved limits in memory and the answer. Formatting cleanup cannot turn an ambiguous source into an exact formula.
+5. Persist new search outcomes, verified findings, and unresolved limits under the memory contract above. Edit ordinary notes normally; use helpers for their own structured state. Retain the same conditions in memory and the answer. Formatting cleanup cannot turn an ambiguous source into an exact formula.
 
 No fixed round count determines completion. `evidence-pack` is a batching helper, not the workflow; its plan/verification tags and examples are in [evidence schema](references/evidence-schema.md).
 

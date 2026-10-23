@@ -1,10 +1,12 @@
 # Evidence ledger
 
-This reference owns helper storage contracts, not a prerequisite for keeping ordinary notes. Apply the save/reuse triggers in `SKILL.md` on every route. Use a research ledger when its structured updates materially help a long or multi-source investigation. Choosing Research does not itself require or authorize `research.sqlite`. Direct and Retrieval may preserve findings in a simple note; they need no facets or database rows.
+This reference owns helper storage contracts, not a prerequisite for keeping ordinary notes. Apply the always-on memory contract in `SKILL.md` on every route. Use a research ledger when its structured updates materially help a long or multi-source investigation. Choosing Research does not itself require or authorize `research.sqlite`. Direct and Retrieval preserve findings in a simple note when sufficient; they need no facets or database rows.
 
 ## Lightweight memory and existing work
 
 A small Markdown/JSON note or compatible project store is a complete analytical owner when it meets the task's needs. Keep the question and scope, source identity/generation, selected supported findings with stable locators, necessary conditions, unresolved ambiguities/conflicts, and next action if any. No fixed field names, receipt conversion, index, or extra reference load is required. Edit it normally and update affected entries rather than appending a transcript. Do not create a second note when an existing store already owns these findings.
+
+Non-helper searches retain compact query/scope, generation, outcome, selected locators and any coverage/continuation limits in the same owner. A scoped no-hit result is reusable search state, not proof of absence. For indexed search, pass the authorized `--receipts-db` so the helper checks and saves query receipts; do not copy those rows into an analytical note. Batch pending non-helper updates and save before completion/handoff, without a separate write turn after every query. A direct read with no search needs findings and locators, not a fabricated query receipt.
 
 For a repeat, check the known note's question/scope, verification provenance and source generation. Reuse current supported findings without automatic rereading; retain known limits. Leave unchanged notes untouched: no session stamp, duplicate summary, or ceremonial save. Unverified notes are leads, and changed/disputed facts or missing qualifiers require targeted verification. A hash match does not certify a conclusion. A current unresolved result can avoid repeating an exhausted query but cannot become a positive or negative answer merely because it was saved.
 
@@ -31,7 +33,7 @@ For a repeat, check the known note's question/scope, verification provenance and
 | `conflict` | Competing source or interpretation that affects the conclusion |
 | `verified` | Whether the decisive passage was checked in immediate context or against the rendered original |
 
-These are semantic requirements for relevant evidence, not mandatory columns for a simple note. A compact in-session record is enough for one-off work with no save trigger. Use a note, helper task receipt, or separate `research.sqlite`/compatible analytical store according to the task; do not store durable findings inside the rebuildable FTS index.
+These are semantic requirements for relevant evidence, not mandatory columns for a simple note. Use a note, helper task receipt, or separate `research.sqlite`/compatible analytical store according to the task; do not store durable findings inside the rebuildable FTS index. In-session-only state is a fallback when persistence is prohibited or unavailable, not an exception for apparently one-off questions.
 
 ## Memory levels and resume
 

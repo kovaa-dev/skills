@@ -6,7 +6,7 @@ Read this reference when the role, provenance, authority, or ownership of materi
 
 Applicable trusted project instructions govern the task. An original is the evidence record for what that artifact contains, not automatic proof that its claims are accurate, current, or controlling; resolve those questions from provenance, version, scope, and corroboration. For an investigation using `doc-research`, choose one owner and active writer for analytical findings, conflicts, and progress; a direct answer needs no ledger. Independent scopes may coexist. Map compatible existing tools or stores to index, search-receipt, catalog-routing, or analytical-state roles. Do not require both a task receipt and Research ledger to own the same conclusions. For mixed local/remote sources, apply [source routing](source-routing.md).
 
-For a one-off read-only answer, keep this state task-local; invocation alone does not authorize restructuring project files. Persistent cutover, superseding markers, archival, and deletion require an explicitly requested migration and a recoverable checkpoint.
+When persistence is not authorized, keep new state task-local and disclose that it was not saved; a question being apparently one-off is not a reason to skip authorized memory. Invocation alone does not authorize restructuring project files. Persistent cutover, superseding markers, archival, and deletion require an explicitly requested migration and a recoverable checkpoint.
 
 ## Classify original, research, and rules
 
