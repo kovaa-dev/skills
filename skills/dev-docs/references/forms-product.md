@@ -72,6 +72,31 @@ Shared rationale can be a named block without an extra file/ID. A technical choi
 in an existing decision block or [decision form](forms-decisions.md) when independently useful.
 Work to realize this contract belongs in the [queue](forms-technical.md).
 
+## A requirement recovered from implementation
+
+Use [code recovery](requirements.md#recovering-requirements-from-code) when reconstructing
+an undocumented contract. This example is a coherent candidate with no established
+acceptance; it does not inherit accepted metadata from the containing specification:
+
+```md
+###### R-003
+
+Revision: 1. Definition: proposed.
+Origin: recovered from code.
+Sources: <repository-relative path>::<symbol or lines> at <inspected SHA or exact snapshot/digest>;
+<supporting test/config source, with its distinct role>.
+
+<Recovered behavior, actor, conditions and exceptions, readable without the source code.>
+
+Rationale: <known source, explicitly inferred purpose, or unknown>.
+Acceptance source: pending; implementation provenance does not establish agreement.
+Acceptance: <observable check or explicit method gap>.
+Verification: unknown at runtime; source inspection only, no execution result established.
+```
+
+For an already accepted requirement, retain its state, origin, and acceptance source; add
+implementation sources under the same R-ID. Record discrepancies rather than replacing the agreed text.
+
 ## A proposed revision and a historical redirect
 
 When proposing a revision to an existing accepted R-002, retain its accepted formulation.

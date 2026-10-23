@@ -11,6 +11,8 @@ Discovery does not require init, an existing codebase, a layer registry, or a co
 business plan. Respect discussion/read-only mode; write only authorized content.
 Distinguish facts, hypotheses, accepted obligations, and delivered behavior. Code can
 establish an implementation observation without becoming the desired product contract.
+Recover and capture undocumented contracts through
+[code recovery](requirements.md#recovering-requirements-from-code), retaining their source and state.
 
 Identify the user/buyer, problem, value, current behavior, and nearest end-to-end outcome.
 Preserve the accepted interface, actor, workflow, ownership, and data boundaries unless

@@ -96,13 +96,15 @@ or when there is a known conflict or contract-compatibility risk.
 Read the project's applicable canonical product/documentation sources and do not
 reinterpret their product meaning. A separate documentation skill is not required: use
 the project's canonical requirements/work records and accepted decisions, then treat
-the user's latest explicit decision and shipped behavior as the preservation default. If sources are
-missing or conflict, ask; do not declare the code an accepted invariant or invent your
-own contract.
+the user's latest explicit decision and shipped behavior as the preservation default.
+When contract sources are missing, use the active documentation policy's recovery route
+where available and record unresolved acceptance. Ask about material unresolved choices
+or conflicts; do not declare the code an accepted invariant or invent your own contract.
 
 Use the lifecycle and canonical records defined by the active documentation policy.
 When that policy is dev-docs, PRD/layer-task tracking is legacy: use its on-touch route
-for selected legacy material and ongoing capture for new requirements/clarifications.
+for selected legacy material, ongoing capture for new requirements/clarifications, and
+code recovery for undocumented behavior with explicit implementation provenance.
 Continue from the owning canonical records for the affected scope. Documentation-only
 work uses the documentation policy's material/owner route without inventing requirements.
 Do not duplicate its migration or status schema here, require a separate init, or create

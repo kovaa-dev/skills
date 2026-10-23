@@ -61,6 +61,47 @@ identify the exact revision/baseline they checked. Do not carry an old green res
 forward as proof of a changed requirement. A requirements change may need work; it does
 not mechanically create a new queue entry or reopen a historical completed entry.
 
+## Recovering requirements from code
+
+Recover undocumented requirements when asked to reconstruct a specification, or when the
+selected work, audit, or migration exposes a relevant documentation gap. Scope recovery
+to the affected capability; routine work does not require a repository-wide extraction.
+
+1. Inspect the relevant reachable implementation paths and their callers, configuration,
+   flags, and supporting tests. Recover observable behavior, actors/data boundaries,
+   conditions, exceptions, errors, and meaningful constraints. A function, private
+   algorithm, unused branch, comment, or test fixture is not automatically a requirement.
+2. Match each recovered meaning against existing contracts. Reuse the owning R-ID and
+   add implementation provenance when it supports that obligation. For a missing
+   independently meaningful contract, write a readable requirement in its owning specification;
+   keep descriptive implementation facts in their own documentation. Do not stop at an
+   unpersisted finding when the documentation write is authorized.
+3. Mark a newly recovered requirement **Origin: recovered from code**. For existing
+   requirements, retain their origin and add **Implementation sources**. Record repository-relative
+   source paths with symbols or useful line locators, and the actual inspected baseline
+   (commit SHA or exact snapshot/digest). For uncommitted code, preserve or identify the
+   inspected scoped content rather than citing HEAD as its version. Distinguish implementation,
+   test expectations, configuration, comments, and inferred meaning; label unsupported
+   rationale/intent as unknown or inferred. A separate source registry or code mirror is not required.
+4. Keep implementation origin separate from acceptance source. A coherent recovered
+   obligation without established agreement is proposed; incomplete meaning stays draft
+   or an explicit question. Record it without waiting for adoption approval, using
+   [ongoing capture](#questions-during-work). Existing acceptance or an applicable accepted
+   preservation policy may establish its binding scope; cite that authority separately.
+   Code, comments, and test expectations alone do not establish agreement. When implementation
+   contradicts an accepted requirement, record the actual deviation under [maintenance](maintenance.md);
+   do not rewrite or downgrade the agreed obligation.
+5. Separate source inspection from execution evidence. Reading code or a test does not
+   establish a passing check, deployed behavior, or support for every mode. Record checks
+   actually run and their baseline, plus uninspected paths and material uncertainty.
+   Code absence does not retire an accepted obligation or recover unimplemented intent.
+
+Keep recovered behavior readable without opening source code. Code-derived candidates
+need no legacy conversion map merely because they were undocumented. Existing legacy
+documents still require their own coverage; code recovery does not substitute for reading
+or preserving their requirements, questions, and history. Register separate work only
+under the normal queue threshold.
+
 ## Current contract and nonbinding material
 
 Definition state is not a work status. Use compatible project tokens with these meanings:

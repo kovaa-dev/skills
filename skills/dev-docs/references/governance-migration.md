@@ -26,7 +26,9 @@ recreate historical sources from memory.
    and replacement lineage; preserve candidates as candidates and obsolete text as history,
    not newly accepted obligations. Check applicable accepted contracts for conflicts before
    consolidating; expose both formulations and resolve only the affected choices under
-   [decision governance](documentation.md#decision-approval).
+   [decision governance](documentation.md#decision-approval). Use
+   [code recovery](requirements.md#recovering-requirements-from-code) for relevant undocumented
+   behavior; keep implementation provenance distinct from the legacy baseline and acceptance.
 2. **Map meaning to destinations.** Each obligation has one canonical specification/ID;
    each independently useful remaining outcome has one queue entry. Reuse already
    converted records and stable IDs. Several old cards may share a requirement; a card

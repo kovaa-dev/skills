@@ -29,6 +29,7 @@ obligation. Source factual descriptions from the relevant code/configuration/int
 observed behavior, or established sources; identify version and uncertainty where useful.
 Recording a fact does not accept it as the desired invariant. If actual behavior conflicts
 with an accepted requirement, distinguish the observation from the required behavior.
+For reconstructing missing contracts, use [code recovery and provenance](requirements.md#recovering-requirements-from-code).
 
 Update or create descriptions and instructions when a changed system or reader's actual
 question makes them useful. Requirements and delivery records do not replace those

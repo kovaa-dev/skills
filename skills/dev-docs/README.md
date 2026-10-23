@@ -13,6 +13,7 @@ implicitly.
 - Groom desired behavior, constraints, acceptance, and material open questions.
 - Maintain descriptions, API references, guides/runbooks, and specifications in their owners.
 - Plan code, research, documents, data, and other outcomes in lean queues.
+- Recover undocumented requirements from code with explicit source paths and inspected baseline.
 - Analyze affected and preserved contracts, prerequisites, and conflicting obligations.
 - Keep proposed replacements distinct from current contracts; retire stale routes with
   explicit successor/history notices.

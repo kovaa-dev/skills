@@ -10,7 +10,8 @@ For an explicit one-shot transition use [migrate](governance-migration.md).
 Before continuing implementation, grooming, closure, or a material edit of a selected
 legacy PRD/task, first capture its affected contract and remaining work in the new model.
 Apply the same rule when carrying forward a pre-existing contract from an old chat,
-checklist, task, or another noncanonical source.
+checklist, task, or another noncanonical document.
+Requirements recovered from implementation use [code recovery](requirements.md#recovering-requirements-from-code).
 
 New requirements and clarifications received during current work use
 [ongoing capture](requirements.md#questions-during-work). Recording that input alone does
