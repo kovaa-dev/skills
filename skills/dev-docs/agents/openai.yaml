@@ -1,0 +1,4 @@
+interface:
+  display_name: "kovaa: dev docs"
+  short_description: "Product documentation and task governance"
+  default_prompt: "Use $dev-docs to maintain the affected product documentation, requirements, tasks, and decisions in the project's existing structure without duplicating sources of truth."
