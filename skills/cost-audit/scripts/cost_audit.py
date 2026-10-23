@@ -1025,10 +1025,30 @@ def scope_relation(path: Path, cwd: Path) -> str:
     return "other_project_path"
 
 
+def worktree_root_for(directory: Path, root: Path) -> Path:
+    root = root.resolve()
+    current = directory.resolve()
+    if current != root and root not in current.parents:
+        return root
+    while True:
+        if (current / ".git").exists():
+            return current
+        if current == root:
+            return root
+        current = current.parent
+
+
+def worktree_path(worktree_root: Path, root: Path) -> str:
+    relative = worktree_root.relative_to(root)
+    return "." if not relative.parts else relative.as_posix()
+
+
 def inventory_docs(root: Path, cwd: Path | None = None) -> tuple[list[dict[str, Any]], int]:
+    root = root.resolve()
     items: list[dict[str, Any]] = []
     unreadable = 0
     effective_cwd = (cwd or root).resolve()
+    current_worktree = worktree_root_for(effective_cwd, root)
     paths: list[Path] = []
     for directory, names, filenames in os.walk(root, followlinks=False):
         names[:] = sorted(name for name in names if name not in EXCLUDED_DIRS)
@@ -1044,6 +1064,7 @@ def inventory_docs(root: Path, cwd: Path | None = None) -> tuple[list[dict[str, 
             unreadable += 1
             continue
         text = raw.decode("utf-8", errors="replace")
+        document_worktree = worktree_root_for(path.parent, root)
         items.append(
             {
                 "path": path.relative_to(root).as_posix(),
@@ -1054,10 +1075,36 @@ def inventory_docs(root: Path, cwd: Path | None = None) -> tuple[list[dict[str, 
                 "words": len(re.findall(r"\S+", text)),
                 "sha256": hashlib.sha256(raw).hexdigest(),
                 "scope_relation": scope_relation(path, effective_cwd),
+                "worktree_key": safe_key(str(document_worktree)),
+                "worktree_path": worktree_path(document_worktree, root),
+                "worktree_relation": (
+                    "current" if document_worktree == current_worktree else "other"
+                ),
                 "load_status": "unknown",
             }
         )
     return items, unreadable
+
+
+def exact_duplicate_groups(documents: list[dict[str, Any]]) -> list[list[str]]:
+    duplicates: dict[str, list[str]] = {}
+    for item in documents:
+        duplicates.setdefault(item["sha256"], []).append(item["path"])
+    return sorted(sorted(paths) for paths in duplicates.values() if len(paths) > 1)
+
+
+def document_totals(
+    documents: list[dict[str, Any]], duplicate_group_count: int | None = None
+) -> dict[str, int]:
+    if duplicate_group_count is None:
+        duplicate_group_count = len(exact_duplicate_groups(documents))
+    return {
+        "documents": len(documents),
+        "bytes": sum(item["bytes"] for item in documents),
+        "characters": sum(item["characters"] for item in documents),
+        "words": sum(item["words"] for item in documents),
+        "exact_duplicate_groups": duplicate_group_count,
+    }
 
 
 def docs_command(args: argparse.Namespace) -> dict[str, Any]:
@@ -1068,10 +1115,26 @@ def docs_command(args: argparse.Namespace) -> dict[str, Any]:
     if cwd != root and root not in cwd.parents:
         raise ValueError("--cwd must be inside --root")
     documents, unreadable = inventory_docs(root, cwd)
-    duplicates: dict[str, list[str]] = {}
+    grouped: dict[str, list[dict[str, Any]]] = {}
     for item in documents:
-        duplicates.setdefault(item["sha256"], []).append(item["path"])
-    duplicate_groups = [paths for paths in duplicates.values() if len(paths) > 1]
+        grouped.setdefault(item["worktree_path"], []).append(item)
+    worktrees = []
+    duplicate_groups: list[list[str]] = []
+    for path, items in sorted(grouped.items()):
+        groups = exact_duplicate_groups(items)
+        duplicate_groups.extend(groups)
+        worktrees.append(
+            {
+                "worktree_key": items[0]["worktree_key"],
+                "worktree_path": path,
+                "relation": items[0]["worktree_relation"],
+                "totals": document_totals(items),
+                "exact_duplicate_groups": groups,
+            }
+        )
+    totals = document_totals(documents, len(duplicate_groups))
+    totals["worktrees"] = len(worktrees)
+    totals["unreadable_documents"] = unreadable
     return {
         "schema_version": 1,
         "kind": "instruction_inventory",
@@ -1079,16 +1142,14 @@ def docs_command(args: argparse.Namespace) -> dict[str, Any]:
         "root_key": safe_key(str(root)),
         "cwd_key": safe_key(str(cwd)),
         "content_emitted": False,
-        "warning": "Presence and size do not prove that a runtime loaded a file.",
-        "totals": {
-            "documents": len(documents),
-            "bytes": sum(item["bytes"] for item in documents),
-            "characters": sum(item["characters"] for item in documents),
-            "words": sum(item["words"] for item in documents),
-            "unreadable_documents": unreadable,
-            "exact_duplicate_groups": len(duplicate_groups),
-        },
+        "worktree_accounting": "independent",
+        "warning": (
+            "Presence and size do not prove that a runtime loaded a file. "
+            "Top-level totals cover the inventory; compare instruction sets by worktree."
+        ),
+        "totals": totals,
         "exact_duplicate_groups": duplicate_groups,
+        "worktrees": worktrees,
         "documents": documents,
     }
 

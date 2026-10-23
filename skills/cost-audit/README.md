@@ -23,7 +23,7 @@ python scripts/cost_audit.py inspect SESSION_JSONL --since 7d --max-buckets 20 -
 python scripts/cost_audit.py docs --root PROJECT_ROOT --cwd WORKING_DIRECTORY --pretty
 ```
 
-The exact Python launcher is environment-specific. The helper writes JSON only to standard output and creates no database. Raw file locators are hidden unless `--include-locators` is explicitly supplied. Token coverage and byte-based proxy coverage remain separate; incomplete error visibility is emitted as `null` with `partial` or `unavailable` observability metadata.
+The exact Python launcher is environment-specific. The helper writes JSON only to standard output and creates no database. Raw file locators are hidden unless `--include-locators` is explicitly supplied. Token coverage and byte-based proxy coverage remain separate; incomplete error visibility is emitted as `null` with `partial` or `unavailable` observability metadata. The `docs` report retains nested Git worktrees, labels the one containing `--cwd`, and calculates document totals and exact duplicates independently for each worktree.
 
 ## Package layout
 

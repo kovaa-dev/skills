@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import json
 import subprocess
@@ -289,6 +290,56 @@ class CostAuditTests(unittest.TestCase):
             self.assertEqual(items[0]["load_status"], "unknown")
             self.assertTrue(all(item["scope_relation"] == "ancestor_of_cwd" for item in items))
             self.assertEqual(unreadable, 0)
+
+    def test_docs_keeps_nested_worktrees_but_counts_them_independently(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / ".git").mkdir()
+            (root / "AGENTS.md").write_text("shared instruction", encoding="utf-8")
+
+            worktree = root / ".worktrees" / "feature"
+            worktree.mkdir(parents=True)
+            (worktree / ".git").write_text("gitdir: elsewhere", encoding="utf-8")
+            (worktree / "AGENTS.md").write_text("shared instruction", encoding="utf-8")
+            nested = worktree / "nested"
+            nested.mkdir()
+            (nested / "AGENTS.md").write_text("shared instruction", encoding="utf-8")
+
+            report = COST_AUDIT.docs_command(
+                argparse.Namespace(root=str(root), cwd=str(root))
+            )
+
+            self.assertEqual(report["worktree_accounting"], "independent")
+            self.assertEqual(report["totals"]["documents"], 3)
+            self.assertEqual(report["totals"]["worktrees"], 2)
+            self.assertEqual(
+                [item["worktree_path"] for item in report["worktrees"]],
+                [".", ".worktrees/feature"],
+            )
+            self.assertEqual(
+                [item["totals"]["documents"] for item in report["worktrees"]],
+                [1, 2],
+            )
+            self.assertEqual(
+                report["exact_duplicate_groups"],
+                [[".worktrees/feature/AGENTS.md", ".worktrees/feature/nested/AGENTS.md"]],
+            )
+            self.assertEqual(
+                {item["path"] for item in report["documents"]},
+                {
+                    "AGENTS.md",
+                    ".worktrees/feature/AGENTS.md",
+                    ".worktrees/feature/nested/AGENTS.md",
+                },
+            )
+            self.assertEqual(report["worktrees"][0]["relation"], "current")
+            self.assertEqual(report["worktrees"][1]["relation"], "other")
+
+            nested_report = COST_AUDIT.docs_command(
+                argparse.Namespace(root=str(root), cwd=str(worktree))
+            )
+            self.assertEqual(nested_report["worktrees"][0]["relation"], "other")
+            self.assertEqual(nested_report["worktrees"][1]["relation"], "current")
 
     def test_sessions_filter_to_requested_project(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

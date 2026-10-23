@@ -37,6 +37,8 @@ python scripts/cost_audit.py docs --root PROJECT_ROOT --cwd WORKING_DIRECTORY --
 
 The launcher is illustrative; use a compatible local Python. `sessions` filters usage by event time, keeps provider totals separate, and reports token and missing-usage proxy coverage separately. It selects costly sessions plus material anomaly representatives without a fixed minimum. Use `--include-locators` only to open selected sessions locally, then run `inspect`; never copy locators into the report. `inspect` emits bounded turn-level metrics and hashed repeat signatures, never message or payload content. Treat `null` as unavailable, not zero, and respect visibility/coverage fields.
 
+When `docs` encounters nested Git worktrees under the selected root, retain them all but use per-worktree totals and duplicate groups. Do not treat byte-identical files in different worktrees as duplicates within one instruction set.
+
 ## Workflow
 
 1. Record scope, objective, privacy boundary, and available metrics. Use token/workload evidence unless current provider pricing is explicitly available.

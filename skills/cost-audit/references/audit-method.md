@@ -113,7 +113,7 @@ Trace a session finding to the smallest plausible control surface:
 
 Evaluate clarity, overlap, contradictory requirements, eager loading, redundant examples, excessive mandatory checks, and failure/retry guidance. Preserve safety and correctness invariants. A shorter file is not an optimization unless it is actually loaded often enough to matter.
 
-Use hierarchy only to classify an instruction as an ancestor, descendant, or unrelated candidate. Confirm actual loading from runtime/session evidence when available. Exact file hashes may reveal byte-identical duplicates without exposing content; semantic duplication still requires bounded inspection.
+Use hierarchy only to classify an instruction as an ancestor, descendant, or unrelated candidate. Confirm actual loading from runtime/session evidence when available. When the selected root contains multiple Git worktrees, keep every worktree in the inventory but compare its totals and exact duplicates independently; another checkout is not evidence of repeated loading in the current one. Exact file hashes may reveal byte-identical duplicates within a worktree without exposing content; semantic duplication still requires bounded inspection.
 
 ## Bounded session inspection
 
