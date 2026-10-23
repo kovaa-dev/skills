@@ -30,8 +30,9 @@ specifications. Numbers do not encode priority, phase, section order, or file po
 Never renumber on reorder/rename or reuse a retired ID. Preserve existing stable
 requirement IDs when converting; do not copy a legacy task ID onto every extracted rule.
 
-A requirement needs its ID, readable behavior/obligation, applicability, acceptance
-method, and known state. Shared context/metadata can live at specification level.
+A requirement needs its ID, readable behavior/obligation, applicability, verification
+method or an explicit method gap, and known state. Shared context/metadata can live at
+specification level.
 Use only fields needed for this contract; no per-line IDs or universal empty header.
 
 Distinguish:
@@ -42,9 +43,10 @@ Distinguish:
   violated, with a locator/version where established;
 - work readiness: belongs to the queue, not the requirement's definition state.
 
-A requirement can be accepted while implementation is unknown or not feasible yet.
-Unclear desired behavior or acceptance remains draft with explicit questions.
-Unavailable feasibility proof does not erase an already accepted obligation.
+A requirement can be accepted while implementation, feasibility, or its verification method
+is unresolved. Record missing verification methods as gaps; work readiness and completion
+still follow [queue rules](work-queue.md#state-and-readiness). Keep unsettled behavior or
+observable bounds as draft/questions separate from established accepted meaning.
 "Accepted" future behavior must state its activation/rollout condition; it does not
 silently replace the current contract before that condition holds.
 
@@ -65,7 +67,7 @@ Definition state is not a work status. Use compatible project tokens with these 
 
 | State | Meaning and use |
 | --- | --- |
-| draft | Desired behavior or acceptance is incomplete; not a binding obligation. |
+| draft | Desired behavior or observable bounds are unsettled or unagreed; not a binding obligation. |
 | proposed | A coherent candidate awaiting a decision; may intentionally contradict the current contract. |
 | accepted | Agreed obligation, binding only for its stated applicability and activation condition. |
 | rejected | A candidate was considered and declined; retain the reason/source. |
@@ -266,9 +268,9 @@ response; do not claim it persisted in project documentation.
    and routine implementation choices follow their own material type rather than becoming
    fictional product requirements.
 3. Capture enough known behavior/scope, rationale/source, definition state, and uncertainty
-   to retain the intent. Missing implementation detail or an incomplete acceptance method
-   is recorded as a gap, not a reason to discard the input. Keep accepted meaning accepted;
-   do not promote an unclear alternative or invent agreement to complete a template.
+   to retain the intent. Record missing implementation or verification detail under
+   [definition and verification state](#identity-state-and-revision); do not discard the
+   input, promote an unclear alternative, or invent agreement to complete a template.
 4. Keep a concise input-to-owner locator in existing work context when needed to verify
    capture, then update the canonical document. No separate inbox, permanent duplicate
    catalog, or Q entry per requirement is required. Queue registration remains independent.

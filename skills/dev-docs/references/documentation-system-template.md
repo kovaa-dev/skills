@@ -2,7 +2,7 @@
 
 Use [governance](documentation.md), [requirements](requirements.md), and
 [work queues](work-queue.md). This guide creates the new scheme, not a legacy PRD/layer
-tracker. Routine selected work uses [on-touch conversion](legacy-transition.md);
+tracker. Selected legacy work uses [on-touch conversion](legacy-transition.md);
 an explicit full transition uses [migration](governance-migration.md).
 
 ## Minimum setup

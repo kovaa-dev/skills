@@ -212,8 +212,9 @@ micro-documents.
 
 1. Read applicable instructions/settings; identify the reader's question, material type,
    and existing owner under [documentation purpose](#documentation-purpose-and-ownership).
-2. For selected legacy work or an applicable uncaptured obligation, follow
-   [on-touch conversion](legacy-transition.md). A factual description needs no invented requirement.
+2. Use the [conversion trigger](legacy-transition.md#trigger-and-authority) for selected legacy
+   material and [ongoing capture](requirements.md#questions-during-work) for new input.
+   A factual description needs no invented requirement.
 3. Read relevant sources and context for that material. When requirements/decisions apply,
    resolve their current revision, acceptance, and applicability under
    [the lifecycle](requirements.md#current-contract-and-nonbinding-material).

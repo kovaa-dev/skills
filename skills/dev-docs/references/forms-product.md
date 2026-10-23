@@ -31,7 +31,8 @@ Revision: 1. Basis: [Continue work across devices](#why-001-continue-work-across
 
 <One separately meaningful obligation under the stated conditions.>
 
-Acceptance: <observable scenario and method; use existing tests when sufficient>.
+Acceptance: <observable scenario and method, or an explicit verification gap;
+use existing tests when sufficient>.
 Verification: unknown; no current result established.
 
 ## Apply remote changes on active devices
@@ -43,7 +44,7 @@ Prerequisites: <actual required capability/result, or none>.
 
 <Expected behavior, including accepted conditions; do not invent a freshness bound.>
 
-Acceptance: <scenario, applicable conditions, and verification method>.
+Acceptance: <scenario, applicable conditions, and verification method or explicit gap>.
 Verification: unknown.
 
 ## Open questions
@@ -62,9 +63,10 @@ limitations, and artifacts. Historical results remain labeled as historical.>
 ```
 
 Promote only genuinely agreed obligations to accepted and capture their acceptance source.
-Unknown implementation does not itself invalidate an agreed requirement. Requirement
-IDs stay stable across clarification and semantic revisions. A new independent obligation
-gets a new ID, not a renamed completed task.
+Use [definition and verification state](requirements.md#identity-state-and-revision) for
+unsettled behavior and missing verification methods. Requirement IDs stay stable across
+clarification and semantic revisions. A new independent obligation gets a new ID, not a
+renamed completed task.
 
 Shared rationale can be a named block without an extra file/ID. A technical choice belongs
 in an existing decision block or [decision form](forms-decisions.md) when independently useful.

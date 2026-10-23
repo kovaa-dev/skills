@@ -9,8 +9,12 @@ For an explicit one-shot transition use [migrate](governance-migration.md).
 
 Before continuing implementation, grooming, closure, or a material edit of a selected
 legacy PRD/task, first capture its affected contract and remaining work in the new model.
-Apply the same rule when selected work exposes an applicable requirement that exists
-only in chat, a checklist, a task, or another noncanonical source.
+Apply the same rule when carrying forward a pre-existing contract from an old chat,
+checklist, task, or another noncanonical source.
+
+New requirements and clarifications received during current work use
+[ongoing capture](requirements.md#questions-during-work). Recording that input alone does
+not initiate a legacy conversion or require a separate migration baseline/map/notice.
 
 Reading an unrelated legacy link is not a request to migrate it or the entire backlog.
 Convert the selected outcome and the directly necessary shared contracts/prerequisites.

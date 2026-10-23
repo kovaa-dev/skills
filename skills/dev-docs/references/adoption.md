@@ -12,8 +12,9 @@ or an adoption-mode field. Maintain the affected scope using
 
 - Preserve compatible project paths, language, stable IDs, accepted meaning, history, and
   explicit constraints. Reuse existing specifications/wiki and queue locations.
-- Before continuing selected legacy work or an uncaptured requirement, perform the bounded
-  conversion. Keep unrelated legacy records available with an explicit route to the new model.
+- Use the [conversion trigger](legacy-transition.md#trigger-and-authority) for selected legacy
+  material and [ongoing capture](requirements.md#questions-during-work) for new input.
+  Keep unrelated legacy records available with an explicit route to the new model.
 - Faithful capture of an existing accepted contract is continuity, not a new product
   decision. Do not ask again merely to convert the selected item or start already
   authorized work. Do not infer write permission from a read-only request.

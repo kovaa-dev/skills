@@ -1,7 +1,7 @@
 # One-shot migration to requirements and work queues
 
 Use this action only for an explicit request to migrate the selected scope. It replaces
-the former task-schema consolidation/hard-renaming workflow. Ordinary selected work
+the former task-schema consolidation/hard-renaming workflow. Ordinary selected legacy work
 uses [on-touch conversion](legacy-transition.md); both routes produce the same
 [requirements](requirements.md) and [queue](work-queue.md) model.
 

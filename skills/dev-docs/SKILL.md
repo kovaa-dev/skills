@@ -4,9 +4,10 @@ description: >-
   Maintain product and technical documentation, requirements, lean work queues,
   decisions, and verification without duplicating contracts. Use for product grooming,
   references and guides, bugs, research, change-impact and consistency checks.
-  Before continuing selected legacy task/PRD or undocumented-requirement work,
-  convert its affected scope to requirements and queue entries. Use migrate for an
-  explicitly requested one-shot transition; legacy task tracking is deprecated.
+  Before continuing selected legacy task/PRD work or carrying forward obligations from
+  older noncanonical sources, convert the affected scope to requirements and queue entries.
+  Capture new input directly in its owning documents. Use migrate for an explicitly
+  requested one-shot transition; legacy task tracking is deprecated.
 ---
 
 # dev-docs
@@ -26,8 +27,8 @@ Do not create new legacy cards or extend that workflow as the default.
    [documentation purpose and ownership](references/documentation.md#documentation-purpose-and-ownership).
    Reuse its owning document; requirements and queue entries are created only when their
    meanings and registration rules apply.
-3. Identify the selected work and affected contracts. Before changing or executing a
-   legacy task/PRD, or continuing work on a requirement not yet captured in this model,
+3. Identify the selected work and affected contracts. Before changing or executing selected
+   legacy work or carrying forward obligations from older noncanonical sources,
    follow [on-touch conversion](references/legacy-transition.md). Do this within the
    authorized work; no init, full-backlog migration, or new permission ceremony is needed.
    Read-only requests produce a proposal only. An explicit prohibition on migration or
@@ -57,9 +58,11 @@ rewrite an installed pinned copy or every consuming project.
   [requirements](references/requirements.md).
 - Work selection, readiness, cross-queue waits, research and non-code results,
   completion/history, and delivery targets: [work queues](references/work-queue.md).
-- Selected legacy work or an uncaptured requirement:
+- Selected legacy work or obligations held only in older noncanonical sources:
   [on-touch conversion](references/legacy-transition.md). Read old-format details in
   [legacy recognition](references/task-tracker.md) only as needed.
+- New requirements, clarifications, and material questions:
+  [ongoing capture](references/requirements.md#questions-during-work).
 - Grooming and incremental product development:
   [product discovery](references/product-discovery.md).
 - Bugs, findings, ideas, severity, and releases:

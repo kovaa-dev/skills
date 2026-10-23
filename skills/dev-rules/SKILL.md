@@ -101,10 +101,10 @@ missing or conflict, ask; do not declare the code an accepted invariant or inven
 own contract.
 
 Use the lifecycle and canonical records defined by the active documentation policy.
-When that policy is dev-docs, PRD/layer-task tracking is legacy: before continuing
-selected legacy work or an uncaptured requirement, follow its on-touch conversion and
-resume from the resulting canonical records for that scope. Documentation-only work
-uses the documentation policy's material/owner route without inventing requirements.
+When that policy is dev-docs, PRD/layer-task tracking is legacy: use its on-touch route
+for selected legacy material and ongoing capture for new requirements/clarifications.
+Continue from the owning canonical records for the affected scope. Documentation-only
+work uses the documentation policy's material/owner route without inventing requirements.
 Do not duplicate its migration or status schema here, require a separate init, or create
 new legacy cards.
 Use that policy's readiness, execution-brief, and missing-input route rather than

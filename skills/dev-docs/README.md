@@ -27,8 +27,8 @@ and history, link converted sections to their new owners, then continue from tho
 Unconverted sections of a shared source remain explicitly active until their own conversion.
 Repeated entry reuses the same IDs and mapping. No init or complete backlog migration is required.
 [Coverage reconciliation](references/legacy-transition.md#coverage-and-reconciliation) makes
-existing meaning, destinations, new inputs, and remaining gaps explicit; ongoing capture
-also records material requirements/questions received during ordinary work.
+existing meaning, destinations, new inputs, and remaining gaps explicit. Newly received
+requirements/questions use ongoing capture directly in their owning documents.
 
 **One-shot migrate:** convert the entire agreed scope, including active and completed
 work, decisions, questions, acceptance sources, and verification. Reconcile the reading
