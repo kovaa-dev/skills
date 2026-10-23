@@ -15,7 +15,7 @@ Before source-content retrieval, read relevant findings from the known store or 
 - **Partial:** retrieve only missing or affected evidence; keep valid findings and unresolved limits.
 - **Absent, stale, disputed, or unverified:** establish the affected evidence from originals.
 
-This is a dependency, not a mandatory extra roundtrip. In one conditional tool call, read existing memory and check generation, OR establish its absence and perform the normal first search/read. Never search speculatively alongside unread memory. A receipt-aware tool can enforce the gate internally. An absent store is a miss, not a setup task; do not scan the machine for memory. Use an existing hash facility; POSIX `shasum` may need `LC_ALL=C`.
+This is a dependency, not an extra setup phase. For local UTF-8 sources, `scripts/corpus read-text SOURCE --memory NOTE.json --scope QUESTION --find TERM` checks a `save-answer` note and searches on a miss in one call. For other owners, combine the equivalent operations when possible. Never search speculatively alongside unread memory. An absent store is a miss; do not scan the machine for memory or create an index to satisfy the gate.
 
 ## Route and effort
 
@@ -36,7 +36,7 @@ Save new search/analysis state before completion on every route, without predict
 
 For a simple note, save the **same cited factual answer** you will deliver, with a small provenance header: question/scope, source identity and hash/version, verification basis, searched coverage/continuation and unresolved limits. Preserve all requested items, mappings, units, conditions, exceptions and checked locators. Do not expand this into a second research report, copy raw passages/tool logs, or compress established answers into “see source”. Omit conversational text. In a structured owner, store those facts using its existing schema instead; never keep a competing answer note.
 
-Check support and completeness from context already obtained, then save once and deliver. A successful write needs no reread or separate validation turn. Update affected entries in place, retaining unrelated findings; unchanged records need no stamp or rewrite. Report the memory location. Context isolation does not disable persisted-memory reuse.
+Check support and completeness from context already obtained, then save once and deliver. For local text, `save-answer` adds provenance and checks supplied locators/quotes without certifying meaning; see [lightweight memory](references/evidence-schema.md#lightweight-memory-and-existing-work). Other owners remain valid. A successful write needs no reread. Update affected entries, preserving unrelated findings; unchanged memory needs no write. Report its location. Context isolation does not disable memory reuse.
 
 ## Boundaries
 
