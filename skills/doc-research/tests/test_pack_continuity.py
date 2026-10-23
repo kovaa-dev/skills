@@ -30,8 +30,9 @@ class PackContinuityCliTest(CorpusCliTestCase):
                         if item["name"] == "CargoMass")
             findings = root / "findings.json"
             findings.write_text(json.dumps([{
-                "facet_id": "mass", "status": "verified",
+                "facet_id": "mass",
                 "claims": [{"text": "CargoMass has decimal type.",
+                            "status": "confirmed", "basis": "Read schema", "scope": "CargoMass",
                             "evidence_ids": [fact["evidence_id"]]}],
             }]), encoding="utf-8")
             saved = run_corpus("findings-save", receipt, findings)
@@ -88,10 +89,11 @@ class PackContinuityCliTest(CorpusCliTestCase):
                         if item["name"] == "CargoMass")
             findings = root / "findings.json"
             findings.write_text(json.dumps([
-                {"facet_id": "mass", "status": "conflicted", "reason": "Policy contradicts XSD.",
+                {"facet_id": "mass", "reason": "Policy contradicts XSD.",
                  "claims": [{"text": "XSD declares decimal.", "evidence_ids": [fact["evidence_id"]],
+                             "status": "conflicted", "basis": "Policy contradicts XSD", "limits": "Precedence unknown",
                              "scope": "Type declaration only; policy applicability is unknown."}]},
-                {"facet_id": "policy", "status": "unresolved", "claims": [],
+                {"facet_id": "policy", "claims": [],
                  "reason": "No authoritative policy version identified."},
             ]), encoding="utf-8")
             saved = run_corpus("findings-save", receipt, findings)

@@ -76,8 +76,8 @@ def _check_memory_path(path: Path) -> os.stat_result:
 
 
 def _open_memory_directory(path: Path) -> int | Path:
-    """Reject symlink ancestors, using descriptor traversal when available."""
-    absolute = Path(os.path.abspath(path))
+    """Resolve trusted ancestors while rejecting a linked memory directory itself."""
+    absolute = path.parent.resolve() / path.name
     if not hasattr(os, "O_NOFOLLOW") or os.name == "nt":
         info = _check_memory_path(absolute)
         if not stat.S_ISDIR(info.st_mode):
@@ -147,6 +147,8 @@ def _memory(path: Path, budget: int) -> dict[str, object]:
                         item["status"] = "symlink"
                     elif stat.S_ISDIR(mode):
                         item["status"] = "directory"
+                    elif info.st_nlink != 1:
+                        item["status"] = "hardlink"
                     elif not stat.S_ISREG(mode) or Path(entry.name).suffix.lower() not in {".md", ".txt", ".json"}:
                         item["status"] = "unsupported"
                     else:
@@ -243,7 +245,7 @@ def command_read_text(args: object) -> int:
         memory = _memory(Path(args.memory_dir), allowance) if args.memory_dir is not None else None
     if memory is not None:
         result["memory"] = memory
-    if memory is None or memory["status"] in {"miss", "stale", "different-source"}:
+    if memory is None or memory["status"] in {"miss", "different-source"}:
         lines = _source_lines(data)
         if args.after_line > len(lines):
             raise ValueError("--after-line is outside the source")

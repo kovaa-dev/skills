@@ -65,15 +65,14 @@ Return the bounded save result, or the error and stage if saving fails. Stop aft
   "findings": [
     {
       "facet_id": "F1",
-      "status": "verified",
-      "claims": [{"text": "Supported proposition including material exceptions", "passage_ids": [12], "scope": "Applicable version and conditions"}]
+      "claims": [{"text": "Supported proposition including material exceptions", "status": "confirmed", "basis": "Checked the applicable provision and exceptions", "passage_ids": [12], "scope": "Applicable version and conditions"}]
     },
-    {"facet_id": "F2", "status": "unresolved", "reason": "The referenced amendment was not available", "claims": []}
+    {"facet_id": "F2", "reason": "The referenced amendment was not available", "claims": []}
   ]
 }
 ```
 
-Claims may cite `passage_ids`, structural `evidence_ids`, or both. Allowed statuses are `verified`, `conflicted`, and `unresolved`. The analyst establishes exact support and, for control claims, checks contrary evidence/exceptions. Query roles are retrieval hints, not a mechanical save gate or proof of semantic sufficiency. If a Research store owns findings, return the same bounded findings to its writer instead of maintaining another analytical receipt.
+Claims may cite `passage_ids`, structural `evidence_ids`, or both. Give each claim its assessment, basis, scope and any uncertainty limits under the [canonical findings contract](evidence-schema.md#memory-levels-and-resume); do not apply one verification flag to a mixed answer. The analyst establishes support and checks material contrary evidence/exceptions. Query roles are retrieval hints, not semantic proof. If Research owns findings, return them to that writer instead of maintaining a second analytical receipt.
 
 ## Escalation and synthesis
 

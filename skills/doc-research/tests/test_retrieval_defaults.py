@@ -11,6 +11,17 @@ class RetrievalDefaultsTest(CorpusCliTestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout)
 
+    def test_content_hashes_distinguish_literal_whitespace(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, index = root / "source.jsonl", root / "index.sqlite"
+            source.write_text("\n".join(json.dumps({"text": text}) for text in ("Needle A B", "Needle A  B")))
+            self.command("index", source, "--db", index)
+            args = parser().parse_args(["search", str(index), "needle"])
+            result = SEARCH_MODULE.search_payload(args, include_content_hash=True)
+            self.assertEqual(result["result_count"], 2)
+            self.assertEqual(len({item["_content_hash"] for item in result["results"]}), 2)
+
     def test_batch_preserves_different_snippets_from_the_same_passage(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -41,11 +52,15 @@ class RetrievalDefaultsTest(CorpusCliTestCase):
                 self.command("catalog-put", catalog, corpus_id, "--adapter", "local-index",
                              "--access-boundary", "team", "--index", index, "--receipts-db", receipts)
             args = ("catalog-search", catalog, "needle", "--max-chars", 100, "--receipt-id", "stable")
+            expected_ids = None
             for iteration, extra in enumerate(((), (), (), ("--refresh",), ("--max-chars", 800))):
                 payload = self.command(*args, *extra)
                 self.assertEqual(payload["result_count"], 2)
                 self.assertFalse(payload["has_more"])
-                self.assertEqual({item["passage_id"] for item in payload["results"]}, {1, 2})
+                ids = {item["passage_id"] for item in payload["results"]}
+                if expected_ids is None:
+                    expected_ids = ids
+                self.assertEqual(ids, expected_ids)
                 self.assertTrue(all(len(item["also_in"]) == 1 for item in payload["results"]))
                 self.assertNotIn("_content_hash", json.dumps(payload))
                 if iteration == 0:

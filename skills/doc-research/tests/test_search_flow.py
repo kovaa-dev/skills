@@ -72,8 +72,9 @@ class SearchFlowTest(CorpusCliTestCase):
             receipt = json.loads(receipt_path.read_text())
             findings = root / "findings.json"
             findings.write_text(json.dumps({"findings": [
-                {"facet_id": facet["id"], "status": "verified", "claims": [
-                    {"text": f"Baseline {facet['id']} holds.", "passage_ids": facet["passage_ids"]}
+                {"facet_id": facet["id"], "claims": [
+                    {"text": f"Baseline {facet['id']} holds.", "passage_ids": facet["passage_ids"],
+                     "status": "confirmed", "basis": "Read baseline", "scope": "Baseline"}
                 ]} for facet in receipt["facets"]
             ]}), encoding="utf-8")
             self.command("findings-save", receipt_path, findings)
@@ -84,15 +85,17 @@ class SearchFlowTest(CorpusCliTestCase):
             new_id = found["results"][0]["passage_id"]
             after = json.loads(receipt_path.read_text())
             self.assertIn(new_id, after["facets"][0]["passage_ids"])
-            self.assertEqual(after["facets"][0]["finding"]["status"], "unresolved")
+            self.assertEqual(after["facets"][0]["finding"]["status"], "confirmed")
+            self.assertIn({"facet_id": "alpha", "reason": "new-evidence-needs-review"}, after["gaps"])
             self.assertEqual(after["facets"][1], before["facets"][1])
             self.assertEqual(after["conflicts"], before["conflicts"])
             self.assertEqual(after["facets"][0]["support_passage_ids"], before["facets"][0]["support_passage_ids"])
             reopened = self.command("get", index, new_id, "--task-receipt", receipt_path)
             self.assertIn("under a condition", reopened["results"][0]["text"])
             findings.write_text(json.dumps({"findings": [{
-                "facet_id": "alpha", "status": "verified", "claims": [{
-                    "text": "The special case changes alpha conditionally.", "passage_ids": [new_id]
+                "facet_id": "alpha", "claims": [{
+                    "text": "The special case changes alpha conditionally.", "passage_ids": [new_id],
+                    "status": "confirmed", "basis": "Checked special case", "scope": "Special case conditions"
                 }]
             }]}), encoding="utf-8")
             self.command("findings-save", receipt_path, findings)
@@ -124,7 +127,7 @@ class SearchFlowTest(CorpusCliTestCase):
             self.command("index", corpus, "--db", index)
             self.command("receipts-init", receipts, "--corpus", corpus, "--index", index)
             args = ("search", index, "needle", "--receipts-db", receipts, "--dedupe-exact",
-                    "--max-chars", 100, "--max-total-chars", 100, "--snippet-tokens", 64)
+                    "--max-chars", 100, "--max-total-chars", 4000, "--limit", 1, "--snippet-tokens", 64)
             first = self.command(*args)
             repeated = self.command(*args)
             self.assertTrue(repeated.pop("receipt_hit"))

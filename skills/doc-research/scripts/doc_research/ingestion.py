@@ -124,13 +124,12 @@ def command_import_docling(args: argparse.Namespace) -> int:
                         raise ValueError(f"{location}: invalid JSON: {exc}") from exc
                     if not isinstance(item, dict) or not isinstance(item.get("text"), str):
                         raise ValueError(f"{location}: expected an object with string field 'text'")
-                    contextualized_text = item["text"].strip()
+                    contextualized_text = item["text"]
                     raw_text = item.get("raw_text")
                     if raw_text is not None and not isinstance(raw_text, str):
                         raise ValueError(f"{location}: raw_text must be a string")
-                    raw_candidate = raw_text.strip() if isinstance(raw_text, str) else ""
-                    text = raw_candidate or contextualized_text
-                    if not text:
+                    text = raw_text if isinstance(raw_text, str) and raw_text.strip() else contextualized_text
+                    if not text.strip():
                         raise ValueError(f"{location}: text must not be empty")
 
                     record: dict[str, object] = {
@@ -480,23 +479,22 @@ def normalized_comparison_units(
                     )
                     if item.get(key) is not None
                 }
-                text = normalize_text(item["text"])
+                text = item["text"]
                 prefix = json.dumps(
                     metadata, ensure_ascii=False, sort_keys=True, separators=(",", ":")
                 )
                 append_unit(f"{prefix}\t{text}" if prefix else text)
         return units
 
-    raw = path.read_text(encoding="utf-8")
+    raw = path.read_bytes().decode("utf-8")
     for page, section, _line_start, _line_end, text in paragraphs_from_text(raw):
         metadata = {
             key: value
             for key, value in {"page": page, "section": section}.items()
             if value is not None
         }
-        normalized = normalize_text(text)
         prefix = json.dumps(metadata, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-        append_unit(f"{prefix}\t{normalized}" if prefix else normalized)
+        append_unit(f"{prefix}\t{text}" if prefix else text)
     return units
 
 def comparison_snapshot(
@@ -553,7 +551,8 @@ def command_compare(args: argparse.Namespace) -> int:
                 "sha256": right_hash,
                 "units": len(right_units),
             },
-            "identical": left_units == right_units,
+            "identical": left_hash == right_hash,
+            "comparison_units_equal": left_units == right_units,
             "diff_truncated": diff_truncated,
             "diff": diff,
         },

@@ -20,8 +20,9 @@ class RetrievalInteractionsTest(CorpusCliTestCase):
 
     def save(self, root, payload):
         (root / "findings.json").write_text(json.dumps({"findings": [
-            {"facet_id": facet["id"], "status": "verified", "claims": [
+            {"facet_id": facet["id"], "claims": [
                 {"text": "A supported fixture finding, conditional on the cited rule.",
+                 "status": "confirmed", "basis": "Checked cited rule", "scope": "Rule conditions",
                  "passage_ids": facet["passage_ids"][:1]}]}
             for facet in payload["facets"]]}), encoding="utf-8")
         return self.invoke("findings-save", root / "task.json", root / "findings.json")
@@ -68,12 +69,14 @@ class RetrievalInteractionsTest(CorpusCliTestCase):
             changed = self.pack(root, corpus, [dict(questions[0], question="Does Alpha forbid the action?"), questions[1]])
             self.assertEqual(changed["finding_hits"], 1)
             self.assertEqual(changed["searched_facets"], ["A"])
-            # Return to the original meaning, then request a genuinely broader set.
+            # A larger retrieval budget alone does not invalidate a current answer.
             small = self.pack(root, corpus, questions)
             self.save(root, small)
             expanded = self.pack(root, corpus, questions, "--limit-per-query", 6, "--max-passages-per-question", 6)
-            self.assertGreater(len(expanded["facets"][0]["passage_ids"]), len(small["facets"][0]["passage_ids"]))
-            self.assertIn("previous_finding", expanded["facets"][0])
+            self.assertEqual(expanded["finding_hits"], 2)
+            self.assertEqual(expanded["search_count"], 0)
+            self.assertEqual(expanded["passages"], [])
+            self.assertEqual(expanded["findings"], warm["findings"])
             self.save(root, expanded)
             receipt_path = root / "task.json"
             saved = json.loads(receipt_path.read_text())
@@ -86,12 +89,18 @@ class RetrievalInteractionsTest(CorpusCliTestCase):
             by_id = {facet["id"]: facet for facet in saved["facets"]}
             self.assertEqual(set(by_id), {"A", "B"})
             self.assertTrue(by_id["A"]["stale"])
-            self.assertEqual(by_id["A"]["finding"]["status"], "unresolved")
+            self.assertEqual(by_id["A"]["finding"]["status"], "confirmed")
             self.assertTrue(by_id["A"]["finding"]["claims"])
             self.assertIn("previous_finding", by_id["B"])
             self.assertTrue(saved["conflicts"])
             self.assertEqual(saved["next_mode"], "retrieval")
             self.assertTrue(any(gap["reason"] == "Check applicability in amendment" for gap in saved["gaps"]))
+            for generation in range(2):
+                (corpus / "new.md").write_text(f"Amendment generation {generation}.", encoding="utf-8")
+                self.pack(root, corpus, questions[1:])
+                saved = json.loads(receipt_path.read_text())
+                self.assertEqual(sum(gap == {"facet_id": "A", "reason": "source-changed"}
+                                     for gap in saved["gaps"]), 1)
 
     def test_aliases_filters_and_unresolved_without_fabricated_claims(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -106,11 +115,79 @@ class RetrievalInteractionsTest(CorpusCliTestCase):
             self.assertTrue(all(item["version"] == "1" for item in filtered["passages"]))
             self.assertFalse(any(item.get("also_in") for item in filtered["passages"]))
             findings = root / "findings.json"
-            findings.write_text(json.dumps({"findings": [{"facet_id": "A", "status": "unresolved", "claims": [],
+            findings.write_text(json.dumps({"findings": [{"facet_id": "A", "claims": [],
                 "reason": "No evidence for the requested interpretation"}]}), encoding="utf-8")
             self.invoke("findings-save", root / "task.json", findings)
             repeated = self.pack(root, source, [dict(question, version="1")])
             self.assertEqual(repeated["finding_hits"], 0)
+
+    def test_mixed_findings_retain_each_assessment_and_reject_blanket_confirmation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.md"
+            source.write_text("Alpha is specified; the applicability is unclear.", encoding="utf-8")
+            question = self.question("A", "Alpha")
+            packed = self.pack(root, source, [question])
+            locator = packed["facets"][0]["passage_ids"]
+            confirmed = {"text": "Alpha is specified.", "status": "confirmed", "basis": "Read explicit statement",
+                         "scope": "Alpha statement", "passage_ids": locator}
+            interpretation = {"text": "Alpha might apply to every case.", "status": "interpretation",
+                              "basis": "Applicability is inferred", "scope": "All cases", "limits": "Unconfirmed applicability",
+                              "passage_ids": locator}
+            findings = root / "findings.json"
+            document = [{"facet_id": "A", "claims": [confirmed, interpretation]}]
+            findings.write_text(json.dumps(document), encoding="utf-8")
+            self.invoke("findings-save", root / "task.json", findings)
+            warm = self.pack(root, source, [question])
+            self.assertEqual(warm["findings"][0]["status"], "interpretation")
+            self.assertEqual([point["status"] for point in warm["findings"][0]["claims"]],
+                             ["confirmed", "interpretation"])
+            self.assertEqual(warm["search_count"], 0)
+            self.assertEqual(warm["next_mode"], "retrieval")
+            before = (root / "task.json").read_bytes()
+            for invalid in (
+                {**document[0], "status": "confirmed"},
+                {"facet_id": "A", "claims": [{key: value for key, value in interpretation.items() if key != "limits"}]},
+                {"facet_id": "A", "claims": [{key: value for key, value in confirmed.items() if key != "status"}]},
+            ):
+                findings.write_text(json.dumps([invalid]), encoding="utf-8")
+                result = run_corpus_raw("findings-save", root / "task.json", findings)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual((root / "task.json").read_bytes(), before)
+            expanded = self.pack(root, source, [question], "--max-passage-chars", 5000)
+            prior = expanded["facets"][0]["previous_finding"]
+            self.assertTrue(prior["source_current"])
+            self.assertEqual(prior["finding"]["claims"][0]["status"], "confirmed")
+
+    def test_oversized_final_receipt_refuses_save_and_preserves_readable_owner(self):
+        from doc_research.common import MAX_BATCH_INPUT_BYTES, load_bounded_json
+        from doc_research.evidence_pack import _write_task_receipt
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.md"
+            source.write_text("Alpha is specified.", encoding="utf-8")
+            packed = self.pack(root, source, [self.question("A", "Alpha")])
+            receipt = root / "task.json"
+            payload = json.loads(receipt.read_text())
+            payload["conflicts"] = [{"description": ""}]
+            serialized = lambda: (json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
+            # Fill the real receipt to exactly the reader cap, including UTF-8 bytes.
+            remaining = MAX_BATCH_INPUT_BYTES - len(serialized())
+            payload["conflicts"][0]["description"] = "я" * (remaining // 2) + "x" * (remaining % 2)
+            _write_task_receipt(receipt, payload)
+            self.assertEqual(receipt.stat().st_size, MAX_BATCH_INPUT_BYTES)
+            self.assertEqual(load_bounded_json(receipt, "Task receipt"), payload)
+            before = receipt.read_bytes()
+            claim = {"text": "Alpha is specified.", "status": "confirmed", "basis": "Checked explicit wording",
+                     "scope": "Alpha", "passage_ids": packed["facets"][0]["passage_ids"]}
+            findings = root / "findings.json"
+            findings.write_text(json.dumps([{"facet_id": "A", "claims": [claim]}]), encoding="utf-8")
+            result = run_corpus_raw("findings-save", receipt, findings)
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertIn("exceeds", result.stderr)
+            self.assertEqual(receipt.read_bytes(), before)
+            self.assertFalse(list(root.glob(".task.json.*.tmp")))
 
     def test_output_collisions_fail_before_any_mutation(self):
         with tempfile.TemporaryDirectory() as directory:

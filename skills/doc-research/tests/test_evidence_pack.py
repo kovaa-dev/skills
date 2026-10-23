@@ -4,6 +4,64 @@ from test_support import *
 
 
 class EvidencePackCliTest(CorpusCliTestCase):
+    def test_schema_fragment_is_a_gap_with_replayable_generation_bound_query(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.xsd"
+            source.write_text('<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">'
+                              '<xs:element name="LargeElement"><xs:annotation><xs:documentation>'
+                              + "Long applicability detail. " * 500
+                              + '</xs:documentation></xs:annotation></xs:element></xs:schema>', encoding="utf-8")
+            questions = root / "questions.json"
+            questions.write_text(json.dumps([{"id": "large", "question": "LargeElement?",
+                                               "kind": "schema", "queries": ["LargeElement"]}]), encoding="utf-8")
+            index, receipt = root / "index.sqlite", root / "task.json"
+            result = run_corpus("evidence-pack", source, questions, "--db", index,
+                                "--task-receipt", receipt, "--max-total-chars", 2000)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertFalse(payload["schema_facts"])
+            self.assertIn({"facet_id": "large", "reason": "schema-evidence-incomplete"}, payload["gaps"])
+            marker = next(item for item in payload["facets"][0]["query_continuations"]
+                          if item.get("tool") == "schema-query")
+            self.assertEqual(marker["start_char"], 0)
+            self.assertEqual(marker["index_fingerprint"], payload["index"]["fingerprint"])
+            resumed = run_corpus("schema-query", index, marker["query"], "--offset", marker["offset"],
+                                 "--start-char", marker["start_char"], "--expected-fingerprint", marker["index_fingerprint"],
+                                 "--limit", 1, "--max-total-chars", 100000)
+            self.assertEqual(resumed.returncode, 0, resumed.stderr)
+            record = json.loads(resumed.stdout)["results"][0]
+            self.assertEqual(record["name"], "LargeElement")
+            self.assertIn("Long applicability detail.", record["documentation"])
+            self.assertFalse(json.loads(receipt.read_text())["facets"][0]["schema_locators"])
+
+    def test_multi_query_pack_walks_source_directory_once(self) -> None:
+        from doc_research.cli import parser
+        from doc_research.evidence_pack import evidence_pack_payload
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            corpus = root / "corpus"
+            corpus.mkdir()
+            (corpus / "rules.md").write_text("Alpha rule. Beta rule. Gamma rule.", encoding="utf-8")
+            questions = root / "questions.json"
+            questions.write_text(json.dumps([{"id": term, "question": term,
+                                               "queries": [term]} for term in ("Alpha", "Beta", "Gamma")]), encoding="utf-8")
+            args = parser().parse_args(["evidence-pack", str(corpus), str(questions), "--db", str(root / "index.sqlite"),
+                                        "--task-receipt", str(root / "task.json")])
+            original, walks = Path.rglob, []
+
+            def tracked(path, pattern, *values, **options):
+                if path == corpus.resolve():
+                    walks.append(path)
+                return original(path, pattern, *values, **options)
+
+            with mock.patch.object(Path, "rglob", tracked):
+                payload = evidence_pack_payload(args)
+            self.assertEqual(payload["search_count"], 3)
+            self.assertTrue(payload["passages"])
+            self.assertEqual(len(walks), 1)
+
     def test_zero_hit_explicit_queries_get_one_deterministic_role_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -453,10 +511,10 @@ class EvidencePackCliTest(CorpusCliTestCase):
                         "findings": [
                             {
                                 "facet_id": "rule",
-                                "status": "verified",
                                 "claims": [
                                     {
                                         "text": "The primary rule is present.",
+                                        "status": "confirmed", "basis": "Checked the rule", "scope": "Primary rule",
                                         "passage_ids": payload["facets"][0][
                                             "support_passage_ids"
                                         ],
@@ -644,9 +702,9 @@ class EvidencePackCliTest(CorpusCliTestCase):
                         "findings": [
                             {
                                 "facet_id": "mass",
-                                "status": "verified",
                                 "claims": [
-                                    {"text": "Invalid locator.", "passage_ids": [999]}
+                                    {"text": "Invalid locator.", "passage_ids": [999],
+                                     "status": "confirmed", "basis": "Checked source", "scope": "Mass"}
                                 ],
                             }
                         ]
@@ -673,10 +731,10 @@ class EvidencePackCliTest(CorpusCliTestCase):
                         "findings": [
                             {
                                 "facet_id": "mass",
-                                "status": "verified",
                                 "claims": [
                                     {
                                         "text": "Cargo mass is required in kilograms.",
+                                        "status": "confirmed", "basis": "Read mass definition", "scope": "Cargo mass",
                                         "passage_ids": facet["passage_ids"],
                                     }
                                 ],
@@ -778,10 +836,10 @@ class EvidencePackCliTest(CorpusCliTestCase):
                         "findings": [
                             {
                                 "facet_id": "alpha",
-                                "status": "verified",
                                 "claims": [
                                     {
                                         "text": "Alpha is covered.",
+                                        "status": "confirmed", "basis": "Checked source", "scope": "Alpha",
                                         "passage_ids": first_payload["facets"][0]["passage_ids"],
                                     }
                                 ],
@@ -1053,10 +1111,10 @@ class EvidencePackCliTest(CorpusCliTestCase):
                         "findings": [
                             {
                                 "facet_id": "mass",
-                                "status": "verified",
                                 "claims": [
                                     {
                                         "text": "CargoMass is a decimal schema element.",
+                                        "status": "confirmed", "basis": "Read schema element", "scope": "CargoMass element",
                                         "evidence_ids": [fact["evidence_id"]],
                                     }
                                 ],

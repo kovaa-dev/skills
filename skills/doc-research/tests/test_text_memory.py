@@ -57,7 +57,7 @@ class TextMemoryTest(unittest.TestCase):
         self.assertFalse(self.save()["changed"])
         self.assertEqual(before, (self.memory.read_bytes(), self.memory.stat().st_mtime_ns))
 
-    def test_scope_upsert_preserves_other_answers_and_stale_version_falls_through(self):
+    def test_scope_upsert_preserves_other_answers_and_stale_points_for_recheck(self):
         self.save()
         self.save(scope="question B", answer="Another answer")
         self.assertEqual(set(json.loads(self.memory.read_text())["entries"]), {"question A", "question B"})
@@ -68,7 +68,15 @@ class TextMemoryTest(unittest.TestCase):
         self.source.write_text("new fact", encoding="utf-8")
         result = self.read(memory=self.memory, scope="question A", find=["new"])
         self.assertEqual(result["memory"]["status"], "stale")
-        self.assertEqual(result["lines"][0]["text"], "new fact")
+        self.assertFalse(result["lines"])
+        point = json.loads(result["memory"]["text"])["points"]["fact"]
+        self.assertIn('second "fact"', point["text"])
+        self.assertFalse(point["source_current"])
+        self.assertFalse(point["reusable"])
+        candidates = self.read(memory=self.memory, scope="paraphrased")
+        self.assertEqual(candidates["memory"]["status"], "candidates")
+        self.assertFalse(candidates["lines"])
+        self.assertEqual(set(json.loads(candidates["memory"]["text"])["entries"]), {"question A", "question B"})
         before = self.memory.read_bytes()
         with self.assertRaisesRegex(ValueError, "generation changed"):
             self.save()
@@ -205,6 +213,22 @@ class TextMemoryTest(unittest.TestCase):
             with self.assertRaises((ValueError, OSError)):
                 self.read(memory=alias, scope="question A")
             self.assertEqual(self.source.read_bytes(), original)
+
+    def test_trusted_parent_alias_and_tmp_work_without_allowing_linked_notes(self):
+        alias = self.root / "trusted-parent"
+        alias.symlink_to(self.root, target_is_directory=True)
+        target = alias / "through-parent.json"
+        self.assertTrue(self.save(memory=target)["changed"])
+        warm = self.read(memory=target, scope="question A")
+        self.assertEqual(warm["memory"]["status"], "current")
+        linked = alias / "linked-note.json"
+        linked.symlink_to(target.resolve())
+        with self.assertRaises((OSError, ValueError)):
+            self.read(memory=linked, scope="question A")
+        with tempfile.TemporaryDirectory(dir="/tmp") as directory:
+            memory = Path(directory) / "answer.json"
+            self.assertTrue(self.save(memory=memory)["changed"])
+            self.assertEqual(self.read(memory=memory, scope="question A")["memory"]["status"], "current")
 
     def test_ambiguous_literal_never_promoted_by_save_or_warm_read(self):
         self.source.write_text("Components: A, B, date, UUID\nPrinted: TX_A_ _B_date_UUID.xml\n", encoding="utf-8")

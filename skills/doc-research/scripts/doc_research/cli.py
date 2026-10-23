@@ -107,6 +107,8 @@ def parser() -> argparse.ArgumentParser:
     )
     normalize_xml_schema.add_argument("--limit", type=int, default=20)
     normalize_xml_schema.add_argument("--offset", type=int, default=0)
+    normalize_xml_schema.add_argument("--start-char", type=int, default=0, help="Continue a serialized record fragment")
+    normalize_xml_schema.add_argument("--source-hash", help="Reject continuation after source bytes change")
     normalize_xml_schema.add_argument("--max-total-chars", type=int, default=12000)
     normalize_xml_schema.add_argument("--pretty", action="store_true")
     normalize_xml_schema.set_defaults(
@@ -124,6 +126,8 @@ def parser() -> argparse.ArgumentParser:
     schema_query.add_argument("--schema", help="Restrict to a schema name substring")
     schema_query.add_argument("--limit", type=int, default=10)
     schema_query.add_argument("--offset", type=int, default=0)
+    schema_query.add_argument("--start-char", type=int, default=0, help="Continue a serialized record fragment")
+    schema_query.add_argument("--expected-fingerprint", help="Index generation returned by the previous page")
     schema_query.add_argument("--max-total-chars", type=int, default=12000)
     schema_query.add_argument(
         "--purpose",
@@ -281,6 +285,7 @@ def parser() -> argparse.ArgumentParser:
     catalog_search.add_argument("--date")
     catalog_search.add_argument("--limit", type=int, default=8)
     catalog_search.add_argument("--offset", type=int, default=0)
+    catalog_search.add_argument("--continuation", help="Opaque cursor returned by the previous page")
     catalog_search.add_argument("--max-chars", type=int, default=1600)
     catalog_search.add_argument("--max-total-chars", type=int, default=20000)
     catalog_search.add_argument("--snippet-tokens", type=int, default=48)
@@ -322,6 +327,7 @@ def parser() -> argparse.ArgumentParser:
     catalog_get.add_argument("locators", nargs="+")
     catalog_get.add_argument("--offset", type=int, default=0)
     catalog_get.add_argument("--start-char", type=int, default=0)
+    catalog_get.add_argument("--expected-fingerprint", help="Expected generation for a single-corpus raw locator")
     catalog_get.add_argument("--max-chars", type=int, default=6000)
     catalog_get.add_argument("--max-total-chars", type=int, default=20000)
     catalog_get.add_argument("--pretty", action="store_true", help="Pretty-print JSON output")
@@ -570,6 +576,7 @@ def parser() -> argparse.ArgumentParser:
     search.add_argument("--date", help="Restrict to an exact document date value")
     search.add_argument("--limit", type=int, default=4)
     search.add_argument("--offset", type=int, default=0, help="Continue at this result offset")
+    search.add_argument("--expected-fingerprint", help="Reject continuation after index generation changes")
     search.add_argument(
         "--max-chars", type=int, default=1600, help="Maximum characters returned per result"
     )
@@ -773,11 +780,12 @@ def parser() -> argparse.ArgumentParser:
     get.add_argument("--task-receipt", type=Path)
     get.add_argument("--gap-facet")
     get.add_argument("--purpose-reason")
-    get.add_argument("--around", help="Open the context of matching terms; omit when continuing with --start-char")
+    get.add_argument("--around", help="Open matching context initially; explicit --start-char resumes without re-anchoring")
+    get.add_argument("--expected-fingerprint", help="Reject retrieval after index generation changes")
     get.add_argument("--limit", type=int, default=12)
     get.add_argument("--offset", type=int, default=0, help="Continue at this passage offset")
     get.add_argument(
-        "--start-char", type=int, default=0, help="Continue within the passage at --offset"
+        "--start-char", type=int, default=None, help="Continue within the passage at --offset (including 0 for its prefix)"
     )
     get.add_argument("--max-chars", type=int, default=6000, help="Maximum characters per passage")
     get.add_argument("--max-total-chars", type=int, default=20000)

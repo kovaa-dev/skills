@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import copy
 import hashlib
 import json
-from collections.abc import Iterator
 from pathlib import Path
 
 from .catalog_store import (
@@ -28,7 +29,7 @@ from .common import (
     utc_now,
     validate_record_id,
 )
-from .index import get_payload, literal_query, prefix_query, require_current_schema, result_item, source_hash
+from .index import get_payload, index_fingerprint, literal_query, prefix_query, require_current_schema, result_item
 from .research_links import link_catalog_receipt_to_research
 from .search import resolved_query_mode, search_payload
 
@@ -55,6 +56,8 @@ def hydrate_federated_references(
     for corpus_id, passage_ids in requested.items():
         with database(Path(str(by_corpus[corpus_id]["index_path"])), readonly=True) as connection:
             require_current_schema(connection)
+            if index_fingerprint(connection) != by_corpus[corpus_id]["current_generation"]:
+                raise ValueError("Cached federated index generation changed; restart the search")
             rows = connection.execute(
                 f"""SELECT rowid AS passage_id,
                        bm25(chunks, 0.0, 3.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 2.0, 1.0) AS score,
@@ -80,6 +83,9 @@ def hydrate_federated_references(
             raise ValueError("Cached federated reference is stale for its index")
         if isinstance(reference.get("also_in"), list):
             result["also_in"] = reference["also_in"]
+        for field in ("index_fingerprint", "locator"):
+            if field in reference:
+                result[field] = reference[field]
         results.append(result)
     return results
 
@@ -127,6 +133,8 @@ def federated_reference(result: dict[str, object]) -> dict[str, object]:
             "version",
             "date",
             "passage_id",
+            "index_fingerprint",
+            "locator",
         )
         if result.get(key) is not None
     }
@@ -134,6 +142,146 @@ def federated_reference(result: dict[str, object]) -> dict[str, object]:
     if isinstance(aliases, list):
         reference["also_in"] = aliases[:5]
     return reference
+
+
+def continuation_identity(query: str, mode: str, filters: dict[str, object], ids: list[str]) -> str:
+    stable = {key: value for key, value in filters.items() if key not in {"_offset", "_limit"}}
+    return hashlib.sha256(json.dumps([query, mode, stable, ids], sort_keys=True).encode()).hexdigest()
+
+
+def encode_continuation(state: dict[str, object]) -> str:
+    raw = json.dumps(state, separators=(",", ":"), sort_keys=True).encode()
+    if len(raw) > 750_000:
+        raise ValueError("Catalog continuation exceeds its bounded state; narrow the search scope")
+    return base64.urlsafe_b64encode(raw).decode()
+
+
+def decode_continuation(token: str, identity: str, fingerprint: str, offset: int | None) -> dict[str, object]:
+    try:
+        if len(token) > 1_000_000:
+            raise ValueError("oversized token")
+        state = json.loads(base64.b64decode(token, altchars=b"-_", validate=True))
+        if state["identity"] != identity or state["fingerprint"] != fingerprint:
+            raise ValueError("search parameters or catalog generation changed")
+        if type(state["offset"]) is not int or not 0 <= state["offset"] < 2**63:
+            raise ValueError("invalid output position")
+        if offset is not None and state["offset"] != offset:
+            raise ValueError("offset does not match continuation")
+        if not isinstance(state["members"], dict) or not isinstance(state["seen"], list):
+            raise ValueError("invalid member state")
+        for member in state["members"].values():
+            if (type(member["offset"]) is not int or not 0 <= member["offset"] < 2**63
+                    or not isinstance(member["done"], bool)):
+                raise ValueError("invalid member position")
+        if not all(isinstance(value, str) for value in state["seen"]):
+            raise ValueError("invalid dedupe state")
+        if not isinstance(state["turn"], int) or state["turn"] < 0:
+            raise ValueError("invalid member turn")
+        if not isinstance(state["sources"], dict) or not all(
+            isinstance(value, int) and value >= 0 for value in state["sources"].values()
+        ):
+            raise ValueError("invalid source counts")
+        return state
+    except (ValueError, TypeError, KeyError) as exc:
+        raise ValueError(f"Invalid catalog continuation: {exc}; restart the search") from exc
+
+
+def position_checkpoint(state: dict[str, object]) -> dict[str, object]:
+    return {"members": copy.deepcopy(state["members"]), "turn": state["turn"]}
+
+
+def receipt_revision(metadata: dict[str, object], references: list[dict[str, object]]) -> str:
+    value = [metadata["base"], metadata["final"], references]
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:16]
+
+
+def load_continuation(
+    connection: sqlite3.Connection, token: str, identity: str, fingerprint: str,
+    offset: int | None,
+) -> dict[str, object]:
+    if not token.startswith("c:"):
+        decoded = decode_continuation(token, identity, fingerprint, offset)
+        decoded.pop("parent", None)
+        return decoded
+    original_token = token
+    selected_state = None
+    history: list[list[dict[str, object]]] = []
+    visited: set[str] = set()
+    try:
+        while token:
+            if token in visited or len(visited) >= 10_000:
+                raise ValueError("invalid or oversized receipt chain")
+            visited.add(token)
+            prefix, receipt_id, count_value, revision = token.split(":")
+            if prefix != "c":
+                raise ValueError("invalid receipt reference")
+            validate_record_id(receipt_id, "continuation receipt")
+            row = connection.execute(
+                "SELECT member_receipts_json, result_refs_json, catalog_fingerprint "
+                "FROM federated_receipts WHERE receipt_id = ?", (receipt_id,),
+            ).fetchone()
+            if row is None or row["catalog_fingerprint"] != fingerprint:
+                raise ValueError("receipt missing or catalog generation changed")
+            metadata = json.loads(row["member_receipts_json"])[0]
+            references = json.loads(row["result_refs_json"])
+            if receipt_revision(metadata, references) != revision:
+                raise ValueError("receipt changed; restart the search")
+            base = metadata["base"]
+            if base["identity"] != identity or base["fingerprint"] != fingerprint:
+                raise ValueError("search parameters or catalog generation changed")
+            count = len(references) if count_value == "end" else int(count_value)
+            if not 0 <= count <= len(references):
+                raise ValueError("invalid receipt result position")
+            checkpoint = (metadata["final"] if count_value == "end" else
+                          references[count - 1]["_checkpoint"] if count else base)
+            current_offset = base["offset"] + count
+            if selected_state is None:
+                selected_state = {**base, **checkpoint, "offset": current_offset}
+            elif child_offset != current_offset:
+                raise ValueError("receipt chain position changed")
+            history.append(references[:count])
+            child_offset = base["offset"]
+            token = base.get("parent")
+        assert selected_state is not None
+        seen = set(base.get("seen", []))
+        sources = dict(base.get("sources", {}))
+        for references in reversed(history):
+            for reference in references:
+                if reference.get("_dedupe_key"):
+                    seen.add(reference["_dedupe_key"])
+                if reference.get("_source_key"):
+                    key = reference["_source_key"]
+                    sources[key] = sources.get(key, 0) + 1
+        selected_state.update(seen=[], sources={})
+        selected_state.pop("parent", None)
+        # Apply the same bounded/type validation to state restored from receipts.
+        validated = decode_continuation(encode_continuation(selected_state), identity, fingerprint, offset)
+        validated.update(seen=sorted(seen), sources=sources)
+        validated["parent"] = original_token
+        return validated
+    except (ValueError, TypeError, KeyError, IndexError) as exc:
+        raise ValueError(f"Invalid catalog continuation: {exc}; restart the search") from exc
+
+
+def bound_catalog_response(payload: dict[str, object], args: argparse.Namespace, cursor) -> None:
+    """Account for the complete wire envelope, including continuation state."""
+    results = payload["results"]
+    original_count = len(results)
+    while True:
+        payload["result_count"] = len(results)
+        payload["characters"] = sum(len(json.dumps(item, ensure_ascii=False, separators=(",", ":"))) for item in results)
+        if len(results) < original_count:
+            payload["has_more"] = True
+            payload["text_truncated"] = True
+        if payload["has_more"]:
+            payload["next_offset"] = args.offset + len(results)
+            payload["next_continuation"] = cursor(len(results), len(results) == original_count)
+        options = {"indent": 2} if args.pretty else {"separators": (",", ":")}
+        if len(json.dumps(payload, ensure_ascii=False, **options)) + 1 <= args.max_total_chars:
+            return
+        if len(results) <= 1:
+            raise ValueError("--max-total-chars is too small for a catalog result/continuation envelope; increase it or narrow the search")
+        results.pop()
 
 def federated_dedupe_key(result: dict[str, object]) -> str:
     content_hash = result.pop("_content_hash", None)
@@ -350,11 +498,37 @@ def command_catalog_search(args: argparse.Namespace) -> int:
                 "search them through the authorized connector or pass --allow-partial"
             )
         selected_ids = [str(item["corpus_id"]) for item in entries]
+        identity = continuation_identity(raw_query, args.mode, filters, selected_ids)
+        token = getattr(args, "continuation", None)
+        continuation = load_continuation(connection, token, identity, fingerprint, args.offset or None) if token else None
+        if continuation is not None:
+            args.offset = continuation["offset"]
+            filters["_offset"] = args.offset
+        if args.offset and continuation is None:
+            # Existing receipts own continuation; an absent checkpoint must not trigger
+            # an unbounded replay of all preceding corpus candidates.
+            for previous in connection.execute(
+                "SELECT filters_json, member_receipts_json FROM federated_receipts "
+                "WHERE query = ? AND mode = ? AND corpus_ids_json = ? AND catalog_fingerprint = ? "
+                "AND next_offset = ? ORDER BY updated_at DESC",
+                (raw_query, args.mode, json.dumps(selected_ids, separators=(",", ":")),
+                 fingerprint, args.offset),
+            ):
+                if continuation_identity(raw_query, args.mode, json.loads(previous["filters_json"]), selected_ids) != identity:
+                    continue
+                members = json.loads(previous["member_receipts_json"])
+                saved_token = members[0].get("next_continuation") if members else None
+                if saved_token:
+                    continuation = load_continuation(connection, saved_token, identity, fingerprint, args.offset)
+                    break
+        if continuation is not None and args.receipt_id is not None:
+            raise ValueError("Omit --receipt-id when continuing; each page owns a separate receipt")
+        cursor_identity = token or (continuation.get("parent") if continuation else None)
         receipt_id = args.receipt_id or federated_receipt_id(
-            raw_query, args.mode, filters, selected_ids, args.offset
+            raw_query, args.mode, {**filters, **({"_cursor": cursor_identity} if cursor_identity else {})}, selected_ids, args.offset
         )
         receipt_id = validate_record_id(receipt_id, "--receipt-id")
-        if not args.refresh and all_current:
+        if not args.refresh and all_current and token is None:
             cached = lookup_federated_receipt(
                 connection,
                 receipt_id,
@@ -368,13 +542,8 @@ def command_catalog_search(args: argparse.Namespace) -> int:
                 references = cached["result_refs"]
                 if not isinstance(references, list):
                     raise ValueError("Cached federated references are not a list")
-                results, characters, output_truncated = bound_federated_results(
-                    hydrate_federated_references(references, entries, args, raw_query),
-                    args.max_total_chars,
-                )
-                next_offset = (
-                    args.offset + len(results) if output_truncated else cached["next_offset"]
-                )
+                results = hydrate_federated_references(references, entries, args, raw_query)
+                next_offset = cached["next_offset"]
                 payload: dict[str, object] = {
                     "query": raw_query,
                     "mode": args.mode,
@@ -382,7 +551,6 @@ def command_catalog_search(args: argparse.Namespace) -> int:
                     "corpus_ids": selected_ids,
                     "offset": args.offset,
                     "result_count": len(results),
-                    "characters": characters,
                     "has_more": next_offset is not None,
                     "coverage_complete": not unavailable,
                     "results": results,
@@ -390,10 +558,10 @@ def command_catalog_search(args: argparse.Namespace) -> int:
                     "receipt_hit": True,
                     "receipt_id": receipt_id,
                 }
-                if next_offset is not None:
-                    payload["next_offset"] = next_offset
-                if output_truncated:
-                    payload["text_truncated"] = True
+                bound_catalog_response(
+                    payload, args,
+                    lambda count, full: f"c:{receipt_id}:{'end' if full else count}:" + receipt_revision(cached["member_receipts"][0], references),
+                )
                 if args.research_db is not None:
                     link_catalog_receipt_to_research(
                         args.research_db,
@@ -409,10 +577,37 @@ def command_catalog_search(args: argparse.Namespace) -> int:
         for item in entries
         if item["adapter"] == "local-index" and item.get("available")
     ]
-    candidate_limit = min(50, args.offset + args.limit + 1)
-    member_receipts: list[dict[str, object]] = []
+    if args.offset and continuation is None:
+        raise ValueError("No current catalog continuation for --offset; use --continuation or restart at offset 0")
+    state = continuation or {
+        "identity": identity, "fingerprint": fingerprint, "offset": args.offset,
+        "turn": 0, "seen": [], "sources": {},
+        "members": {str(item["corpus_id"]): {"offset": 0, "done": False} for item in local_entries},
+    }
+    if set(state["members"]) != {str(item["corpus_id"]) for item in local_entries}:
+        raise ValueError("Catalog continuation members changed; restart the search")
+    initial_state = copy.deepcopy(state)
+    page_base = copy.deepcopy(state)
+    if page_base.get("parent"):
+        page_base.pop("seen", None)
+        page_base.pop("sources", None)
+    seen = set(state["seen"])
+    buffers: dict[str, list[dict[str, object]]] = {}
+    buffer_more: dict[str, bool] = {}
+    member_receipts: list[dict[str, object]] = [{}]
+    candidate_limit = min(50, args.limit + 1)
 
-    def member_results(item: dict[str, object]) -> Iterator[dict[str, object]]:
+    def member_result(item: dict[str, object]) -> dict[str, object] | None:
+        corpus_id = str(item["corpus_id"])
+        position = state["members"][corpus_id]
+        if position["done"]:
+            return None
+        if buffers.get(corpus_id):
+            result = buffers[corpus_id].pop(0)
+            position["offset"] += 1
+            if not buffers[corpus_id] and not buffer_more[corpus_id]:
+                position["done"] = True
+            return result
         namespace = argparse.Namespace(
             db=Path(str(item["index_path"])),
             query=raw_query,
@@ -423,9 +618,9 @@ def command_catalog_search(args: argparse.Namespace) -> int:
             version=normalized_filters["version"],
             date=normalized_filters["date"],
             limit=candidate_limit,
-            offset=0,
+            offset=position["offset"],
             max_chars=args.max_chars,
-            max_total_chars=min(args.max_total_chars, 40_000),
+            max_total_chars=40_000,
             snippet_tokens=args.snippet_tokens,
             receipts_db=Path(str(item["receipts_path"])),
             research_db=None,
@@ -433,71 +628,106 @@ def command_catalog_search(args: argparse.Namespace) -> int:
             receipt_id=None,
             refresh=args.refresh,
             read_only_receipts=args.read_only,
-            dedupe_exact=args.dedupe_exact,
-            max_per_source=args.max_per_source,
+            dedupe_exact=False,
+            max_per_source=0,
+            expected_fingerprint=item.get("current_generation"),
             pretty=False,
         )
-        member_receipt: dict[str, object] = {}
-        member_receipts.append(member_receipt)
-        while True:
-            payload = search_payload(namespace, include_content_hash=args.dedupe_exact)
-            member_receipt.update(
-                {
-                    "corpus_id": item["corpus_id"],
-                    "receipt_id": payload.get("receipt_id"),
-                    "generation": item.get("current_generation"),
-                    "has_more": bool(payload.get("has_more")),
-                    "next_offset": payload.get("next_offset"),
-                }
-            )
-            for result in payload.get("results", []):
-                if isinstance(result, dict):
-                    yield {"corpus_id": str(item["corpus_id"]), **result}
-            if not payload.get("has_more"):
-                return
-            next_offset = payload.get("next_offset")
-            if not isinstance(next_offset, int) or next_offset <= namespace.offset:
+        payload = search_payload(namespace, include_content_hash=args.dedupe_exact)
+        member_receipts.append({"corpus_id": corpus_id, "receipt_id": payload.get("receipt_id"),
+                                "generation": item.get("current_generation")})
+        generation = str(item["current_generation"])
+        buffers[corpus_id] = [
+            {"corpus_id": corpus_id, **result, "index_fingerprint": generation,
+             "locator": f"{corpus_id}@{generation}={result['passage_id']}"}
+            for result in payload.get("results", [])
+        ]
+        buffer_more[corpus_id] = bool(payload.get("has_more"))
+        if not buffers[corpus_id]:
+            if buffer_more[corpus_id]:
                 raise ValueError("Member search returned a non-advancing continuation")
-            namespace.offset = next_offset
+            position["done"] = True
+            return None
+        return member_result(item)
 
     page: list[dict[str, object]] = []
-    seen: dict[str, dict[str, object] | None] = {}
-    streams = [member_results(item) for item in local_entries]
-    position = 0
-    while streams and len(page) <= args.limit:
-        active = []
-        for stream in streams:
-            result = next(stream, None)
-            if result is None:
-                continue
-            active.append(stream)
-            key = federated_dedupe_key(result)
-            if args.dedupe_exact and key in seen:
-                existing = seen[key]
-                if existing is not None:
-                    aliases = existing.setdefault("also_in", [])
-                    if isinstance(aliases, list) and len(aliases) < 5:
-                        aliases.append(federated_reference(result))
-                continue
-            if args.dedupe_exact:
-                seen[key] = result if position >= args.offset else None
-            if position >= args.offset:
-                page.append(result)
-            position += 1
-        streams = active
+    checkpoints: list[dict[str, object]] = []
+    page_keys: list[str | None] = []
+    source_keys: list[str | None] = []
+    page_by_key: dict[str, dict[str, object]] = {}
+    candidates = 0
+    while local_entries and len(page) < args.limit and candidates < 50 * len(local_entries):
+        if all(member["done"] for member in state["members"].values()):
+            break
+        item = local_entries[state["turn"] % len(local_entries)]
+        state["turn"] = (state["turn"] + 1) % len(local_entries)
+        result = member_result(item)
+        if result is None:
+            continue
+        candidates += 1
+        key = federated_dedupe_key(result)
+        if args.dedupe_exact and key in seen:
+            existing = page_by_key.get(key)
+            if existing is not None:
+                aliases = existing.setdefault("also_in", [])
+                if len(aliases) < 5:
+                    aliases.append(federated_reference(result))
+            continue
+        source_key = json.dumps([result["corpus_id"], result.get("source")])
+        source_count = state["sources"].get(source_key, 0)
+        if args.max_per_source and source_count >= args.max_per_source:
+            continue
+        if args.max_per_source:
+            state["sources"][source_key] = source_count + 1
+        if args.dedupe_exact:
+            seen.add(key)
+            state["seen"] = sorted(seen)
+            page_by_key[key] = result
+        state["offset"] += 1
+        page.append(result)
+        checkpoints.append(position_checkpoint(state))
+        page_keys.append(key if args.dedupe_exact else None)
+        source_keys.append(source_key if args.max_per_source else None)
 
-    more_results = len(page) > args.limit
-    page = page[:args.limit]
-    bounded, characters, output_truncated = bound_federated_results(page, args.max_total_chars)
-    has_more = more_results or output_truncated
+    more_results = any(not member["done"] for member in state["members"].values())
     coverage_complete = not unavailable
-    references = [federated_reference(result) for result in bounded]
-    outcome = (
-        "incomplete"
-        if has_more or not coverage_complete
-        else ("results" if references else "no-material-result")
-    )
-    next_offset = args.offset + len(bounded) if has_more and bounded else None
+    all_references = [federated_reference(result) for result in page]
+    for reference, checkpoint, key, source_key in zip(all_references, checkpoints, page_keys, source_keys):
+        reference.update(_checkpoint=checkpoint, _dedupe_key=key, _source_key=source_key)
+
+    def page_metadata(count: int) -> dict[str, object]:
+        final = position_checkpoint(state) if count == len(page) else checkpoints[count - 1]
+        return {"base": page_base, "final": final}
+
+    def output_cursor(count: int, full: bool) -> str:
+        if not args.read_only:
+            return f"c:{receipt_id}:end:" + receipt_revision(page_metadata(count), all_references[:count])
+        selected = copy.deepcopy(state if full else initial_state)
+        selected.pop("parent", None)
+        if not full:
+            selected.update(checkpoints[count - 1])
+            selected["offset"] = args.offset + count
+            selected["seen"] = sorted(set(selected.get("seen", [])) | {key for key in page_keys[:count] if key})
+            sources = selected.setdefault("sources", {})
+            for key in source_keys[:count]:
+                if key:
+                    sources[key] = sources.get(key, 0) + 1
+        return encode_continuation(selected)
+
+    payload = {
+        "query": raw_query, "mode": args.mode,
+        "project_ids": list(dict.fromkeys(project_ids)), "corpus_ids": selected_ids,
+        "offset": args.offset, "has_more": more_results,
+        "coverage_complete": coverage_complete, "results": list(page),
+        "unsearched_corpora": unavailable, "receipt_hit": False,
+        **({"receipt_persisted": False} if args.read_only else {"receipt_id": receipt_id}),
+    }
+    bound_catalog_response(payload, args, output_cursor)
+    bounded = payload["results"]
+    references = all_references[:len(bounded)]
+    member_receipts[0] = {**page_metadata(len(bounded)), "next_continuation": payload.get("next_continuation")}
+    next_offset = payload.get("next_offset")
+    outcome = "incomplete" if payload["has_more"] or not coverage_complete else ("results" if references else "no-material-result")
     if not args.read_only:
         with database(db_path) as connection:
             require_catalog_schema(connection)
@@ -522,28 +752,6 @@ def command_catalog_search(args: argparse.Namespace) -> int:
             receipt_id,
             required_record_id(args.facet_id, "--facet-id"),
         )
-    payload = {
-        "query": raw_query,
-        "mode": args.mode,
-        "project_ids": list(dict.fromkeys(project_ids)),
-        "corpus_ids": selected_ids,
-        "offset": args.offset,
-        "result_count": len(bounded),
-        "characters": characters,
-        "has_more": has_more,
-        "coverage_complete": coverage_complete,
-        "results": bounded,
-        "unsearched_corpora": unavailable,
-        "receipt_hit": False,
-    }
-    if args.read_only:
-        payload["receipt_persisted"] = False
-    else:
-        payload["receipt_id"] = receipt_id
-    if next_offset is not None:
-        payload["next_offset"] = next_offset
-    if output_truncated:
-        payload["text_truncated"] = True
     emit_json(payload, args.pretty)
     return 0
 def command_catalog_get(args: argparse.Namespace) -> int:
@@ -559,10 +767,16 @@ def command_catalog_get(args: argparse.Namespace) -> int:
     if len(args.locators) > 50:
         raise ValueError("At most 50 federated locators may be requested")
     parsed: list[tuple[str, int]] = []
+    expected_generations: dict[str, str] = {}
     for locator in args.locators:
         if "=" not in locator:
             raise ValueError("Federated locator must use CORPUS_ID=PASSAGE_ID")
         corpus_id, raw_passage = locator.rsplit("=", 1)
+        if "@" in corpus_id:
+            corpus_id, generation = corpus_id.rsplit("@", 1)
+            if not generation or (corpus_id in expected_generations and expected_generations[corpus_id] != generation):
+                raise ValueError("Conflicting or empty generation in federated locators")
+            expected_generations[corpus_id] = generation
         corpus_id = validate_record_id(corpus_id, "corpus ID")
         try:
             passage_id = int(raw_passage)
@@ -574,6 +788,8 @@ def command_catalog_get(args: argparse.Namespace) -> int:
     with database(db_path, readonly=True) as connection:
         require_catalog_schema(connection)
         requested = list(dict.fromkeys(corpus_id for corpus_id, _ in parsed))
+        if getattr(args, "expected_fingerprint", None) is not None and len(requested) != 1:
+            raise ValueError("--expected-fingerprint requires one corpus; use generation-qualified locators for multiple corpora")
         if len(requested) > MAX_CATALOG_CORPORA:
             raise ValueError(
                 f"At most {MAX_CATALOG_CORPORA} corpora may be fetched at once"
@@ -593,8 +809,12 @@ def command_catalog_get(args: argparse.Namespace) -> int:
             raise ValueError(
                 f"Corpus {corpus_id} requires its external adapter; catalog-get is local only"
             )
+        expected = expected_generations.get(corpus_id) or getattr(args, "expected_fingerprint", None)
+        if expected is not None and expected != item["current_generation"]:
+            raise ValueError(f"Corpus {corpus_id} locator generation changed; search again")
 
     results: list[dict[str, object]] = []
+    result_positions: list[tuple[int, int]] = []
     not_found: list[str] = []
     characters = 0
     next_offset: int | None = None
@@ -610,6 +830,7 @@ def command_catalog_get(args: argparse.Namespace) -> int:
             max_chars=args.max_chars,
             max_total_chars=min(args.max_total_chars, 40_000),
             pretty=False,
+            expected_fingerprint=expected_generations.get(corpus_id) or getattr(args, "expected_fingerprint", None),
         )
         payload = get_payload(namespace)
         if passage_id in payload.get("not_found", []):
@@ -624,6 +845,7 @@ def command_catalog_get(args: argparse.Namespace) -> int:
         if not results and len(encoded) > args.max_total_chars:
             raise ValueError("--max-total-chars is too small for one federated passage")
         results.append(result)
+        result_positions.append((position, namespace.start_char))
         characters += len(encoded)
         if payload.get("has_more"):
             next_offset = position
@@ -642,5 +864,14 @@ def command_catalog_get(args: argparse.Namespace) -> int:
     if next_offset is not None:
         response["next_offset"] = next_offset
         response["next_start_char"] = next_start_char
+    options = {"indent": 2} if args.pretty else {"separators": (",", ":")}
+    while len(json.dumps(response, ensure_ascii=False, **options)) + 1 > args.max_total_chars:
+        if len(results) <= 1:
+            raise ValueError("--max-total-chars is too small for a catalog passage response envelope")
+        removed = results.pop()
+        response["next_offset"], response["next_start_char"] = result_positions.pop()
+        response["has_more"] = True
+        response["result_count"] = len(results)
+        response["characters"] -= len(json.dumps(removed, ensure_ascii=False, separators=(",", ":")))
     emit_json(response, args.pretty)
     return 0

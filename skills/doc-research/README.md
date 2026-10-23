@@ -55,7 +55,7 @@ scripts/corpus get index.sqlite PASSAGE_ID --around "CargoMass"
 scripts/corpus schema-query index.sqlite CargoMass --kind element
 ```
 
-Use returned IDs and continuation, and inspect relevant parents/definitions before making a requiredness claim. For several independent questions, an optional bounded plan batches the initial work:
+Use returned IDs and generation-bound continuation, and inspect relevant parents/definitions before making a requiredness claim. Long schema records continue within the record without losing the tail; search/get limits include JSON metadata, not just passage text. For several independent questions, an optional bounded plan batches the initial work:
 
 ```json
 {
@@ -74,7 +74,7 @@ scripts/corpus findings-save task-receipt.json findings.json
 
 The pack combines index/receipt reuse, missing searches, bounded enumeration continuation, structural XSD lookup, deduplication, passage reopen, and source locations. It returns inline evidence by default. Optional `--execution-route auto --pack-output PATH` adds a route estimate when measured worker costs and context justify it; unknown worker costs must not be treated as zero. An interpretation-only worker returns gaps for the coordinator to resolve; it does not silently broaden its assignment.
 
-When the task receipt owns findings, `findings-save` records bounded atomic claims whose evidence belongs to the facet. Scoped helper retrieval registers new locators without manual state editing. An unresolved finding may have no claims. An exact unchanged question/scope/version repeat returns saved findings with their status and locators without unnecessary searches or passage reopen. Unresolved findings and conflicts stay visible, not silently promoted to verified or discarded. Upserts preserve unrequested facets and conflicts. Changed question meaning or corpus freshness invalidates affected reuse, even if lexical queries remain identical.
+When the task receipt owns findings, `findings-save` records claim-level assessments, basis, scope and limits—not one verification flag over a mixed answer. Scoped retrieval registers locators without manual state editing. An unchanged repeat reuses current findings; merely enlarging a search budget does not invalidate confirmation. Open findings remain visible. Changed sources invalidate affected reuse, while old findings remain leads for targeted rechecking. `research-sync` cannot turn stale evidence into current confirmation. See the canonical [memory contract](references/evidence-schema.md) for formats and limits.
 
 The question file accepts up to 50 facets and 20 explicit queries per facet; use smaller batches when sufficient. `lookup` selects a small fact set; `enumeration` uses `group_by` and `max_items` for candidates; `schema` adds structural XSD facts. `verification: exact` calls for authoritative support. `verification: control` calls for checking contrary evidence and exceptions for universal, negative, or high-risk claims. Query roles guide retrieval; they are not a mechanical save gate or proof of answer coverage. Check relevant variants, parent conditions, and exceptions; a bounded candidate list is not necessarily a complete list of business cases.
 

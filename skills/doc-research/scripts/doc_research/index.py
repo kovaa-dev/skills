@@ -67,7 +67,6 @@ class SourceFile:
     sha256: str
 
 def split_long(text: str, max_chars: int, overlap: int = 200) -> Iterator[str]:
-    text = normalize_text(text)
     if not text:
         return
     start = 0
@@ -77,7 +76,7 @@ def split_long(text: str, max_chars: int, overlap: int = 200) -> Iterator[str]:
             split_at = text.rfind(" ", start + max_chars // 2, end)
             if split_at > start:
                 end = split_at
-        piece = text[start:end].strip()
+        piece = text[start:end]
         if piece:
             yield piece
         if end >= len(text):
@@ -102,7 +101,7 @@ def paragraphs_from_text(
             nonlocal buffer_start, buffer_end
             if not buffer:
                 return None
-            value = "\n".join(part.rstrip() for part in buffer if part.strip()).strip()
+            value = "\n".join(buffer)
             buffer.clear()
             start = buffer_start
             end = buffer_end
@@ -112,8 +111,10 @@ def paragraphs_from_text(
                 return None
             return current_page, current_section, start, end, value
 
-        for line in page_text.splitlines():
-            source_line += 1
+        # Only LF advances a physical source line; form feed is a page boundary,
+        # not a newline. Unicode line separators remain literal source content.
+        for local_line, line in enumerate(page_text.split("\n")):
+            line_number = source_line + local_line + 1
             page_match = PAGE_MARKER.match(line)
             if page_match:
                 item = flush()
@@ -137,13 +138,14 @@ def paragraphs_from_text(
                 continue
 
             if buffer_start is None:
-                buffer_start = source_line
-            buffer_end = source_line
+                buffer_start = line_number
+            buffer_end = line_number
             buffer.append(line)
 
         item = flush()
         if item:
             yield item
+        source_line += page_text.count("\n")
 
 def chunks_from_text(
     path: Path,
@@ -165,7 +167,7 @@ def chunks_from_text(
         nonlocal pending_length, pending_start, pending_end
         if not pending:
             return None
-        value = "\n\n".join(pending).strip()
+        value = "\n\n".join(pending)
         pending.clear()
         pending_length = 0
         line_start = pending_start
@@ -279,8 +281,8 @@ def chunks_from_jsonl(
                     f"{relative_path}:{line_number}: expected an object with string field 'text'"
                 )
 
-            text = item["text"].strip()
-            if not text:
+            text = item["text"]
+            if not text.strip():
                 raise ValueError(f"{relative_path}:{line_number}: text must not be empty")
             location = f"{relative_path}:{line_number}"
             source = optional_scalar(item, "source", location) or relative_path
@@ -478,6 +480,7 @@ def inventory_sources(
     db_path: Path,
     max_source_bytes: int,
     max_corpus_bytes: int,
+    source_paths: Iterable[Path] | None = None,
 ) -> tuple[list[SourceFile], int]:
     if max_source_bytes <= 0:
         raise ValueError("--max-source-bytes must be greater than zero")
@@ -486,7 +489,7 @@ def inventory_sources(
 
     sources: list[SourceFile] = []
     total_bytes = 0
-    for path in iter_source_files(corpus):
+    for path in source_paths if source_paths is not None else iter_source_files(corpus):
         if path.resolve() == db_path:
             continue
         relative_path = (
@@ -544,6 +547,8 @@ def calculate_index_fingerprint(connection: sqlite3.Connection) -> str:
     digest.update(f"schema:{SCHEMA_VERSION}\n".encode())
     digest.update(f"normalizer:{SCHEMA_IR_VERSION}\n".encode())
     digest.update(f"corpus:{corpus['value'] if corpus else ''}\n".encode())
+    config = connection.execute("SELECT value FROM metadata WHERE key = 'chunk_max_chars'").fetchone()
+    digest.update(f"chunk_max_chars:{config['value'] if config else ''}\n".encode())
     for row in connection.execute(
         "SELECT path, sha256, chunk_count FROM sources ORDER BY path"
     ):
@@ -713,7 +718,7 @@ def resolve_index_binding(index_path: Path, corpus_root: Path) -> tuple[Path, st
 
 def validate_output_paths(
     corpus: Path, outputs: Iterable[Path | None], inputs: Iterable[Path | None] = (),
-    *, index_path: Path | None = None,
+    *, index_path: Path | None = None, source_paths: Iterable[Path] | None = None,
 ) -> None:
     """Reject source/input aliases before any index or receipt write occurs."""
     destinations = [path.resolve() for path in outputs if path is not None]
@@ -726,7 +731,7 @@ def validate_output_paths(
     if corpus.is_file():
         protected.append(corpus)
     elif corpus.is_dir():
-        protected.extend(path.resolve() for path in iter_source_files(corpus) if path.resolve() != index_path)
+        protected.extend(path.resolve() for path in (source_paths if source_paths is not None else iter_source_files(corpus)) if path.resolve() != index_path)
 
     def aliases(left: Path, right: Path) -> bool:
         return left == right or (
@@ -755,14 +760,15 @@ def index_payload(args: argparse.Namespace) -> dict[str, object]:
     if args.max_chars < 500:
         raise ValueError("--max-chars must be at least 500")
 
-    validate_output_paths(corpus, [db_path], index_path=db_path)
-    db_path.parent.mkdir(parents=True, exist_ok=True)
     sources, corpus_bytes = inventory_sources(
         corpus,
         db_path,
         args.max_source_bytes,
         args.max_corpus_bytes,
+        getattr(args, "_source_paths", None),
     )
+    validate_output_paths(corpus, [db_path], index_path=db_path, source_paths=[source.path for source in sources])
+    db_path.parent.mkdir(parents=True, exist_ok=True)
     current_paths = {source.relative_path for source in sources}
     indexed = 0
     unchanged = 0
@@ -778,6 +784,7 @@ def index_payload(args: argparse.Namespace) -> dict[str, object]:
     database_existed = db_path.exists()
     temporary_path: Path | None = None
     update_strategy = "full-build"
+    config_changed = False
 
     try:
         if database_existed:
@@ -788,6 +795,8 @@ def index_payload(args: argparse.Namespace) -> dict[str, object]:
                 row["path"]: row
                 for row in existing_connection.execute("SELECT * FROM sources")
             }
+            config = existing_connection.execute("SELECT value FROM metadata WHERE key = 'chunk_max_chars'").fetchone()
+            config_changed = config is None or int(config['value']) != args.max_chars
             warning_row = existing_connection.execute("SELECT value FROM metadata WHERE key = 'schema_warnings'").fetchone()
             if warning_row:
                 schema_warnings = json.loads(warning_row["value"])
@@ -801,6 +810,7 @@ def index_payload(args: argparse.Namespace) -> dict[str, object]:
             source.relative_path
             for source in sources
             if not database_existed
+            or config_changed
             or source.relative_path not in existing
             or existing[source.relative_path]["sha256"] != source.sha256
         }
@@ -990,7 +1000,12 @@ def index_payload(args: argparse.Namespace) -> dict[str, object]:
                         nonlocal chunk_count
                         for chunk in chunks:
                             chunk_count += 1
+                            identity = json.dumps([source.relative_path, source.sha256, args.max_chars, chunk_count], separators=(",", ":"))
+                            # Content-bound, JSON-safe integer IDs cannot silently identify
+                            # replacement evidence after a rebuild. A collision fails INSERT.
+                            passage_id = int(hashlib.sha256(identity.encode()).hexdigest()[:13], 16)
                             yield (
+                                passage_id,
                                 source.relative_path,
                                 chunk.source,
                                 chunk.source_hash,
@@ -1007,10 +1022,10 @@ def index_payload(args: argparse.Namespace) -> dict[str, object]:
                     new_connection.executemany(
                         """
                         INSERT INTO chunks(
-                            source_path, source, source_hash, page, section,
+                            rowid, source_path, source, source_hash, page, section,
                             version, date, line_start, line_end, context, text
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         parsed_rows(),
                     )
@@ -1035,6 +1050,7 @@ def index_payload(args: argparse.Namespace) -> dict[str, object]:
                     indexed += 1
 
                 verify_source_inventory(sources)
+                new_connection.execute("INSERT OR REPLACE INTO metadata(key, value) VALUES ('chunk_max_chars', ?)", (str(args.max_chars),))
                 schema_warnings = {path: warnings for path, warnings in schema_warnings.items() if path in current_paths}
                 new_connection.execute("INSERT OR REPLACE INTO metadata(key, value) VALUES ('schema_warnings', ?)", (json.dumps(schema_warnings, ensure_ascii=False),))
                 total_chunks = int(
@@ -1219,56 +1235,12 @@ def command_info(args: argparse.Namespace) -> int:
     return 0
 
 
-def bounded_schema_attributes(
-    raw: str, limit: int
-) -> tuple[dict[str, str], int, bool]:
-    values = json.loads(raw)
-    output: dict[str, str] = {}
-    used = 0
-    truncated = False
-    for key, value in values.items():
-        remaining = limit - used - len(key)
-        if remaining < 2:
-            truncated = True
-            break
-        visible, value_truncated = clip_text(str(value), remaining)
-        output[str(key)] = visible
-        used += len(str(key)) + len(visible)
-        truncated = truncated or value_truncated
-        if value_truncated:
-            break
-    return output, used, truncated
-
-
-def bounded_schema_record(
+def schema_record_item(
     block: SchemaBlock,
     record: SchemaRecord,
-    limit: int,
     *,
     source: str | None = None,
-) -> tuple[dict[str, object], int]:
-    fact_limit = max(1, min(limit, max(100, limit // 2)))
-    fact, fact_truncated = clip_text(record.fact_text, fact_limit)
-    used = len(fact)
-    attribute_limit = max(0, min(4_000, (limit - used) // 2))
-    attributes, attribute_chars, attributes_truncated = bounded_schema_attributes(
-        record.attributes_json, attribute_limit
-    )
-    used += attribute_chars
-
-    documentation: str | None = None
-    text: str | None = None
-    for field, value in (("documentation", record.documentation), ("text", record.text)):
-        if value is None or used >= limit:
-            continue
-        clipped, value_truncated = clip_text(value, min(2_000, limit - used))
-        used += len(clipped)
-        fact_truncated = fact_truncated or value_truncated
-        if field == "documentation":
-            documentation = clipped
-        else:
-            text = clipped
-
+) -> dict[str, object]:
     item: dict[str, object] = {
         "schema_name": block.schema_name,
         "block_hash": block.block_hash,
@@ -1281,16 +1253,79 @@ def bounded_schema_record(
         "path": record.path,
         "xsd_line": record.source_line,
         "markdown_line": block.markdown_start_line + record.source_line - 1,
-        "attributes": attributes,
-        "documentation": documentation,
-        "text": text,
-        "fact_text": fact,
+        "attributes": json.loads(record.attributes_json),
+        "documentation": record.documentation,
+        "text": record.text,
+        "fact_text": record.fact_text,
     }
     if source is not None:
         item["source"] = source
-    if fact_truncated or attributes_truncated:
-        item["truncated"] = True
-    return item, used
+    return item
+
+
+def json_size(payload: object, pretty: bool = False) -> int:
+    return len(json.dumps(payload, ensure_ascii=False, indent=2 if pretty else None,
+                          separators=None if pretty else (",", ":"))) + 1
+
+
+def schema_record_page(payload: dict[str, object], records: list[dict[str, object]],
+                       args: argparse.Namespace, *, more_records: bool) -> dict[str, object]:
+    """Page whole records, or lossless JSON fragments for an oversized record."""
+    start_char = getattr(args, "start_char", 0)
+    if start_char < 0:
+        raise ValueError("--start-char must be nonnegative")
+    pretty = getattr(args, "pretty", False)
+    output: list[dict[str, object]] = []
+    payload.update(results=output, offset=args.offset, start_char=start_char,
+                   result_count=0, characters=args.max_total_chars, has_more=more_records,
+                   next_offset=None, next_start_char=0)
+    if start_char and not records:
+        raise ValueError("Record continuation no longer exists")
+    for position, record in enumerate(records):
+        serialized = json.dumps(record, ensure_ascii=False, separators=(",", ":"))
+        offset = start_char if position == 0 else 0
+        if offset >= len(serialized):
+            raise ValueError("--start-char exceeds the selected record")
+        next_record = args.offset + position + 1
+        more = more_records or position + 1 < len(records)
+        payload.update(has_more=more, next_offset=next_record if more else None,
+                       next_start_char=0, result_count=len(output) + 1)
+        output.append(record)
+        if offset == 0 and json_size(payload, pretty) <= args.max_total_chars:
+            continue
+        output.pop()
+        if output:
+            payload.update(has_more=True, next_offset=args.offset + position,
+                           result_count=len(output), next_start_char=offset)
+            break
+        fragment = {"record_fragment": "", "record_start_char": offset,
+                    "record_total_chars": len(serialized)}
+        output.append(fragment)
+        lo, hi = 0, len(serialized) - offset
+        while lo < hi:
+            mid = (lo + hi + 1) // 2
+            fragment["record_fragment"] = serialized[offset:offset + mid]
+            partial = offset + mid < len(serialized)
+            payload.update(has_more=partial or more,
+                           next_offset=args.offset + position if partial else (next_record if more else None),
+                           next_start_char=offset + mid if partial else 0)
+            if json_size(payload, pretty) <= args.max_total_chars:
+                lo = mid
+            else:
+                hi = mid - 1
+        if not lo:
+            raise ValueError("--max-total-chars is too small for the schema response envelope")
+        fragment["record_fragment"] = serialized[offset:offset + lo]
+        partial = offset + lo < len(serialized)
+        payload.update(has_more=partial or more,
+                       next_offset=args.offset + position if partial else (next_record if more else None),
+                       next_start_char=offset + lo if partial else 0)
+        break
+    # `characters` is the delivered record content, not a claim about the envelope.
+    payload["characters"] = sum(len(item.get("record_fragment", "")) if "record_fragment" in item else len(json.dumps(item, ensure_ascii=False, separators=(",", ":"))) for item in output)
+    if json_size(payload, pretty) > args.max_total_chars:
+        raise ValueError("--max-total-chars is too small for the schema response envelope")
+    return payload
 
 
 def normalize_xml_schema_payload(args: argparse.Namespace) -> dict[str, object]:
@@ -1305,22 +1340,23 @@ def normalize_xml_schema_payload(args: argparse.Namespace) -> dict[str, object]:
         raise ValueError("--offset must be zero or greater")
     if not 100 <= args.max_total_chars <= 40_000:
         raise ValueError("--max-total-chars must be between 100 and 40000")
+    before = file_signature(source)
+    source_hash = sha256_file(source)
+    if getattr(args, "source_hash", None) not in (None, source_hash):
+        raise ValueError("Schema source changed; restart continuation")
     normalized = normalize_schema_source(source, source.name)
+    if file_signature(source) != before:
+        raise ValueError("Schema source changed during normalization; retry")
     records = [
         (block, record)
         for block in normalized.blocks
         for record in block.records
     ]
     selected: list[dict[str, object]] = []
-    characters = 0
     if args.include_records:
         for block, record in records[args.offset : args.offset + args.limit]:
-            remaining = args.max_total_chars - characters
-            if remaining < 100:
-                break
-            item, used = bounded_schema_record(block, record, remaining)
+            item = schema_record_item(block, record)
             selected.append(item)
-            characters += used
     block_summaries = [
         {
             "block_index": block.block_index,
@@ -1333,20 +1369,23 @@ def normalize_xml_schema_payload(args: argparse.Namespace) -> dict[str, object]:
         }
         for block in normalized.blocks
     ]
-    return {
+    payload = {
         "source": str(source),
+        "source_hash": source_hash,
         "schema_ir_version": SCHEMA_IR_VERSION,
         "capabilities": optional_capabilities(),
         "block_count": len(normalized.blocks),
         "record_count": len(records),
         "offset": args.offset,
         "result_count": len(selected) if args.include_records else 0,
-        "characters": characters,
+        "characters": 0,
         "has_more": args.include_records and args.offset + len(selected) < len(records),
         "blocks": block_summaries,
-        "records": selected,
         "warnings": list(normalized.warnings),
     }
+    payload = schema_record_page(payload, selected, args, more_records=args.include_records and args.offset + len(selected) < len(records))
+    payload["records"] = payload.pop("results")
+    return payload
 
 
 def command_normalize_xml_schema(args: argparse.Namespace) -> int:
@@ -1400,18 +1439,16 @@ def schema_query_payload(args: argparse.Namespace) -> dict[str, object]:
     """
     with database(db_path, readonly=True) as connection:
         require_current_schema(connection)
+        fingerprint = index_fingerprint(connection)
+        if getattr(args, "expected_fingerprint", None) not in (None, fingerprint):
+            raise ValueError("Index generation changed; restart schema continuation")
         rows = connection.execute(sql, parameters).fetchall()
         warning_row = connection.execute("SELECT value FROM metadata WHERE key = 'schema_warnings'").fetchone()
         schema_warnings = json.loads(warning_row["value"]) if warning_row else {}
 
     selected = rows[: args.limit]
     results: list[dict[str, object]] = []
-    characters = 0
-    truncated = False
     for row in selected:
-        if characters >= args.max_total_chars:
-            truncated = True
-            break
         block = SchemaBlock(
             block_index=int(row["block_index"]),
             schema_name=str(row["schema_name"]),
@@ -1434,29 +1471,18 @@ def schema_query_payload(args: argparse.Namespace) -> dict[str, object]:
             documentation=row["documentation"],
             fact_text=str(row["fact_text"]),
         )
-        item, used = bounded_schema_record(
+        item = schema_record_item(
             block,
             record,
-            args.max_total_chars - characters,
             source=str(row["source_path"]),
         )
         results.append(item)
-        characters += used
-        if item.get("truncated"):
-            truncated = True
-            break
-    has_more = len(rows) > args.limit or truncated
-    return {
+    return schema_record_page({
         "query": query,
         "purpose": purpose,
-        "offset": args.offset,
-        "result_count": len(results),
-        "characters": characters,
-        "has_more": has_more,
-        "next_offset": args.offset + len(results) if has_more else None,
-        "results": results,
+        "index_fingerprint": fingerprint,
         "schema_warnings": schema_warnings,
-    }
+    }, results, args, more_records=len(rows) > args.limit)
 
 
 def command_schema_query(args: argparse.Namespace) -> int:
@@ -1575,7 +1601,7 @@ def select_search_rows(
     for position, row in enumerate(rows[:candidate_limit]):
         if dedupe_exact:
             text_key = hashlib.sha256(
-                normalize_text(str(row["full_text"] or "")).encode("utf-8")
+                str(row["full_text"] or "").encode("utf-8")
             ).hexdigest()
             existing_index = seen_text.get(text_key)
             if existing_index is not None:
@@ -1659,7 +1685,8 @@ def get_payload(args: argparse.Namespace) -> dict[str, object]:
         raise ValueError("--limit must be between 1 and 50")
     if args.offset < 0:
         raise ValueError("--offset must be zero or greater")
-    if args.start_char < 0:
+    start_char = args.start_char or 0
+    if start_char < 0:
         raise ValueError("--start-char must be zero or greater")
     if not 100 <= args.max_chars <= 100_000:
         raise ValueError("--max-chars must be between 100 and 100000")
@@ -1675,16 +1702,19 @@ def get_payload(args: argparse.Namespace) -> dict[str, object]:
     """
     with database(db_path, readonly=True) as connection:
         require_current_schema(connection)
+        fingerprint = index_fingerprint(connection)
+        if getattr(args, "expected_fingerprint", None) not in (None, fingerprint):
+            raise ValueError("Index generation changed; restart retrieval from current locators")
         rows = connection.execute(sql, unique_ids).fetchall()
     by_id = {row["passage_id"]: row for row in rows}
     ordered = [by_id[passage_id] for passage_id in unique_ids if passage_id in by_id]
-    if args.offset < len(ordered) and args.start_char > len(ordered[args.offset]["text"]):
+    if args.offset < len(ordered) and start_char > len(ordered[args.offset]["text"]):
         raise ValueError("--start-char exceeds the selected passage length")
 
     results: list[dict[str, object]] = []
     characters = 0
     current_offset = args.offset
-    current_start = args.start_char
+    current_start = start_char
     next_offset: int | None = None
     next_start_char = 0
     prefix_continuations: list[dict[str, int]] = []
@@ -1698,7 +1728,7 @@ def get_payload(args: argparse.Namespace) -> dict[str, object]:
 
         row = ordered[current_offset]
         full_text = str(row["text"] or "")
-        if getattr(args, "around", None) and current_start == 0:
+        if getattr(args, "around", None) and args.start_char is None and current_start == 0:
             current_start = context_start(full_text, args.around, min(args.max_chars, remaining_budget))
             if current_start:
                 prefix_continuations.append({"offset": current_offset, "start_char": 0, "end_char": current_start})
@@ -1737,7 +1767,8 @@ def get_payload(args: argparse.Namespace) -> dict[str, object]:
     has_more = next_offset is not None
     payload: dict[str, object] = {
         "offset": args.offset,
-        "start_char": args.start_char,
+        "start_char": start_char,
+        "index_fingerprint": fingerprint,
         "result_count": len(results),
         "characters": characters,
         "has_more": has_more,
@@ -1748,13 +1779,50 @@ def get_payload(args: argparse.Namespace) -> dict[str, object]:
     if has_more:
         payload["next_offset"] = next_offset
         payload["next_start_char"] = next_start_char
+    return bound_get_payload(payload, args)
+
+
+def bound_get_payload(payload: dict[str, object], args: argparse.Namespace) -> dict[str, object]:
+    """Count locators/metadata too; never return an undeliverable evidence envelope."""
+    results = payload["results"]
+    pretty = getattr(args, "pretty", False)
+    while len(results) > 1 and json_size(payload, pretty) > args.max_total_chars:
+        removed = results.pop()
+        payload.update(has_more=True, next_offset=args.offset + len(results),
+                       next_start_char=removed.get("text_start_char", 0), result_count=len(results))
+        payload["characters"] = sum(len(item["text"]) for item in results)
+    if results and json_size(payload, pretty) > args.max_total_chars:
+        item = results[0]
+        original = item["text"]
+        if item.get("text_truncated"):
+            original = original[:-1]
+        start = item.get("text_start_char", 0)
+        lo, hi = 0, len(original)
+        item["text_truncated"] = True
+        payload.update(has_more=True, next_offset=args.offset, next_start_char=start)
+        while lo < hi:
+            mid = (lo + hi + 1) // 2
+            item["text"] = original[:mid] + "…"
+            payload.update(characters=mid + 1, next_start_char=start + mid)
+            if json_size(payload, pretty) <= args.max_total_chars:
+                lo = mid
+            else:
+                hi = mid - 1
+        item["text"] = original[:lo] + "…"
+        payload.update(characters=lo + 1, next_start_char=start + lo)
+        if not lo:
+            raise ValueError("--max-total-chars is too small for one passage locator; increase the budget")
+    if json_size(payload, pretty) > args.max_total_chars:
+        raise ValueError("--max-total-chars is too small for the retrieval response envelope")
     return payload
+
 
 def command_get(args: argparse.Namespace) -> int:
     from .search import register_task_results
     purpose = lower_level_purpose_record(args, args.passage_ids)
     payload = get_payload(args)
-    register_task_results(args, payload)
     payload["purpose"] = purpose
+    bound_get_payload(payload, args)
+    register_task_results(args, payload)
     emit_json(payload, args.pretty)
     return 0

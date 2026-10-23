@@ -26,17 +26,19 @@ from .common import (
     database,
     database_objects,
     emit_json,
+    file_signature,
     harden_database_permissions,
     optional_research_text,
     required_research_text,
     schema_version,
+    sha256_file,
     sqlite3,
     table_columns,
     table_exists,
     utc_now,
     validate_record_id,
 )
-from .index import resolve_index_binding
+from .index import resolve_index_binding, require_current_schema
 from .receipts import require_receipt_database, require_receipt_schema
 
 RESEARCH_COLUMNS = {
@@ -70,6 +72,7 @@ RESEARCH_COLUMNS = {
         "excerpt",
         "interpretation",
         "confidence",
+        "status",
         "verified",
         "updated_at",
     ),
@@ -180,6 +183,9 @@ def create_research_schema(connection: sqlite3.Connection) -> None:
             confidence TEXT CHECK (
                 confidence IS NULL OR confidence IN ('confirmed', 'probable', 'uncertain')
             ),
+            status TEXT NOT NULL CHECK (status IN (
+                'confirmed', 'interpretation', 'unresolved', 'conflicted'
+            )),
             verified INTEGER NOT NULL CHECK (verified IN (0, 1)),
             updated_at TEXT NOT NULL
         );
@@ -494,9 +500,18 @@ def research_resume_payload(
             )
         ]
         values = dict(state)
+        evidence = [research_record(row) for row in connection.execute(
+            "SELECT * FROM evidence ORDER BY evidence_id LIMIT ?", (limit + 1,)
+        )]
+
+    freshness_cache: dict[str, tuple[object, str]] = {}
+    for item in evidence:
+        item.update(evidence_freshness(values, item, freshness_cache))
+    evidence = [clip_research_record(summarize_research_record("evidence", item), 600)
+                for item in evidence]
 
     output_truncated = any(
-        len(items) > limit for items in (receipt_links, facets, gaps, conflicts)
+        len(items) > limit for items in (receipt_links, facets, gaps, conflicts, evidence)
     ) or any(
         item.get("truncated_fields") for items in (facets, gaps, conflicts) for item in items
     )
@@ -600,6 +615,7 @@ def research_resume_payload(
         "catalog_fingerprint": values["catalog_fingerprint"],
         "catalog_scope": catalog_scope_payload(values),
         "active_facets": facets,
+        "evidence": evidence[:limit],
         "open_gaps": gaps,
         "open_conflicts": conflicts,
         "recent_receipts": recent_receipts,
@@ -608,7 +624,7 @@ def research_resume_payload(
     payload.update(current_binding_status(values))
     return fit_payload_lists(
         payload,
-        ("recent_receipts", "open_conflicts", "open_gaps", "active_facets"),
+        ("recent_receipts", "open_conflicts", "open_gaps", "active_facets", "evidence"),
         max_total_chars,
     )
 
@@ -793,6 +809,90 @@ def require_facet(connection: sqlite3.Connection, facet_id: str) -> None:
         "SELECT 1 FROM facets WHERE facet_id = ?", (facet_id,)
     ).fetchone() is None:
         raise ValueError(f"Facet does not exist: {facet_id}")
+
+def evidence_freshness(
+    state: dict[str, object], item: dict[str, object],
+    source_cache: dict[str, tuple[object, str]] | None = None,
+) -> dict[str, object]:
+    """Check this evidence's dependency, independently of investigation rebinding."""
+    current = False
+    reason = "Evidence has no verifiable source hash"
+    try:
+        if not item.get("source_hash"):
+            raise ValueError(reason)
+        if state["binding_kind"] == "catalog":
+            corpus_ids, boundaries, _ = decode_catalog_scope(state["catalog_scope_json"])
+            if item.get("corpus_id") not in corpus_ids:
+                raise ValueError("Evidence corpus is outside the research scope")
+            with database(Path(str(state["catalog_path"])), readonly=True) as catalog:
+                entries, _, _ = catalog_snapshot(catalog, [str(item["corpus_id"])], boundaries or None)
+            entry = entries[0]
+            if entry["adapter"] != "local-index" or not entry.get("available"):
+                raise ValueError("Evidence requires verification through its source adapter")
+            index_path = Path(str(entry["index_path"]))
+        else:
+            if not state.get("index_path"):
+                raise ValueError("Evidence has no bound index")
+            index_path, _ = resolve_index_binding(
+                Path(str(state["index_path"])), Path(str(state["corpus_root"]))
+            )
+        with database(index_path, readonly=True) as index:
+            require_current_schema(index)
+            conditions = ["source_hash = ?", "(source = ? OR source_path = ?)"]
+            parameters = [item["source_hash"], item["source"], item["source"]]
+            for field, column in (("passage_id", "rowid"), ("source_version", "version"),
+                                  ("page", "page"), ("section", "section")):
+                if item.get(field) is not None:
+                    conditions.append(f"{column} = ?")
+                    parameters.append(item[field])
+            matches = index.execute(
+                "SELECT DISTINCT source_path FROM chunks WHERE " + " AND ".join(conditions) + " LIMIT 2",
+                parameters,
+            ).fetchall()
+            if not matches:
+                raise ValueError("Evidence source hash or locator changed")
+            if len(matches) != 1:
+                raise ValueError("Evidence source identity is ambiguous; supply a precise passage locator")
+            source_path = str(matches[0]["source_path"])
+            source = index.execute("SELECT sha256 FROM sources WHERE path = ?", (source_path,)).fetchone()
+            binding = index.execute("SELECT value FROM metadata WHERE key = 'corpus_root'").fetchone()
+            if source is None or binding is None:
+                raise ValueError("Evidence has no indexed source dependency")
+            root = Path(binding["value"])
+            relative = Path(source_path)
+            if relative.is_absolute() or ".." in relative.parts:
+                raise ValueError("Evidence input path is outside its corpus")
+            if root.is_file():
+                if source_path != root.name:
+                    raise ValueError("Evidence input path does not match its corpus file")
+                path = root
+            else:
+                path = root / relative
+                if not path.resolve().is_relative_to(root.resolve()):
+                    raise ValueError("Evidence input path is outside its corpus")
+            if path.is_symlink() or any(parent.is_symlink() for parent in path.parents):
+                raise ValueError("Evidence input path contains a symbolic link")
+            cache = source_cache if source_cache is not None else {}
+            key = str(path)
+            signature = file_signature(path)
+            if key not in cache:
+                digest = sha256_file(path)
+                if file_signature(path) != signature:
+                    raise ValueError("Evidence source changed while hashing; retry")
+                cache[key] = (signature, digest)
+            cached_signature, digest = cache[key]
+            if cached_signature != signature:
+                raise ValueError("Evidence source changed during this read; retry")
+            current = digest == source["sha256"]
+            reason = "Evidence input bytes changed since indexing"
+    except HANDLED_ERRORS as exc:
+        reason = str(exc)
+    return {
+        "source_current": current,
+        "reusable": current and bool(item.get("verified")) and item.get("status") == "confirmed",
+        **({} if current else {"freshness_reason": reason}),
+    }
+
 
 def research_record(row: sqlite3.Row) -> dict[str, object]:
     item: dict[str, object] = dict(row)

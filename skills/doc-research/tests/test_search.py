@@ -1,9 +1,102 @@
 from __future__ import annotations
 
 from test_support import *
+from doc_research import search as SEARCH_MODULE
+from doc_research.cli import parser
 
 
 class SearchCliTest(CorpusCliTestCase):
+    def test_serialized_search_pages_include_metadata_and_keep_raw_continuations(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, index, receipts = (root / name for name in ("source.jsonl", "index.sqlite", "receipts.sqlite"))
+            records = [
+                {"text": f"Needle passage {number} " + "text " * (10 + number * 15),
+                 "source": f"source-{number}-{copy}.pdf", "section": 'Literal "quoted" section ' * 3}
+                for number in range(4) for copy in range(2)
+            ]
+            source.write_text("\n".join(map(json.dumps, records)), encoding="utf-8")
+            self.assertEqual(run_corpus("index", source, "--db", index).returncode, 0)
+            baseline = json.loads(run_corpus("search", index, "needle", "--dedupe-exact", "--limit", 10).stdout)
+            expected = {item["passage_id"] for item in baseline["results"]}
+            for warm in (False, True):
+                observed = []
+                offset = 0
+                for _ in range(10):
+                    result = run_corpus(
+                        "search", index, "needle", "--dedupe-exact", "--limit", 10,
+                        "--receipts-db", receipts, "--max-total-chars", 1400, "--offset", offset,
+                        "--expected-fingerprint", baseline["index_fingerprint"],
+                    )
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertLessEqual(len(result.stdout), 1400)
+                    payload = json.loads(result.stdout)
+                    self.assertEqual(payload["receipt_hit"], warm)
+                    observed.extend(item["passage_id"] for item in payload["results"])
+                    self.assertTrue(all(item.get("also_in") for item in payload["results"]))
+                    if not payload["has_more"]:
+                        break
+                    self.assertGreater(payload["next_offset"], offset)
+                    offset = payload["next_offset"]
+                else:
+                    self.fail("search continuation did not terminate")
+                self.assertEqual(set(observed), expected)
+                self.assertEqual(len(observed), len(expected))
+            source.write_text(json.dumps({"text": "Needle changed."}), encoding="utf-8")
+            self.assertEqual(run_corpus("index", source, "--db", index).returncode, 0)
+            stale = run_corpus("search", index, "needle", "--expected-fingerprint", baseline["index_fingerprint"])
+            self.assertEqual(stale.returncode, 2)
+            self.assertIn("fingerprint changed", stale.stderr)
+
+    def test_unbounded_locator_is_rejected_without_clipping_identity(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, index = root / "source.jsonl", root / "index.sqlite"
+            source.write_text(json.dumps({"text": "Needle.", "section": "long locator " * 500}))
+            self.assertEqual(run_corpus("index", source, "--db", index).returncode, 0)
+            result = run_corpus("search", index, "needle", "--max-total-chars", 1000)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("too small", result.stderr)
+
+    def test_batch_serialized_envelope_and_pretty_output_stay_bounded(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, index, batch = (root / name for name in ("source.md", "index.sqlite", "batch.json"))
+            source.write_text("Needle " + "evidence " * 100)
+            batch.write_text(json.dumps([{"query": "needle"}] * 6))
+            self.assertEqual(run_corpus("index", source, "--db", index).returncode, 0)
+            offset = 0
+            count = 0
+            while offset < 6:
+                result = run_corpus("search-many", index, batch, "--max-total-chars", 1800,
+                                    "--query-offset", offset, "--pretty")
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertLessEqual(len(result.stdout), 1800)
+                payload = json.loads(result.stdout)
+                self.assertGreater(payload["query_count"], 0)
+                count += payload["query_count"]
+                if not payload["has_more"]:
+                    break
+                self.assertGreater(payload["next_query_offset"], offset)
+                offset = payload["next_query_offset"]
+            self.assertEqual(count, 6)
+
+    def test_batch_captures_protected_source_inventory_once(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            corpus = root / "corpus"
+            corpus.mkdir()
+            (corpus / "source.md").write_text("Needle evidence.")
+            index, batch, receipts = (root / name for name in ("index.sqlite", "batch.json", "receipts.sqlite"))
+            batch.write_text(json.dumps([{"query": "needle"}, {"query": "evidence"}]))
+            self.assertEqual(run_corpus("index", corpus, "--db", index).returncode, 0)
+            args = parser().parse_args(["search-many", str(index), str(batch), "--receipts-db", str(receipts)])
+            with mock.patch.object(SEARCH_MODULE, "iter_source_files", wraps=SEARCH_MODULE.iter_source_files) as inventory:
+                with mock.patch.object(INDEX_MODULE, "iter_source_files", side_effect=AssertionError("repeated inventory")):
+                    with redirect_stdout(io.StringIO()):
+                        SEARCH_MODULE.command_search_many(args)
+                self.assertEqual(inventory.call_count, 1)
+
     def test_scoped_search_and_get_need_no_purpose_or_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -12,6 +105,7 @@ class SearchCliTest(CorpusCliTestCase):
             index = root / "index.sqlite"
             indexed = run_corpus("index", source, "--db", index)
             self.assertEqual(indexed.returncode, 0, indexed.stderr)
+            passage_id = json.loads(run_corpus("search", index, "needle").stdout)["results"][0]["passage_id"]
 
             queries = root / "queries.json"
             queries.write_text(
@@ -20,7 +114,7 @@ class SearchCliTest(CorpusCliTestCase):
             commands = (
                 ("search", index, "needle"),
                 ("search-many", index, queries),
-                ("get", index, 1),
+                ("get", index, passage_id),
             )
             for command in commands:
                 with self.subTest(command=command[0]):
@@ -42,6 +136,7 @@ class SearchCliTest(CorpusCliTestCase):
             index = root / "index.sqlite"
             indexed = run_corpus("index", source, "--db", index)
             self.assertEqual(indexed.returncode, 0, indexed.stderr)
+            passage_id = json.loads(run_corpus("search", index, "needle").stdout)["results"][0]["passage_id"]
             named_gap = run_corpus_raw(
                 "search", index, "needle", "--purpose", "named-gap", "--gap-facet", "F1"
             )
@@ -54,14 +149,14 @@ class SearchCliTest(CorpusCliTestCase):
             verified_locator = run_corpus_raw(
                 "get",
                 index,
-                1,
+                passage_id,
                 "--purpose",
                 "locator-verification",
             )
             self.assertEqual(verified_locator.returncode, 0, verified_locator.stderr)
             self.assertEqual(
                 json.loads(verified_locator.stdout)["purpose"],
-                {"kind": "locator-verification", "passage_ids": [1]},
+                {"kind": "locator-verification", "passage_ids": [passage_id]},
             )
 
             missing_reason = run_corpus_raw(
@@ -305,7 +400,7 @@ class SearchCliTest(CorpusCliTestCase):
                         "--max-chars",
                         100,
                         "--max-total-chars",
-                        100,
+                        1000,
                         "--offset",
                         offset,
                         "--start-char",
@@ -688,7 +783,8 @@ class SearchCliTest(CorpusCliTestCase):
                 ).stdout
             )
             self.assertEqual(deduplicated["result_count"], 2)
-            self.assertEqual(len(deduplicated["results"][0]["also_in"]), 1)
+            duplicate = next(item for item in deduplicated["results"] if item.get("also_in"))
+            self.assertEqual(len(duplicate["also_in"]), 1)
 
             first = run_corpus(
                 "search-many", index, queries, "--receipts-db", receipts

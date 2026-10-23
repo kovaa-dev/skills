@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from test_support import *
+from doc_research import schema_ir as SCHEMA_IR_MODULE
 
 
 SCHEMA_MARKDOWN = """# Transport format
@@ -44,7 +45,98 @@ Narrative marker outside the schema.
 """
 
 
+class SchemaTextFidelityTest(unittest.TestCase):
+    def normalize(self, content: str):
+        return SCHEMA_IR_MODULE.normalize_xsd_file(
+            '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" '
+            'xmlns:sch="http://purl.oclc.org/dsdl/schematron">'
+            + content + '</xs:schema>',
+            "fidelity.xsd",
+        ).blocks[0].records
+
+    def test_mixed_content_keeps_negation_in_source_order(self) -> None:
+        records = self.normalize(
+            '<xs:element name="Delivery"><xs:annotation>'
+            '<xs:documentation>Delivery is <b>not</b> permitted.</xs:documentation>'
+            '<xs:appinfo><sch:assert test="allowed">Delivery is '
+            '<b>not <i>ever</i></b> permitted.</sch:assert></xs:appinfo>'
+            '</xs:annotation></xs:element>'
+        )
+        element = next(record for record in records if record.kind == "element")
+        assertion = next(record for record in records if record.kind == "assert")
+        self.assertEqual(element.documentation, "Delivery is not permitted.")
+        self.assertIn("documentation=Delivery is not permitted.", element.fact_text)
+        self.assertEqual(assertion.text, "Delivery is not ever permitted.")
+        self.assertIn("message=Delivery is not ever permitted.", assertion.fact_text)
+
+    def test_whitespace_and_literals_survive_normalization(self) -> None:
+        documentation = '  code: A  B\n\tkeep <b>  both  </b> spaces &amp; tabs\t '
+        expected = '  code: A  B\n\tkeep   both   spaces & tabs\t '
+        records = self.normalize(
+            '<xs:element name="Literal"><xs:annotation>'
+            '<xs:documentation xml:space="preserve">' + documentation
+            + '</xs:documentation></xs:annotation></xs:element>'
+            '<xs:enumeration value="A  B&#x9;C"/>'
+        )
+        element = next(record for record in records if record.kind == "element")
+        document = next(record for record in records if record.kind == "documentation")
+        enumeration = next(record for record in records if record.kind == "enumeration")
+        self.assertEqual(element.documentation, expected)
+        self.assertEqual(document.text, expected)
+        self.assertIn("documentation=" + expected, element.fact_text)
+        self.assertIn("value=A  B\tC", enumeration.fact_text)
+
+    def test_long_documentation_retains_final_source_evidence(self) -> None:
+        documentation = "prefix " * 2000 + "FINAL_POLICY_MARKER: no delivery."
+        records = self.normalize(
+            '<xs:element name="Long"><xs:annotation><xs:documentation>'
+            + documentation
+            + '</xs:documentation></xs:annotation></xs:element>'
+        )
+        element = next(record for record in records if record.kind == "element")
+        document = next(record for record in records if record.kind == "documentation")
+        self.assertEqual(document.text, documentation)
+        self.assertEqual(element.documentation, documentation)
+        self.assertTrue(element.fact_text.endswith(documentation))
+
+    def test_record_expansion_limit_rejects_instead_of_truncating(self) -> None:
+        with mock.patch.object(SCHEMA_IR_MODULE, "MAX_SCHEMA_RECORD_CHARS", 512):
+            with self.assertRaisesRegex(ValueError, "normalized XSD records exceed"):
+                self.normalize(
+                    '<xs:element name="Long"><xs:annotation><xs:documentation>'
+                    + "preserved text " * 25
+                    + '</xs:documentation></xs:annotation></xs:element>'
+                )
+
+
 class SchemaIrCliTest(CorpusCliTestCase):
+    def test_long_documentation_is_stored_and_tail_remains_searchable(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "long.xsd"
+            documentation = "  prefix  text\n\t" * 1000 + "TAILPOLICYMARKER: no delivery.  "
+            source.write_text(
+                '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">'
+                '<xs:element name="Long"><xs:annotation><xs:documentation>'
+                + documentation
+                + '</xs:documentation></xs:annotation></xs:element></xs:schema>',
+                encoding="utf-8",
+            )
+            database = root / "index.sqlite"
+            indexed = run_corpus("index", source, "--db", database)
+            self.assertEqual(indexed.returncode, 0, indexed.stderr)
+            with closing(sqlite3.connect(database)) as connection:
+                stored = connection.execute(
+                    "SELECT text FROM schema_records WHERE kind = 'documentation'"
+                ).fetchone()[0]
+                projected = [row[0] for row in connection.execute("SELECT text FROM chunks")]
+            self.assertEqual(stored, documentation)
+            self.assertGreater(len(projected), 1)
+            self.assertTrue(any("TAILPOLICYMARKER: no delivery." in text for text in projected))
+            found = run_corpus("search", database, "TAILPOLICYMARKER")
+            self.assertEqual(found.returncode, 0, found.stderr)
+            self.assertGreater(json.loads(found.stdout)["result_count"], 0)
+
     def test_index_replaces_raw_xsd_with_searchable_semantic_facts(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -60,7 +152,7 @@ class SchemaIrCliTest(CorpusCliTestCase):
 
             info = json.loads(run_corpus("info", database).stdout)
             self.assertEqual(info["schema_version"], 3)
-            self.assertEqual(info["schema_ir_version"], 2)
+            self.assertEqual(info["schema_ir_version"], 3)
             self.assertEqual(info["schema_block_count"], 1)
 
             found = json.loads(run_corpus("search", database, "ROAD").stdout)

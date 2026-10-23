@@ -92,7 +92,7 @@ scripts/corpus normalize-xml-schema SOURCE.md --include-records --limit 20
 scripts/corpus schema-query index.sqlite FIELD_NAME --kind element
 ```
 
-`schema-query` is a normal bounded retrieval route. Inspect relevant ancestors, definitions, constraints, and original lines before interpreting requiredness or applicability; structural declarations alone do not prove complete effective semantics. Follow continuation for omitted nodes. When source hash and normalizer version are unchanged, `index` reuses persisted IR; changes invalidate the derived generation.
+`schema-query` is a normal bounded retrieval route. Inspect relevant ancestors and definitions before interpreting requiredness: declarations alone do not prove effective semantics. XML text retains mixed-content order, whitespace and literals under XML parsing semantics; record expansion beyond the parser's safety budget fails explicitly rather than silently cutting evidence. Oversized records return `record_fragment` JSON substrings; concatenate fragments before parsing or interpreting the record. Continue with both `next_offset` and `next_start_char`, plus `--expected-fingerprint` for `schema-query` or `--source-hash` for `normalize-xml-schema`. Record offset advances only after the entire record. A pack that cannot include a full schema record exposes a gap and continuation, not a partial fact. Unchanged block hashes and normalizer versions permit IR reuse.
 
 ## Normalized inputs for `scripts/corpus`
 
@@ -103,6 +103,8 @@ For Markdown or text:
 - Markdown headings become section metadata.
 - Form-feed characters split pages.
 - A line such as `<!-- page: 12 -->` sets explicit page metadata for following text.
+
+Physical line locators count LF only; form feeds and Unicode separators do not invent source lines. Chunk text preserves literal whitespace. Exact deduplication compares source text bytes, not a whitespace-normalized approximation.
 
 For JSONL, each non-empty line is an object with this shape:
 
@@ -120,7 +122,9 @@ The helper hashes every normalized input and verifies that its filesystem identi
 
 The disposable working copy uses no on-disk rollback journal: a handled parse, source-consistency, or database failure deletes that copy and leaves the published index untouched. An interrupted process can leave its hidden `.tmp` working file, but cannot publish it. Delta deletion enables SQLite `secure_delete` so removed source text is not retained in free cells of the published database. Before publication the helper restores the normal SQLite journal mode and closes both databases, including on Windows. This does not promise forensic erasure from storage media, backups, snapshots, or operating-system caches. `index` refuses to clear a non-empty index when no supported source files remain, protecting against a temporarily unavailable corpus. Keep authorized originals outside the generated index.
 
-The reusable FTS index and its schema IR, cross-session receipts, and durable research state are separate `index.sqlite`, `receipts.sqlite`, and `research.sqlite` files. Never pass either state database to `index`, or store conclusions in the index. After a rebuild, live fingerprint checks exclude stale receipts by default; `receipts-sync` updates the receipt-store binding and `research-sync` only rebinds investigation state.
+Chunk size is part of index identity: changing it rebuilds affected chunks and changes the generation, even if source bytes are unchanged. Index/pack batches reuse one checked source-path inventory internally; source hashing is not replaced by `mtime` trust. Content-bound passage IDs do not silently resolve to replacement text.
+
+The index, query receipts and research state remain separate. Never pass state databases to `index`. Generation checks exclude stale receipts; `research-sync` also invalidates affected evidence confirmations, without promoting old findings. See [memory contracts](evidence-schema.md).
 
 By default, `index` accepts at most 256 MiB per source and 8 GiB across the corpus. A full build checks for input-size plus headroom; a delta update checks for the existing database snapshot, changed input, and headroom. It creates owner-only (`0600`) database files on POSIX systems. Windows uses the containing directory's ACL, so place sensitive indexes in an appropriately restricted directory. Override size caps only for an authorized, understood corpus. `compare` applies the same per-source limit and also caps normalized comparison units. Inspect exact defaults and overrides with command `--help`.
 

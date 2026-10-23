@@ -34,7 +34,7 @@ def _unique_object(pairs: list[tuple[str, object]]) -> dict:
 
 def _read_owned(path: Path, kind: str) -> dict | None:
     try:
-        directory = _open_memory_directory(path.parent)
+        directory = _open_memory_directory(path.parent.resolve())
     except FileNotFoundError:
         return None
     try:
@@ -64,7 +64,10 @@ def _write_owned(path: Path, payload: dict, source: Path, inputs: list[Path | No
 
     # Reuse the package's collision and atomic-write rules. One writer owns each
     # artifact; this is not a concurrent database or an adversarial directory sandbox.
-    _check_memory_path(path.parent.absolute())
+    # System ancestors such as macOS /tmp are trusted aliases. The artifact
+    # itself must still be an unaliased regular file.
+    path = path.parent.resolve() / path.name
+    _check_memory_path(path.parent)
     if path.exists() or path.is_symlink():
         info = _check_memory_path(path.absolute())
         if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
@@ -75,7 +78,7 @@ def _write_owned(path: Path, payload: dict, source: Path, inputs: list[Path | No
     previous = _read_owned(path, payload["kind"])
     if previous == payload:
         return False
-    _write_json(path, payload)
+    _write_json(path, payload, max_bytes=MAX_NOTE_BYTES)
     return True
 
 
@@ -177,14 +180,14 @@ def answer_page(args: object, source_hash: str, envelope: dict) -> dict:
             if entry is not None:
                 current = [point["source_current"] for point in entry["points"].values()]
                 status = "current" if current and all(current) else "partial" if any(current) else "stale"
-            elif any(point["source_current"] for value in entries.values() for point in value["points"].values()):
+            elif entries:
                 # A paraphrase is not an empty store or proof of equivalence. Return
                 # candidates and their limits for assessment before any new search.
                 status = "candidates"
                 entry = {"entries": entries}
             else:
                 status = "stale" if entries else "miss"
-    if status not in {"current", "partial", "candidates"}:
+    if status not in {"current", "partial", "candidates", "stale"} or entry is None:
         if offset or args.memory_hash:
             raise ValueError("Memory/source changed during continuation; restart memory lookup")
         return {"status": status}

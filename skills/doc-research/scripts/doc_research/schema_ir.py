@@ -14,12 +14,12 @@ from xml.parsers import expat
 XSD_NAMESPACE = "http://www.w3.org/2001/XMLSchema"
 SCHEMATRON_NAMESPACE = "http://purl.oclc.org/dsdl/schematron"
 # Bump whenever persisted records or model-facing fact semantics change.
-SCHEMA_IR_VERSION = 2
+SCHEMA_IR_VERSION = 3
 MAX_SCHEMA_BLOCKS = 64
 MAX_SCHEMA_CHARS = 16 * 1024 * 1024
 MAX_SCHEMA_NODES = 200_000
 MAX_SCHEMA_DEPTH = 256
-MAX_NODE_TEXT = 8_000
+MAX_SCHEMA_RECORD_CHARS = 4 * MAX_SCHEMA_CHARS
 MAX_NODE_ATTRIBUTES = 256
 MAX_ATTRIBUTE_CHARS = 32_000
 MAX_ATTRIBUTE_VALUE_CHARS = 8_000
@@ -41,7 +41,7 @@ class XmlNode:
     line: int
     parent: XmlNode | None = None
     children: list[XmlNode] = field(default_factory=list)
-    text_parts: list[str] = field(default_factory=list)
+    content: list[str | XmlNode] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -89,18 +89,13 @@ def local_name(value: str) -> str:
     return split_qname(value)[1]
 
 
-def compact_text(value: str, limit: int = MAX_NODE_TEXT) -> str:
-    normalized = " ".join(value.split())
-    if len(normalized) <= limit:
-        return normalized
-    return normalized[: limit - 1].rstrip() + "…"
-
-
 def node_text(node: XmlNode) -> str:
-    pieces = list(node.text_parts)
-    for child in node.children:
-        pieces.append(node_text(child))
-    return compact_text(" ".join(pieces))
+    # Character callbacks and child elements must stay interleaved: moving a
+    # marked-up negation after its parent's tail can reverse the source meaning.
+    return "".join(
+        part if isinstance(part, str) else node_text(part)
+        for part in node.content
+    )
 
 
 def direct_documentation(node: XmlNode) -> str | None:
@@ -116,7 +111,7 @@ def direct_documentation(node: XmlNode) -> str | None:
                         values.append(value)
     if not values:
         return None
-    return compact_text(" | ".join(values))
+    return " | ".join(values)
 
 
 def parse_xml_tree(xml_text: str, location: str) -> XmlNode:
@@ -155,6 +150,7 @@ def parse_xml_tree(xml_text: str, location: str) -> XmlNode:
         if stack:
             node.parent = stack[-1]
             stack[-1].children.append(node)
+            stack[-1].content.append(node)
         else:
             root = node
         stack.append(node)
@@ -164,7 +160,7 @@ def parse_xml_tree(xml_text: str, location: str) -> XmlNode:
 
     def characters(value: str) -> None:
         if stack and value:
-            stack[-1].text_parts.append(value)
+            stack[-1].content.append(value)
 
     def reject_doctype(*_args: object) -> None:
         raise ValueError(f"{location}: DTD declarations are not allowed in XSD input")
@@ -278,7 +274,7 @@ def fact_for(
         message = node_text(node)
         if message:
             parts.append(f"message={message}")
-    return compact_text(" ".join(parts), 12_000)
+    return " ".join(parts)
 
 
 def records_from_root(root: XmlNode, location: str) -> tuple[str | None, tuple[SchemaRecord, ...]]:
@@ -288,8 +284,10 @@ def records_from_root(root: XmlNode, location: str) -> tuple[str | None, tuple[S
 
     records: list[SchemaRecord] = []
     orders: dict[int, int] = {}
+    record_chars = 0
 
     def visit(node: XmlNode, parent_path: str, sibling_index: int) -> None:
+        nonlocal record_chars
         namespace, kind = split_qname(node.qname)
         segment = component_segment(node, kind, sibling_index)
         structural = namespace == XSD_NAMESPACE and kind in {
@@ -313,6 +311,17 @@ def records_from_root(root: XmlNode, location: str) -> tuple[str | None, tuple[S
         orders[id(node)] = order
         parent_order = orders.get(id(node.parent)) if node.parent is not None else None
         fact = fact_for(node, namespace, kind, path, documentation)
+        attributes_json = json.dumps(
+            node.attrs, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        )
+        # Nested documentation can duplicate source text across records. Reject
+        # excessive expansion explicitly rather than silently discard evidence.
+        record_chars += sum(map(len, (text or "", documentation or "", fact, path, attributes_json)))
+        if record_chars > MAX_SCHEMA_RECORD_CHARS:
+            raise ValueError(
+                f"{location}:{node.line}: normalized XSD records exceed "
+                f"{MAX_SCHEMA_RECORD_CHARS} characters"
+            )
         records.append(
             SchemaRecord(
                 record_order=order,
@@ -322,9 +331,7 @@ def records_from_root(root: XmlNode, location: str) -> tuple[str | None, tuple[S
                 name=node.attrs.get("name") or node.attrs.get("ref"),
                 path=path,
                 source_line=node.line,
-                attributes_json=json.dumps(
-                    node.attrs, ensure_ascii=False, sort_keys=True, separators=(",", ":")
-                ),
+                attributes_json=attributes_json,
                 text=text,
                 documentation=documentation,
                 fact_text=fact,
@@ -375,7 +382,8 @@ def normalize_markdown(
     source_name: str,
     cached_blocks: dict[str, SchemaBlock] | None = None,
 ) -> NormalizedSchemaSource:
-    lines = raw.splitlines(keepends=True)
+    lines = raw.split("\n")
+    lines = [line + "\n" for line in lines[:-1]] + ([lines[-1]] if lines[-1] else [])
     output: list[str] = []
     blocks: list[SchemaBlock] = []
     parsed_blocks = 0
@@ -476,7 +484,7 @@ def normalize_xsd_file(
             block_index=1,
             schema_name=Path(source_name).name,
             markdown_start_line=1,
-            markdown_end_line=max(1, len(raw.splitlines())),
+            markdown_end_line=max(1, raw.count("\n") + int(not raw.endswith("\n"))),
         )
         return NormalizedSchemaSource("", (block,), 0, 1)
     block = normalize_block(
@@ -484,7 +492,7 @@ def normalize_xsd_file(
         block_index=1,
         schema_name=Path(source_name).name,
         markdown_start_line=1,
-        markdown_end_line=max(1, len(raw.splitlines())),
+        markdown_end_line=max(1, raw.count("\n") + int(not raw.endswith("\n"))),
         location=source_name,
     )
     return NormalizedSchemaSource("", (block,), 1, 0)
@@ -506,7 +514,7 @@ def normalize_schema_source(
                 f"{source_name}: cannot decode XSD using declared encoding {encoding}"
             ) from exc
         return normalize_xsd_file(raw, source_name, cached_blocks)
-    raw = path.read_text(encoding="utf-8")
+    raw = path.read_bytes().decode("utf-8")
     if path.suffix.lower() == ".md":
         return normalize_markdown(raw, source_name, cached_blocks)
     return NormalizedSchemaSource(raw, ())
@@ -539,8 +547,21 @@ def iter_fact_groups(block: SchemaBlock, max_chars: int) -> Iterator[str]:
             pending = []
             pending_length = len(header)
         if len(line) + len(header) + 1 > max_chars:
-            available = max(1, max_chars - len(header) - 2)
-            line = line[:available].rstrip() + "…"
+            prefix = header + "\n" + locator + " "
+            available = max_chars - len(prefix)
+            if available <= 0:
+                raise ValueError("chunk size is too small for the schema source locator")
+            # Keep a boundary-spanning search term in at least one chunk, without
+            # dropping whitespace or the end of a long documentation/message.
+            overlap = min(200, available // 2)
+            start = 0
+            while start < len(record.fact_text):
+                end = min(len(record.fact_text), start + available)
+                yield prefix + record.fact_text[start:end]
+                if end == len(record.fact_text):
+                    break
+                start = end - overlap
+            continue
         pending.append(line)
         pending_length += len(line) + 1
     if pending:

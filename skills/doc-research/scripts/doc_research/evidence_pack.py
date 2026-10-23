@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .common import (
     MAX_QUERY_TEXT,
+    MAX_BATCH_INPUT_BYTES,
     EVIDENCE_EXECUTION_ROUTES,
     EVIDENCE_WORKER_CONTEXTS,
     TASK_RECEIPT_VERSION,
@@ -22,6 +23,7 @@ from .common import (
 )
 from .index import (
     index_payload,
+    iter_source_files,
     resolve_index_binding,
     schema_query_payload,
     validate_output_paths,
@@ -48,7 +50,7 @@ QUESTION_KINDS = {"lookup", "enumeration", "schema"}
 VERIFICATION_MODES = {"exact", "control"}
 GROUP_BY_FIELDS = {"source", "section", "schema"}
 MAX_ENUMERATION_ITEMS = 50
-FINDING_STATUSES = {"verified", "conflicted", "unresolved"}
+FINDING_STATUSES = {"confirmed", "interpretation", "conflicted", "unresolved"}
 LOCATOR_FIELDS = (
     "passage_id",
     "source",
@@ -624,9 +626,15 @@ def _load_task_receipt(
             if (
                 not isinstance(finding, dict)
                 or set(finding) - {"status", "claims", "reason"}
+                or not isinstance(finding.get("status"), str)
                 or finding.get("status") not in FINDING_STATUSES
             ):
                 raise ValueError(f"Task receipt facet {index}.finding is invalid")
+            normalized = _normalize_findings([{
+                "facet_id": facet_id, **{key: value for key, value in finding.items() if key != "status"},
+            }])[0]
+            if normalized["status"] != finding["status"]:
+                raise ValueError("Task receipt finding status disagrees with its individual claims")
             claims = finding.get("claims")
             if finding.get("reason") is not None:
                 required_research_text(finding["reason"], "finding.reason", MAX_FINDING_TEXT)
@@ -637,7 +645,7 @@ def _load_task_receipt(
                     raise ValueError(
                         f"Task receipt facet {index}.finding.claims[{claim_index}] is invalid"
                     )
-                if set(claim) - {"text", "passage_ids", "evidence_ids", "scope"}:
+                if set(claim) - {"text", "passage_ids", "evidence_ids", "scope", "status", "basis", "limits"}:
                     raise ValueError(
                         f"Task receipt facet {index}.finding.claims[{claim_index}] is invalid"
                     )
@@ -672,11 +680,11 @@ def _load_task_receipt(
                     raise ValueError(
                         f"Task receipt facet {index}.finding references outside schema evidence"
                     )
-                if finding.get("status") == "verified" and not (
+                if claim.get("status") == "confirmed" and not (
                     claim_ids or evidence_ids
                 ):
                     raise ValueError(
-                        f"Task receipt facet {index}.verified finding requires evidence locators"
+                        f"Task receipt facet {index}.confirmed claim requires evidence locators"
                     )
                 if claim.get("scope") is not None:
                     required_research_text(
@@ -689,22 +697,24 @@ def _load_task_receipt(
     return raw
 
 
-def _write_json(path: Path, payload: object) -> None:
+def _write_json(path: Path, payload: object, *, max_bytes: int | None = None) -> None:
+    serialized = (json.dumps(payload, ensure_ascii=False, sort_keys=True,
+                             separators=(",", ":")) + "\n").encode("utf-8")
+    if max_bytes is not None and len(serialized) > max_bytes:
+        raise ValueError(f"Serialized artifact exceeds {max_bytes} bytes; narrow the scope")
     resolved = path.resolve()
     resolved.parent.mkdir(parents=True, exist_ok=True)
     temporary_path: Path | None = None
     try:
         with tempfile.NamedTemporaryFile(
-            mode="w",
-            encoding="utf-8",
+            mode="wb",
             prefix=f".{resolved.name}.",
             suffix=".tmp",
             dir=resolved.parent,
             delete=False,
         ) as handle:
             temporary_path = Path(handle.name)
-            json.dump(payload, handle, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-            handle.write("\n")
+            handle.write(serialized)
         if os.name != "nt":
             temporary_path.chmod(0o600)
         temporary_path.replace(resolved)
@@ -715,7 +725,7 @@ def _write_json(path: Path, payload: object) -> None:
 
 
 def _write_task_receipt(path: Path, payload: dict[str, object]) -> None:
-    _write_json(path, payload)
+    _write_json(path, payload, max_bytes=MAX_BATCH_INPUT_BYTES)
 
 
 def _receipt_store(args: argparse.Namespace, corpus: Path) -> tuple[Path, bool]:
@@ -814,7 +824,9 @@ def _search_namespace(
         limit=limit or args.limit_per_query,
         offset=offset,
         max_chars=240,
-        max_total_chars=max(800, (limit or args.limit_per_query) * 400),
+        # This in-process batch carries complete locator/alias metadata as well
+        # as snippets; the selected evidence has a separate user output budget.
+        max_total_chars=max(24000, (limit or args.limit_per_query) * 1600),
         snippet_tokens=16,
         receipts_db=receipts_db,
         research_db=None,
@@ -824,6 +836,7 @@ def _search_namespace(
         read_only_receipts=False,
         dedupe_exact=True,
         max_per_source=0,
+        _source_paths=getattr(args, "_source_paths", None),
         pretty=False,
     )
 
@@ -849,13 +862,13 @@ def _schema_facts_for_question(
     args: argparse.Namespace,
     question: dict[str, object],
     character_budget: int,
-) -> tuple[list[dict[str, object]], int]:
+) -> tuple[list[dict[str, object]], int, list[dict[str, object]]]:
     if question.get("kind") != "schema" or character_budget < 100:
-        return [], 0
+        return [], 0, []
     if any(key != "source" for key in question.get("filters", {})):
         # Schema records have source/block identity, not passage metadata. Do not
         # silently broaden a version/page/section-filtered search with unfiltered facts.
-        return [], 0
+        return [], 0, []
     terms: list[tuple[str, str]] = []
     seen_terms: set[str] = set()
     for raw_query in question["queries"]:
@@ -882,6 +895,7 @@ def _schema_facts_for_question(
                 seen_terms.add(key)
                 terms.append((term, role))
     facts: dict[str, dict[str, object]] = {}
+    continuations: list[dict[str, object]] = []
     query_count = 0
     used = 0
     for term, role in terms[:3]:
@@ -889,8 +903,7 @@ def _schema_facts_for_question(
         remaining_chars = character_budget - used
         if remaining_items <= 0 or remaining_chars < 100:
             break
-        result = schema_query_payload(
-            argparse.Namespace(
+        query_args = argparse.Namespace(
                 db=args.db,
                 query=term,
                 kind=None,
@@ -904,11 +917,31 @@ def _schema_facts_for_question(
                 task_receipt=None,
                 gap_facet=None,
             )
-        )
+        marker = {"tool": "schema-query", "query": term, "role": role,
+                  "source": query_args.source, "offset": 0, "start_char": 0,
+                  "index_fingerprint": getattr(args, "_index_fingerprint", None)}
+        try:
+            result = schema_query_payload(query_args)
+        except ValueError as exc:
+            if "too small for the schema response envelope" not in str(exc):
+                raise
+            continuations.append({**marker, "reason": "schema-budget-insufficient"})
+            query_count += 1
+            continue
         query_count += 1
-        for raw in result.get("results", []):
+        marker["index_fingerprint"] = result["index_fingerprint"]
+        incomplete_record = False
+        for position, raw in enumerate(result.get("results", [])):
             if not isinstance(raw, dict):
                 continue
+            if "record_fragment" in raw:
+                # The prefix was not delivered as evidence. Resume this exact
+                # record from its beginning, never promote partial JSON to a fact.
+                continuations.append({**marker, "offset": position,
+                                      "reason": "schema-record-exceeds-budget",
+                                      "record_total_chars": raw["record_total_chars"]})
+                incomplete_record = True
+                break
             evidence_id = _schema_fact_id(raw)
             current = facts.get(evidence_id)
             if current is None:
@@ -917,14 +950,21 @@ def _schema_facts_for_question(
                     json.dumps(candidate, ensure_ascii=False, separators=(",", ":"))
                 )
                 if used + candidate_characters > character_budget:
-                    continue
+                    continuations.append({**marker, "offset": position,
+                                          "reason": "schema-record-exceeds-budget"})
+                    incomplete_record = True
+                    break
                 facts[evidence_id] = candidate
                 used += candidate_characters
                 continue
             roles = current["roles"]
             if isinstance(roles, list) and role not in roles:
                 roles.append(role)
-    return list(facts.values()), query_count
+        if result.get("has_more") and not incomplete_record:
+            continuations.append({**marker, "offset": result["next_offset"],
+                                  "start_char": result.get("next_start_char", 0),
+                                  "reason": "schema-results-remaining"})
+    return list(facts.values()), query_count, continuations
 
 
 def _facet_candidates(
@@ -1102,7 +1142,7 @@ def _facet_candidates(
             if passage_id not in seen:
                 seen.add(passage_id)
                 ordered.append(candidate)
-        schema_facts, schema_queries = _schema_facts_for_question(
+        schema_facts, schema_queries, schema_continuations = _schema_facts_for_question(
             args, question, schema_character_budget
         )
         schema_query_count += schema_queries
@@ -1112,7 +1152,7 @@ def _facet_candidates(
                 "facet_hash": facet_hash(question),
                 "question": question["question"],
                 "queries": planned_queries,
-                "query_continuations": continuations,
+                "query_continuations": [*continuations, *schema_continuations],
                 "aliases": {str(item["passage_id"]): item["also_in"] for item in merged.values() if item.get("also_in")},
                 "candidates": ordered,
                 "receipt_ids": receipt_ids,
@@ -1263,6 +1303,8 @@ def _receipt_gaps(facets: list[dict[str, object]]) -> list[dict[str, object]]:
     for facet in facets:
         if _verified_finding(facet) is not None:
             continue
+        if any(item.get("tool") == "schema-query" for item in facet.get("query_continuations", [])):
+            gaps.append({"facet_id": facet["id"], "reason": "schema-evidence-incomplete"})
         finding = facet.get("finding")
         if isinstance(finding, dict):
             gaps.append({
@@ -1393,7 +1435,8 @@ def _compact_locators(raw_results: object) -> dict[int, dict[str, object]]:
 
 def _verified_finding(facet: dict[str, object]) -> dict[str, object] | None:
     finding = facet.get("finding")
-    if isinstance(finding, dict) and finding.get("status") == "verified":
+    if (not facet.get("stale") and isinstance(finding, dict)
+            and finding.get("status") == "confirmed"):
         return finding
     return None
 
@@ -1602,11 +1645,13 @@ def evidence_pack_payload(args: argparse.Namespace) -> dict[str, object]:
     questions = normalize_questions(load_bounded_json(args.input, "Evidence question file"))
     questions_hash = question_set_hash(questions)
     corpus = args.corpus.resolve()
+    args._source_paths = list(iter_source_files(corpus))
     receipt_db = args.receipts_db or args.db.with_name(f"{args.db.stem}.receipts.sqlite")
     validate_output_paths(
         corpus, [args.db, receipt_db, args.task_receipt, getattr(args, "pack_output", None)],
         [args.input, getattr(args, "routing_profile", None)],
         index_path=args.db,
+        source_paths=args._source_paths,
     )
     index_result = index_payload(
         argparse.Namespace(
@@ -1615,9 +1660,11 @@ def evidence_pack_payload(args: argparse.Namespace) -> dict[str, object]:
             max_chars=args.chunk_chars,
             max_source_bytes=args.max_source_bytes,
             max_corpus_bytes=args.max_corpus_bytes,
+            _source_paths=args._source_paths,
         )
     )
     index_path, fingerprint = resolve_index_binding(args.db, corpus)
+    args._index_fingerprint = fingerprint
     task_receipt_path = args.task_receipt.resolve()
     previous_receipt = _load_task_receipt(task_receipt_path, fingerprint)
     if previous_receipt is None and task_receipt_path.exists():
@@ -1630,10 +1677,9 @@ def evidence_pack_payload(args: argparse.Namespace) -> dict[str, object]:
                 for facet in previous_receipt["facets"]:
                     facet["stale"] = True
                     facet.setdefault("evidence_fingerprint", previous_receipt["index_fingerprint"])
-                    if isinstance(facet.get("finding"), dict):
-                        facet["finding"] = {**facet["finding"], "status": "unresolved", "reason": "Source set changed; evidence needs revalidation"}
                 # Historical analytical state survives, but none of it is warm evidence.
-                previous_receipt["gaps"] = [*previous_receipt.get("gaps", []),
+                previous_receipt["gaps"] = [*(gap for gap in previous_receipt.get("gaps", [])
+                                             if gap.get("reason") != "source-changed"),
                     *({"facet_id": facet["id"], "reason": "source-changed"} for facet in previous_receipt["facets"])]
     previous_facets = {
         (facet["id"], facet["facet_hash"]): facet
@@ -1650,7 +1696,7 @@ def evidence_pack_payload(args: argparse.Namespace) -> dict[str, object]:
     for question in questions:
         key = (question["id"], facet_hash(question))
         previous = previous_facets.get(key)
-        if previous is not None and any(
+        if previous is not None and _verified_finding(previous) is None and any(
             value > previous.get("retrieval_budget", {}).get(name, 0)
             for name, value in retrieval_budget.items()
         ):
@@ -1715,7 +1761,9 @@ def evidence_pack_payload(args: argparse.Namespace) -> dict[str, object]:
                 # growing history. Old IDs retain their original fingerprint.
                 facet["previous_finding"] = {
                     "question": prior.get("question"),
-                    "finding": {**prior["finding"], "status": "unresolved"},
+                    "finding": prior["finding"],
+                    "source_current": not prior.get("stale", False),
+                    "reusable": False,
                     "locators": prior.get("locators", []),
                     "schema_locators": prior.get("schema_locators", []),
                     "evidence_fingerprint": prior.get("evidence_fingerprint", (previous_receipt or {}).get("index_fingerprint")),
@@ -1840,7 +1888,7 @@ def evidence_pack_payload(args: argparse.Namespace) -> dict[str, object]:
 
     receipt_gaps = _receipt_gaps(facets)
     requested_ids = {str(question["id"]) for question in questions}
-    generated_reasons = {"no-material-result", "support-not-found", "control-not-found", "candidates-require-verification", "new-evidence-needs-review", "finding-unresolved", "finding-conflicted"}
+    generated_reasons = {"no-material-result", "support-not-found", "control-not-found", "candidates-require-verification", "finding-unresolved", "finding-conflicted", "finding-interpretation", "schema-evidence-incomplete"}
     receipt_gaps.extend(gap for gap in (previous_receipt or {}).get("gaps", [])
                         if gap.get("facet_id") in requested_ids and gap.get("reason") not in generated_reasons)
     retained_facets = [facet for facet in (previous_receipt or {}).get("facets", []) if facet["id"] not in requested_ids]
@@ -2040,6 +2088,12 @@ def command_evidence_pack(args: argparse.Namespace) -> int:
     return 0
 
 
+def _finding_status(claims: list[dict[str, object]]) -> str:
+    statuses = {claim["status"] for claim in claims}
+    return next((status for status in ("conflicted", "unresolved", "interpretation")
+                 if status in statuses), "confirmed" if claims else "unresolved")
+
+
 def _normalize_findings(raw: object) -> list[dict[str, object]]:
     items = raw.get("findings") if isinstance(raw, dict) else raw
     if not isinstance(items, list) or not items:
@@ -2053,7 +2107,7 @@ def _normalize_findings(raw: object) -> list[dict[str, object]]:
         location = f"findings[{index}]"
         if not isinstance(item, dict):
             raise ValueError(f"{location} must be an object")
-        unknown = set(item) - {"facet_id", "status", "claims", "reason"}
+        unknown = set(item) - {"facet_id", "claims", "reason"}
         if unknown:
             raise ValueError(
                 f"{location} has unsupported fields: {', '.join(sorted(unknown))}"
@@ -2062,14 +2116,11 @@ def _normalize_findings(raw: object) -> list[dict[str, object]]:
         if facet_id in seen:
             raise ValueError(f"Duplicate finding facet: {facet_id}")
         seen.add(facet_id)
-        status = item.get("status")
-        if status not in FINDING_STATUSES:
-            raise ValueError(
-                f"{location}.status must be verified, conflicted, or unresolved"
-            )
         raw_claims = item.get("claims")
-        if not isinstance(raw_claims, list) or (not raw_claims and status != "unresolved"):
-            raise ValueError(f"{location}.claims must be an array, non-empty unless unresolved")
+        if not isinstance(raw_claims, list):
+            raise ValueError(f"{location}.claims must be an array")
+        if not raw_claims and not item.get("reason"):
+            raise ValueError(f"{location} needs a reason for an empty unresolved finding")
         if len(raw_claims) > MAX_FINDING_CLAIMS:
             raise ValueError(
                 f"{location}.claims allows at most {MAX_FINDING_CLAIMS} entries"
@@ -2084,6 +2135,9 @@ def _normalize_findings(raw: object) -> list[dict[str, object]]:
                 "passage_ids",
                 "evidence_ids",
                 "scope",
+                "status",
+                "basis",
+                "limits",
             }
             if claim_unknown:
                 raise ValueError(
@@ -2093,6 +2147,16 @@ def _normalize_findings(raw: object) -> list[dict[str, object]]:
             text = required_research_text(
                 raw_claim.get("text"), f"{claim_location}.text", MAX_FINDING_TEXT
             )
+            status = raw_claim.get("status")
+            if not isinstance(status, str) or status not in FINDING_STATUSES:
+                raise ValueError(f"{claim_location}.status must be confirmed, interpretation, unresolved, or conflicted")
+            basis = required_research_text(raw_claim.get("basis"), f"{claim_location}.basis", MAX_FINDING_TEXT)
+            scope = required_research_text(raw_claim.get("scope"), f"{claim_location}.scope", MAX_FINDING_SCOPE)
+            limits = raw_claim.get("limits", "")
+            if status != "confirmed" or limits:
+                limits = required_research_text(limits, f"{claim_location}.limits", MAX_FINDING_TEXT)
+            elif not isinstance(limits, str):
+                raise ValueError(f"{claim_location}.limits must be text")
             passage_ids = raw_claim.get("passage_ids", [])
             if not isinstance(passage_ids, list) or any(
                 not isinstance(value, int) or isinstance(value, bool) or value < 1
@@ -2107,19 +2171,17 @@ def _normalize_findings(raw: object) -> list[dict[str, object]]:
                 raise ValueError(f"{claim_location}.evidence_ids is invalid")
             claim: dict[str, object] = {
                 "text": text,
+                "status": status,
+                "basis": basis,
+                "scope": scope,
+                "limits": limits,
                 "passage_ids": list(dict.fromkeys(passage_ids)),
                 "evidence_ids": list(dict.fromkeys(evidence_ids)),
             }
-            if raw_claim.get("scope") is not None:
-                claim["scope"] = required_research_text(
-                    raw_claim.get("scope"),
-                    f"{claim_location}.scope",
-                    MAX_FINDING_SCOPE,
-                )
             claims.append(claim)
         total_claims += len(claims)
         normalized.append(
-            {"facet_id": facet_id, "status": str(status), "claims": claims,
+            {"facet_id": facet_id, "status": _finding_status(claims), "claims": claims,
              **({"reason": required_research_text(item["reason"], f"{location}.reason", MAX_FINDING_TEXT)} if item.get("reason") is not None else {})}
         )
     if total_claims > MAX_EVIDENCE_QUESTIONS * MAX_FINDING_CLAIMS:
@@ -2175,9 +2237,9 @@ def findings_save_payload(args: argparse.Namespace) -> dict[str, object]:
                 continue
             claim_ids = set(claim.get("passage_ids", []))
             claim_evidence_ids = set(claim.get("evidence_ids", []))
-            if status == "verified" and not (claim_ids or claim_evidence_ids):
+            if claim["status"] == "confirmed" and not (claim_ids or claim_evidence_ids):
                 raise ValueError(
-                    f"Verified finding {facet_id} claims require evidence locators"
+                    f"Confirmed finding {facet_id} claims require evidence locators"
                 )
             if not claim_ids.issubset(allowed_ids):
                 raise ValueError(
@@ -2218,7 +2280,7 @@ def findings_save_payload(args: argparse.Namespace) -> dict[str, object]:
     receipt["gaps"] = gaps
     every_verified = all(
         isinstance(facet.get("finding"), dict)
-        and facet["finding"].get("status") == "verified"
+        and _verified_finding(facet) is not None
         for facet in facets.values()
     )
     receipt["next_mode"] = (

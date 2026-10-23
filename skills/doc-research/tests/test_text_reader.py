@@ -111,10 +111,11 @@ class TextReaderTest(unittest.TestCase):
             (memory / "unknown.bin").write_bytes(b"opaque")
             (memory / "subdir").mkdir()
             (memory / "link.md").symlink_to(source)
+            os.link(source, memory / "hardlink.md")
             result, _ = self.read(source, memory_dir=memory)
             self.assertEqual(result["memory"]["status"], "incomplete")
             self.assertEqual({entry["status"] for entry in result["memory"]["entries"]},
-                             {"unsupported", "directory", "symlink"})
+                             {"unsupported", "directory", "symlink", "hardlink"})
             self.assertFalse(result["lines"])
             (root / "linked").symlink_to(memory, target_is_directory=True)
             result, _ = self.read(source, memory_dir=root / "linked")

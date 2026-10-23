@@ -10,6 +10,7 @@ from .index import resolve_index_binding
 
 from .research_store import (
     decode_catalog_scope,
+    evidence_freshness,
     require_facet,
     require_research_database,
     require_research_schema,
@@ -119,6 +120,20 @@ def command_research_sync(args: argparse.Namespace) -> int:
                 "index_fingerprint": fingerprint,
                 "changed": changed,
             }
+        refreshed = dict(connection.execute(
+            "SELECT * FROM research_state WHERE singleton = 1"
+        ).fetchone())
+        invalidated = 0
+        freshness_cache: dict[str, tuple[object, str]] = {}
+        for evidence in connection.execute("SELECT * FROM evidence WHERE verified = 1").fetchall():
+            if not evidence_freshness(refreshed, dict(evidence), freshness_cache)["source_current"]:
+                connection.execute(
+                    "UPDATE evidence SET verified = 0, status = CASE WHEN status = 'confirmed' "
+                    "THEN 'unresolved' ELSE status END, updated_at = ? WHERE evidence_id = ?",
+                    (utc_now(), evidence["evidence_id"]),
+                )
+                invalidated += 1
+        payload["invalidated_evidence"] = invalidated
     harden_database_permissions(db_path)
     emit_json(payload, args.pretty)
     return 0

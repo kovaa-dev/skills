@@ -12,7 +12,7 @@ local/normalized corpus B -> index B + receipts B ----> catalog -> optional rese
 remote source descriptor ----------------------------+
 ```
 
-This separation makes source changes, retention, access review, and removal local to one corpus. It also prevents identical filenames or passage IDs from colliding: federated locators use `CORPUS_ID=PASSAGE_ID`.
+This separation makes source changes, retention, access review, and removal local to one corpus. Generated federated locators use `CORPUS_ID@INDEX_FINGERPRINT=PASSAGE_ID`, preventing collisions and rejecting changed generations.
 
 ## Resolve projects without creating noise
 
@@ -82,12 +82,14 @@ Treat `access-boundary` as permission scope, not project identity. An explicit `
 ```bash
 scripts/corpus catalog-info catalog.sqlite --live
 scripts/corpus catalog-search catalog.sqlite "search terms" --access-boundary workspace-a --limit 8
-scripts/corpus catalog-get catalog.sqlite CORPUS_A_ID=12 CORPUS_B_ID=7
+scripts/corpus catalog-get catalog.sqlite CORPUS_A_ID@FINGERPRINT_A=PASSAGE_A CORPUS_B_ID@FINGERPRINT_B=PASSAGE_B
 ```
 
-Skip `catalog-info --live` on routine searches when no source changed; `catalog-search` validates selected local bindings and checks its deterministic composite receipt. A hit rehydrates bounded snippets and locators from the current index; the receipt itself stores only locators. Without durable-write authority, add `--read-only`: current catalog/member receipts may be reused, but misses are not persisted and research state cannot be linked. Continue the same query only when `next_offset` is returned. `has_more` means another local page is available; `coverage_complete: false` and `unsearched_corpora` describe an external or unavailable-source gap, not a continuation. Use `--allow-partial` only when that gap is acceptable for the current claim; an incomplete search cannot support a corpus-wide absence claim.
+Skip `catalog-info --live` on routine searches when no source changed. `catalog-search` validates bindings and rehydrates receipt locators from the current index. Without write authority, use `--read-only`; misses are not persisted. For continuation, pass `next_continuation` as `--continuation` with the same query/selectors. It retains member positions, dedupe state and generation so later pages do not replay the prefix. A bounded page can contain no new unique results while still having a continuation; its numeric offset may be unchanged. Offset-only continuation needs a current saved checkpoint and otherwise requests restart. `coverage_complete: false` and `unsearched_corpora` describe a source gap, not pagination. `--allow-partial` never establishes corpus-wide absence.
 
 For `catalog-get`, resume with returned `--offset` and `--start-char` positions. A deferred item is not missing, and a truncated passage is not complete evidence. Preserve the same selected IDs/order and source generation when continuing; changed generations require fresh locators.
+
+Catalog output budgets cover the whole JSON response. Writable cursors are short references to the existing receipt chain; dedupe keys are stored once, not copied into every output. Read-only cursors carry bounded inline state and explicitly fail if that state cannot fit the requested output budget. Restoring deep dedupe state reads prior receipts, not earlier corpus matches. Omit a custom `--receipt-id` after the first page. A changed receipt revision invalidates its old cursor instead of silently retargeting it.
 
 After a local source changes, update its index, sync its receipt store, and run `catalog-sync`. Prior-generation corpus and composite receipts remain history but are not current. Registering, disabling, or changing any selected corpus also changes the catalog fingerprint.
 
