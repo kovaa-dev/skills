@@ -66,9 +66,9 @@ policy requirement. It covers all source types/ranges in scope, preserved questi
 acceptance/verification, cross-links/dependencies, real enforcement, and residual legacy
 routing. It checks the documentation system, not product/security correctness.
 
-Temporary detailed coverage is used only when the migration scope or required audit
-traceability warrants it. Condense it into the migration result afterward, or retain it
-as historical provenance under explicit policy. It is not a permanent migration mode.
+Detailed working coverage is used when migration scope or required traceability warrants
+it. Condense transient detail under the [coverage protocol](legacy-transition.md#coverage-and-reconciliation),
+keeping checked provenance accessible. It is not a permanent migration mode or live tracker.
 
 ## Update
 

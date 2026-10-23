@@ -13,10 +13,11 @@ migration. A full migration covers every source type in that scope, regardless o
 directory: legacy tasks/PRDs, specifications, decisions, research, findings, checklists,
 README/runbooks, indexes, and relevant agent instructions/templates/validators.
 
-Inventory files/headings and follow targeted locators, rather than reading every source
-in full before locating relevant content. Preserve a recoverable immutable revision,
-patch, or exact copy before destructive replacement. Use copy/move plus targeted edits
-where they retain original content safely. Do not recreate historical sources from memory.
+Inventory files/headings to locate the selected material, then apply the shared
+[coverage and reconciliation protocol](legacy-transition.md#coverage-and-reconciliation)
+to every claimed range. Preserve a recoverable immutable revision, patch, or exact copy
+before destructive replacement. Use copy/move plus targeted edits where safer; do not
+recreate historical sources from memory.
 
 ## Perform the transition
 
@@ -50,17 +51,19 @@ where they retain original content safely. Do not recreate historical sources fr
    active and discoverable under on-touch conversion; whole-source retirement requires
    complete coverage. Preserve old links and update affected templates, bootstrap,
    local rules, and parser routing so new work does not regenerate legacy tasks.
-6. **Verify the entire agreed scope.** Reconcile source-to-destination coverage,
-   requirement/work graph integrity, all relevant exceptions/questions/results, current
-   versus historical applicability, proposal targets, retirement redirects, and affected
-   links/checks. List residual sources and unresolved conflicts; a partial conversion is not a completed full migration.
+6. **Verify the entire agreed scope.** Run the shared two-way coverage check against the
+   baseline and [new/changed inputs](requirements.md#questions-during-work). Check graph
+   integrity, applicability, proposal targets, retirement redirects, and affected enforcement.
+   Name residual/unavailable/unmapped sources and unresolved conflicts. Captured questions
+   can remain open; uncovered source meaning prevents a completed full-migration claim.
 
 Progress and a compact source-to-requirement/work/result mapping belong with the migration
 work's result. A temporary detailed coverage file is appropriate for a full/large
 transition or required audit traceability; do not create a permanent second tracker.
-After verification condense it into a closure summary, or preserve it as an explicitly
-historical artifact when policy requires. Delete sources/coverage only within granted
-cleanup authority and after verified recovery.
+After verification condense working detail under the
+[coverage preservation rule](legacy-transition.md#coverage-and-reconciliation), retaining
+checkable historical provenance in the result or linked record. Delete sources/coverage
+only within granted cleanup authority and after verified recovery.
 
 ## Governance and enforcement
 

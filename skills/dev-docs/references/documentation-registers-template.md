@@ -33,7 +33,8 @@ or reintroduce PRD/layer cards from an old form.
 - Completed/cancelled results remain visible with honest verification limits.
 - New choices have acceptance; implementation reconciles the preserved contracts.
 - Converted legacy sources point to self-contained new owners; repeat conversion reuses them.
-- Full migration covers all agreed source ranges; scoped work does not claim full migration.
+- [Coverage](legacy-transition.md#coverage-and-reconciliation) accounts for existing meaning
+  and new inputs; full migration covers the agreed ranges and scoped work claims only its scope.
 - Actual available checks passed; lint does not substitute for semantic/source comparison.
 
 Examples are illustrative, not accepted project choices or records to create automatically.

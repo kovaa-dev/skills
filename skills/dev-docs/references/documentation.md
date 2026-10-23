@@ -77,8 +77,9 @@ do not build a benchmark merely to make documentation look rigorous.
 | Confirmation of a checked result | Verification record | Method, observed result, applicable revision/environment, limitations | Owning specification/result artifact or release record |
 
 Research support does not accept a choice; acceptance does not prove implementation.
-Historical verification does not prove the current requirement revision. Migration
-coverage is temporary control data, not a new evidence category or live tracker.
+Historical verification does not prove the current requirement revision. Working migration
+coverage is control data; its checked mapping can remain historical source provenance.
+Neither is a new evidence category or live tracker.
 Classify existing generic evidence by meaning without inventing missing facts.
 
 ## Decision approval
@@ -156,6 +157,9 @@ and examples/procedures as feasible; disclose unverified steps and source gaps.
   ordinary documentation maintenance.
 - Update affected requirements, system descriptions/references, and user/operational
   instructions in the same workstream when their content changes or is needed.
+- Reconcile [new/changed requirements and material questions](requirements.md#questions-during-work)
+  received during the work, including capture before handoff; migration also checks
+  [baseline coverage](legacy-transition.md#coverage-and-reconciliation).
 - Keep superseded meaning/reasons/acceptance accessible; Git history alone is not the
   explanation for why the current contract replaced an accepted one.
 - The queue links to the actual result and its verification; it does not copy the specification.

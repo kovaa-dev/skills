@@ -64,12 +64,9 @@ Start prepared work using [queue readiness and execution briefs](work-queue.md#s
 Keep the brief in the existing execution context rather than creating another document
 by default.
 
-When a question arises, determine its effect:
-
-- clarify the same obligation and its examples;
-- revise its accepted contract under the same ID, with a semantic revision and acceptance;
-- add a separately meaningful requirement;
-- choose a technical implementation without changing the agreed contract.
+New requirements, clarifications, and questions follow
+[ongoing capture](requirements.md#questions-during-work). Keep the canonical destination
+and acceptance state explicit as grooming or implementation produces new input.
 
 Keep material uncertainty with its owner. A missing answer/conflict puts only affected
 work in need-info; a missing external result puts it in blocked with an observable wait.

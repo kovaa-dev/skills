@@ -250,13 +250,35 @@ proof of universal consistency.
 
 ## Questions during work
 
-Keep material open questions next to the affected requirement/contract. A question's
-answer may clarify an existing requirement, revise it, add an independent obligation,
-or select a technical implementation; do not automatically create a requirement or
-task for every answer.
+During authorized write work, capture material new/changed requirements and open questions
+as they arise, before dependent implementation and no later than closure or handoff.
+This includes input received while converting legacy sources, discoveries in implementation,
+and answers that change scope. Read-only discussion records the proposed capture in the
+response; do not claim it persisted in project documentation.
 
-The executor chooses routine reversible details within the agreed contract. A product,
-public/data/ownership, or material operational change requires normal decision acceptance.
-Use a separate investigation only when it has an independently useful result. After its
-conclusion, update the relevant facts/questions and queue readiness; a negative feasibility
-finding can complete research while leaving implementation unfulfilled.
+1. Preserve the actual input/source and date/locator where available; distinguish a user's
+   decision, a proposal, an observation, and an executor's hypothesis. No stable chat URL
+   means an accurate statement/source summary, not a fabricated citation or approval.
+2. Match meaning against the current owner. Clarification updates the same obligation;
+   a changed contract follows [semantic revision](#identity-state-and-revision); an
+   independent obligation gets a new ID. A proposed replacement targets the existing
+   revision; an unsettled question stays explicit at its owner. Facts, research requests,
+   and routine implementation choices follow their own material type rather than becoming
+   fictional product requirements.
+3. Capture enough known behavior/scope, rationale/source, definition state, and uncertainty
+   to retain the intent. Missing implementation detail or an incomplete acceptance method
+   is recorded as a gap, not a reason to discard the input. Keep accepted meaning accepted;
+   do not promote an unclear alternative or invent agreement to complete a template.
+4. Keep a concise input-to-owner locator in existing work context when needed to verify
+   capture, then update the canonical document. No separate inbox, permanent duplicate
+   catalog, or Q entry per requirement is required. Queue registration remains independent.
+5. Before dependent execution and at closure/handoff, reconcile material inputs since the
+   last captured baseline: each has its updated/new canonical destination or a visible
+   unresolved question with source and next needed answer. Do not leave agreed obligations,
+   scoped exceptions, or material pending requirements only in chat, a local plan, or a
+   completed queue note.
+
+The executor chooses routine reversible details under [decision governance](documentation.md#decision-approval).
+Use a separate investigation only for an independently useful result. After its conclusion,
+update relevant facts/questions and queue readiness; a negative finding may complete
+research while leaving the obligation unfulfilled.

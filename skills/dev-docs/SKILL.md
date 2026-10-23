@@ -38,7 +38,10 @@ Do not create new legacy cards or extend that workflow as the default.
    Resolve [current contracts, proposals, and history](references/requirements.md#current-contract-and-nonbinding-material)
    before treating found text as binding; follow retirement/replacement notices.
 5. Do not invent accepted requirements, owners, constraints, implementation evidence,
-   approval, or missing historical facts. Preserve unknowns as questions.
+   approval, or missing historical facts. Preserve unknowns as questions. Capture material
+   new requirements/changes under [ongoing capture](references/requirements.md#questions-during-work);
+   verify [coverage](references/legacy-transition.md#coverage-and-reconciliation) before
+   claiming any selected legacy range transferred without loss.
 
 This entrypoint, forms, bootstrap, and migration references all use the new model.
 [Legacy recognition](references/task-tracker.md) is a compatibility route into conversion,
