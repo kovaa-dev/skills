@@ -111,6 +111,26 @@ def validate_skills(errors: list[str]) -> list[str]:
             )
         if not (directory / "README.md").is_file():
             errors.append(f"skills/{directory.name}: README.md is missing")
+        interface_file = directory / "agents" / "openai.yaml"
+        if not interface_file.is_file():
+            errors.append(f"skills/{directory.name}: agents/openai.yaml is missing")
+            continue
+        display_name_match = re.search(
+            r'^\s*display_name:\s*"([^"]+)"\s*$',
+            interface_file.read_text(encoding="utf-8"),
+            re.MULTILINE,
+        )
+        if not display_name_match:
+            errors.append(
+                f"{interface_file.relative_to(ROOT)}: quoted interface.display_name is missing"
+            )
+        elif (
+            not display_name_match.group(1).startswith("kovaa: ")
+            or display_name_match.group(1) != display_name_match.group(1).lower()
+        ):
+            errors.append(
+                f"{interface_file.relative_to(ROOT)}: display_name must be lowercase and start with 'kovaa: '"
+            )
     return sorted(name for name in names if name)
 
 
