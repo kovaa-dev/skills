@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import stat
 from pathlib import Path
 
@@ -59,6 +60,72 @@ def _select_ranges(lines: list[str], requested: list[str], find: list[str],
             if any(term in lines[number - 1].casefold() for term in needles):
                 selected.append((max(1, number - context), min(len(lines), number + context)))
     return _merge(selected)
+
+
+def _prose_ranges(lines: list[str], requested: list[str], find: list[str],
+                  context: int) -> tuple[list[tuple[int, int]], int]:
+    """Select original prose, not a generated summary or a schema substitute.
+
+    Markdown table rows retain their header and preceding title; paragraphs are
+    kept whole. Explicitly scoped code is still excluded in this opt-in view.
+    The ordinary reader remains the way to inspect code/use-site constraints.
+    """
+    allowed = _parse_ranges(requested, len(lines))
+    needles = [term.casefold() for term in find]
+    code: set[int] = set()
+    fence: tuple[str, int] | None = None
+    for number, line in enumerate(lines, 1):
+        match = re.match(r"^ {0,3}(`{3,}|~{3,})(.*)$", line)
+        if fence:
+            code.add(number)
+            if match and match[1][0] == fence[0] and len(match[1]) >= fence[1] and not match[2].strip():
+                fence = None
+        elif match and (match[1][0] != "`" or "`" not in match[2]):
+            code.add(number)
+            fence = (match[1][0], len(match[1]))
+
+    selected: set[int] = set()
+    omitted_matches = 0
+    headings: list[int] = []
+    heading_at: dict[int, tuple[int, ...]] = {}
+    for number, line in enumerate(lines, 1):
+        if number not in code:
+            heading = re.match(r"^ {0,3}(#{1,6})\s+", line)
+            if heading:
+                level = len(heading[1])
+                headings = [n for n in headings if len(re.match(r"^ {0,3}(#+)", lines[n - 1])[1]) < level]
+                headings.append(number)
+        heading_at[number] = tuple(headings)
+
+    for start, end in allowed:
+        for number in range(start, end + 1):
+            if needles and not any(term in lines[number - 1].casefold() for term in needles):
+                continue
+            if number in code:
+                omitted_matches += 1
+                continue
+            if not lines[number - 1].strip():
+                continue
+            selected.update(heading_at[number])
+            low = high = number
+            if lines[number - 1].lstrip().startswith("|"):
+                # Keep each matching row verbatim and the column names. Do not
+                # copy every row of a large table for a single matching field.
+                table_start = number
+                while table_start > 1 and lines[table_start - 2].lstrip().startswith("|") and table_start - 1 not in code:
+                    table_start -= 1
+                selected.update(range(table_start, min(table_start + 2, len(lines) + 1)))
+                # Markdown table labels/titles often aren't ATX headings.
+                selected.update(n for n in range(max(1, table_start - 6), table_start)
+                                if n not in code and lines[n - 1].strip())
+            else:
+                while low > 1 and lines[low - 2].strip() and low - 1 not in code and not lines[low - 2].lstrip().startswith(("|", "#")):
+                    low -= 1
+                while high < len(lines) and lines[high].strip() and high + 1 not in code and not lines[high].lstrip().startswith(("|", "#")):
+                    high += 1
+            selected.update(n for n in range(max(1, low - context), min(len(lines), high + context) + 1)
+                            if n not in code)
+    return _merge([(n, n) for n in selected]), omitted_matches
 
 
 def _is_link(info: os.stat_result) -> bool:
@@ -222,7 +289,9 @@ def command_read_text(args: object) -> int:
     from .text_memory import answer_page
 
     source, budget = Path(args.source), args.max_chars
-    if budget <= 0 or args.context < 0 or args.after_line < 0:
+    prose = getattr(args, "prose", False)
+    context = args.context if args.context is not None else (0 if prose else 3)
+    if budget <= 0 or context < 0 or args.after_line < 0:
         raise ValueError("--max-chars must be positive; --context and --after-line must be nonnegative")
     if any(not term for term in args.find):
         raise ValueError("--find must not be empty")
@@ -249,7 +318,12 @@ def command_read_text(args: object) -> int:
         lines = _source_lines(data)
         if args.after_line > len(lines):
             raise ValueError("--after-line is outside the source")
-        ranges = _select_ranges(lines, args.lines, args.find, args.context)
+        if prose:
+            ranges, omitted = _prose_ranges(lines, args.lines, args.find, context)
+            result["view"] = "prose; fenced code excluded, use ordinary view for schema/code evidence"
+            result["excluded_code_matches"] = omitted
+        else:
+            ranges = _select_ranges(lines, args.lines, args.find, context)
         result["total_selected_lines"] = sum(end - start + 1 for start, end in ranges)
         selected: list[dict[str, object]] = []
         result["lines"] = selected

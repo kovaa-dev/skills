@@ -1,4 +1,5 @@
 #!/bin/sh
+""":"
 
 set -u
 export PYTHONUTF8=1
@@ -81,3 +82,11 @@ esac
 printf '%s\n' 'error: Python 3.10 or newer was not found.' >&2
 printf 'install: %s\n' "$install_command" >&2
 exit 127
+":"""
+
+# Also accept an explicit Python interpreter, as with corpus.py. The shell
+# branch above still discovers a compatible interpreter for direct execution.
+import runpy
+from pathlib import Path
+
+runpy.run_path(str(Path(__file__).resolve().with_name("corpus.py")), run_name="__main__")

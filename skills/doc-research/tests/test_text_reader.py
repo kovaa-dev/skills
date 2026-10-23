@@ -6,6 +6,53 @@ from doc_research import text_reader
 
 
 class TextReaderTest(unittest.TestCase):
+    def test_prose_search_preserves_context_literals_and_exposes_code_exclusion(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "spec.md"
+            source.write_text(
+                "# Contract\n\nTable 2\n\n**Payload**\n\n"
+                "| Field | Rule |\n| --- | --- |\n| Mass | kg  required |\n"
+                "| Other | optional |\n\n"
+                "~~~xml\n<Mass unit='wrong'/>\n~~~\n\n"
+                "An exception for Mass\ncontinues on this line.\n", encoding="utf-8")
+            result, _ = self.read(source, prose=True, context=None, find=["Mass"])
+            selected = {line["number"]: line["text"] for line in result["lines"]}
+            self.assertEqual(result["excluded_code_matches"], 1)
+            self.assertEqual(selected[1], "# Contract")
+            self.assertEqual(selected[5], "**Payload**")
+            self.assertEqual(selected[7], "| Field | Rule |")
+            self.assertEqual(selected[9], "| Mass | kg  required |")
+            self.assertEqual(selected[17], "continues on this line.")
+            self.assertNotIn(10, selected)
+            self.assertNotIn(13, selected)
+            raw, _ = self.read(source, find=["Mass"], context=0)
+            self.assertIn(13, [line["number"] for line in raw["lines"]])
+
+    def test_prose_continuation_and_memory_gate(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            source, memory = root / "spec.md", root / "notes"
+            source.write_text("# Doc\n\n" + "\n\n".join(f"Target {i}: value" for i in range(50))
+                              + "\n```\nTarget hidden\n", encoding="utf-8")
+            complete, _ = self.read(source, prose=True, find=["Target"], context=None)
+            result_lines, cursor, generation = [], 0, None
+            while True:
+                page, raw = self.read(source, prose=True, find=["Target"], context=None,
+                                      max_chars=850, after_line=cursor, source_hash=generation)
+                self.assertLessEqual(len(raw), 850)
+                self.assertEqual(page["excluded_code_matches"], 1)
+                result_lines.extend(page["lines"])
+                cursor, generation = page["next_after_line"], page["source_hash"]
+                if cursor is None:
+                    break
+            self.assertEqual(result_lines, complete["lines"])
+            memory.mkdir()
+            (memory / "note.md").write_text("Known findings", encoding="utf-8")
+            with mock.patch.object(text_reader, "_prose_ranges", side_effect=AssertionError("searched")):
+                hit, _ = self.read(source, prose=True, memory_dir=memory, find=["Target"], context=None)
+            self.assertFalse(hit["lines"])
+            self.assertEqual(hit["memory"]["status"], "hit")
+
     def read(self, source: Path, **options: object) -> tuple[dict, str]:
         values = dict(source=source, lines=[], find=[], context=3, max_chars=24000,
                       after_line=0, source_hash=None, memory_dir=None)

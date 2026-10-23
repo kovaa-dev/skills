@@ -5,7 +5,7 @@ description: Search and synthesize large documents or collections with bounded r
 
 # Document Research
 
-Use ordinary research with mandatory reusable memory. Optimize the completed task, not snippet size. No separate plan, navigation pass, index, or database is required.
+Use ordinary research with mandatory reusable memory. Optimize the completed answer, not snippet size. No separate plan, navigation pass, index, or database is required.
 
 ## First action: read memory, then decide whether to search
 
@@ -15,13 +15,13 @@ Read known memory before source-content retrieval. Establish the **current** sou
 - **Partial:** retrieve only missing or affected evidence; keep valid findings and unresolved limits.
 - **Absent, stale, disputed, or unverified:** establish the affected evidence from originals.
 
-Combine lookup, freshness and first retrieval instead of separate list/hash/search turns. For local UTF-8 and a designated notes folder, the bundled command does that without an index:
+Combine lookup, freshness and first retrieval instead of separate list/hash/search turns. For local text the reader does this without an index. Batch terms covering the requested topics. For Markdown with large embedded code/schema blocks, start with `--prose`: it selects whole prose paragraphs and matching table rows with headers/titles, retaining original spelling and line numbers without loading the code duplicates.
 
 ```bash
-scripts/corpus read-text SOURCE --memory-dir NOTES --find TERM --find SYNONYM
+scripts/corpus read-text SOURCE --memory-dir NOTES --prose --find TOPIC --find OTHER_TOPIC
 ```
 
-It returns existing notes and the current source hash, or numbered matches on an empty/absent folder. For a known `save-answer` owner, use `--memory NOTE.json`; an unknown/rephrased scope returns candidates, not an automatic search. Assess them before seeking missing evidence. These commands are options, not a replacement for a sufficient existing tool. Do not scan for unknown stores or search speculatively alongside unread memory.
+It returns existing notes and the current source hash, or numbered evidence on a miss. Continue with `--after-line NEXT --source-hash HASH` and the same selectors; omit memory flags after assessing memory. Omit `--prose` for raw code/schema evidence or exact `--lines START:END` reads. Excluded code and unfinished selection are explicit, never proof of absence. The default 24,000-character envelope fits a roughly 10,000-token outer tool allowance; increase both for a genuinely larger complete unit. For a `save-answer` owner use `--memory NOTE.json`; unfamiliar scopes return candidates for assessment. Existing sufficient tools remain valid. Do not scan for unknown stores or search alongside unread memory.
 
 ## Route and effort
 
