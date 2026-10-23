@@ -202,19 +202,22 @@ def read_bytes(source: Path, maximum: int) -> bytes:
 
 def source_snapshot(source: Path) -> tuple[str, list[str]]:
     data = read_bytes(source, DEFAULT_MAX_SOURCE_BYTES)
-    source_hash = hashlib.sha256(data).hexdigest()
+    return hashlib.sha256(data).hexdigest(), _source_lines(data)
+
+
+def _source_lines(data: bytes) -> list[str]:
     text = _decode(data)
     lines = text.split("\n") if text else []
     if text.endswith("\n"):
         lines.pop()
     lines = [line[:-1] if line.endswith("\r") and (number < len(lines) - 1 or text.endswith("\n"))
              else line for number, line in enumerate(lines)]
-    return source_hash, lines
+    return lines
 
 
 def command_read_text(args: object) -> int:
     """Return memory first or complete source lines, bounded after JSON escaping."""
-    from .text_memory import answer_page, emitted_ranges, save_ranges
+    from .text_memory import answer_page
 
     source, budget = Path(args.source), args.max_chars
     if budget <= 0 or args.context < 0 or args.after_line < 0:
@@ -222,13 +225,10 @@ def command_read_text(args: object) -> int:
     if any(not term for term in args.find):
         raise ValueError("--find must not be empty")
     memory_path = getattr(args, "memory", None)
-    state_path = getattr(args, "read_state", None)
-    session = getattr(args, "session", None)
-    if bool(state_path) != bool(session):
-        raise ValueError("--read-state and --session must be supplied together")
     if not memory_path and (getattr(args, "memory_offset", 0) or getattr(args, "memory_hash", None)):
         raise ValueError("Memory continuation requires --memory")
-    source_hash, lines = source_snapshot(source)
+    data = read_bytes(source, DEFAULT_MAX_SOURCE_BYTES)
+    source_hash = hashlib.sha256(data).hexdigest()
     if args.source_hash is not None and args.source_hash != source_hash:
         raise ValueError("Source generation changed; restart selection with its current source hash")
     result: dict[str, object] = {
@@ -243,31 +243,20 @@ def command_read_text(args: object) -> int:
         memory = _memory(Path(args.memory_dir), allowance) if args.memory_dir is not None else None
     if memory is not None:
         result["memory"] = memory
-    ranges_seen = []
-    if memory is None or memory["status"] in {"miss", "stale", "different-source", "scope-miss"}:
+    if memory is None or memory["status"] in {"miss", "stale", "different-source"}:
+        lines = _source_lines(data)
         if args.after_line > len(lines):
             raise ValueError("--after-line is outside the source")
         ranges = _select_ranges(lines, args.lines, args.find, args.context)
         result["total_selected_lines"] = sum(end - start + 1 for start, end in ranges)
-        ranges_seen = emitted_ranges(state_path, session, source, source_hash, memory_path)
-        seen = iter(ranges_seen if not getattr(args, "reread", False) else [])
-        current = next(seen, None)
         selected: list[dict[str, object]] = []
         result["lines"] = selected
-        result["suppressed_lines"] = 0
         # Reserve the largest possible cursor/count before adding any content.
         result["next_after_line"] = max(1000, len(lines))
-        result["suppressed_lines"] = result["total_selected_lines"]
         used = len(_json(result)) + NEWLINE_CHARS
-        suppressed = 0
         finished = False
         for start, end in ranges:
             for number in range(max(start, args.after_line + 1), end + 1):
-                while current and number > current[1]:
-                    current = next(seen, None)
-                if current and current[0] <= number <= current[1]:
-                    suppressed += 1
-                    continue
                 item = {"number": number, "text": lines[number - 1]}
                 size = len(_json(item)) + (1 if selected else 0)
                 if used + size > budget:
@@ -280,14 +269,10 @@ def command_read_text(args: object) -> int:
                 used += size
             if finished:
                 break
-        result["suppressed_lines"] = suppressed
         if not finished:
             result["next_after_line"] = None
     output = _json(result)
     if len(output) + NEWLINE_CHARS > budget:
         raise ValueError(f"Response metadata cannot fit; use --max-chars at least {len(output) + NEWLINE_CHARS}")
-    if state_path and result["lines"]:
-        save_ranges(state_path, session, source, source_hash, ranges_seen,
-                    [item["number"] for item in result["lines"]], memory_path)
     print(output)
     return 0

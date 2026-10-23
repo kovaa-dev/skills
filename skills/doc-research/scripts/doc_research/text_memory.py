@@ -1,7 +1,7 @@
-"""Mechanical provenance and emitted-range bookkeeping for ordinary text research.
+"""Mechanical provenance for ordinary text research.
 
-One answer note owns findings; the optional per-context read state contains ranges
-only. Neither source freshness nor a quote match certifies an analyst's conclusion.
+One answer note owns findings. Neither source freshness nor a quote match certifies
+an analyst's conclusion.
 """
 from __future__ import annotations
 
@@ -13,13 +13,12 @@ import sys
 from pathlib import Path
 
 from .text_reader import (
-    _check_memory_path, _decode, _json, _merge, _open_memory_directory,
+    _check_memory_path, _decode, _json, _open_memory_directory,
     _open_memory_file, _parse_ranges, read_bytes, source_snapshot, NEWLINE_CHARS,
 )
 
 MAX_NOTE_BYTES = 1_048_576
 NOTE_KIND = "doc-research-answer"
-STATE_KIND = "doc-research-emitted-ranges"
 
 
 def _read_owned(path: Path, kind: str) -> dict | None:
@@ -76,7 +75,7 @@ def _text(value: str, name: str, maximum: int = 4000) -> str:
 
 
 def answer_page(args: object, source_hash: str, envelope: dict) -> dict:
-    scope = _text(args.scope, "--scope")
+    scope = _text(args.scope, "--scope") if args.scope is not None else None
     offset = args.memory_offset
     if offset < 0 or (offset and not args.memory_hash):
         raise ValueError("Memory continuation needs a nonnegative offset and --memory-hash")
@@ -89,21 +88,30 @@ def answer_page(args: object, source_hash: str, envelope: dict) -> dict:
         elif not isinstance(note.get("entries"), dict):
             raise ValueError("Invalid answer-note entries")
         else:
-            entry = note["entries"].get(scope)
-            if entry is None:
-                status = "scope-miss"
-            elif not isinstance(entry, dict):
-                raise ValueError("Invalid answer-note entry")
+            entries = note["entries"]
+            for candidate in entries.values():
+                if not isinstance(candidate, dict) or not all(
+                    isinstance(candidate.get(key), str)
+                    for key in ("answer", "basis", "coverage", "limits", "source_hash")
+                ) or candidate.get("status") not in {"supported", "unresolved", "conflicted"}:
+                    raise ValueError("Invalid answer-note entry")
+            entry = entries.get(scope)
+            if entry is not None:
+                status = "current" if entry["source_hash"] == source_hash else "stale"
+            elif any(value["source_hash"] == source_hash for value in entries.values()):
+                # A paraphrase is not an empty store or proof of equivalence. Return
+                # candidates and their limits for assessment before any new search.
+                status = "candidates"
+                entry = {"entries": {
+                    key: {**value, "source_current": value["source_hash"] == source_hash}
+                    for key, value in entries.items()
+                }}
             else:
-                status = "current" if entry.get("source_hash") == source_hash else "stale"
-    if status != "current":
+                status = "stale" if entries else "miss"
+    if status not in {"current", "candidates"}:
         if offset or args.memory_hash:
             raise ValueError("Memory/source changed during continuation; restart memory lookup")
         return {"status": status}
-    if not all(isinstance(entry.get(key), str) for key in ("answer", "basis", "coverage", "limits")):
-        raise ValueError("Invalid answer-note content")
-    if entry.get("status") not in {"supported", "unresolved", "conflicted"}:
-        raise ValueError("Invalid answer-note analyst status")
     # Page the complete entry, not just the answer: no qualifiers or provenance
     # disappear when a note exceeds one response. Concatenate text before parsing.
     content = _json(entry)
@@ -113,7 +121,9 @@ def answer_page(args: object, source_hash: str, envelope: dict) -> dict:
     if offset >= len(content):
         raise ValueError("Memory offset is outside the entry")
     result = {"status": status, "memory_hash": digest, "text": "",
-              "next_offset": max(1000, len(content)), "assessment": "source-current; analyst provenance retained"}
+              "next_offset": max(1000, len(content)),
+              "assessment": ("source-current; analyst provenance retained" if status == "current"
+                             else "assess scope and source_current of each candidate; not equivalent answers")}
     low, high = 0, len(content) - offset
     while low < high:
         middle = (low + high + 1) // 2
@@ -128,39 +138,6 @@ def answer_page(args: object, source_hash: str, envelope: dict) -> dict:
     result["text"] = content[offset:offset + low]
     result["next_offset"] = offset + low if offset + low < len(content) else None
     return result
-
-
-def emitted_ranges(path: Path | None, session: str | None, source: Path,
-                   source_hash: str, memory: Path | None) -> list[tuple[int, int]]:
-    if path is None:
-        return []
-    from .index import validate_output_paths
-
-    _text(session, "--session", 200)
-    validate_output_paths(source, [path], [memory])
-    state = _read_owned(path, STATE_KIND)
-    if state is None or any(state.get(key) != expected for key, expected in (
-        ("session", session), ("source", str(source.resolve())), ("source_hash", source_hash),
-    )):
-        return []
-    ranges = state.get("ranges")
-    if not isinstance(ranges, list) or len(ranges) > 10000 or any(
-        not isinstance(pair, list) or len(pair) != 2
-        or any(type(n) is not int for n in pair) or not 1 <= pair[0] <= pair[1]
-        for pair in ranges
-    ):
-        raise ValueError("Invalid emitted ranges; use a fresh disposable state")
-    return _merge([tuple(pair) for pair in ranges])
-
-
-def save_ranges(path: Path, session: str, source: Path, source_hash: str,
-                previous: list[tuple[int, int]], numbers: list[int], memory: Path | None) -> None:
-    ranges = _merge([*previous, *((n, n) for n in numbers)])
-    if len(ranges) > 10000:
-        raise ValueError("Read state exceeds 10000 ranges; use a fresh disposable state")
-    _write_owned(path, {"kind": STATE_KIND, "session": session, "source": str(source.resolve()),
-                       "source_hash": source_hash, "ranges": [list(pair) for pair in ranges]},
-                 source, [memory])
 
 
 def command_save_answer(args: object) -> int:

@@ -12,14 +12,12 @@ class TextMemoryTest(unittest.TestCase):
         self.source = self.root / "source.txt"
         self.source.write_text('first fact\nsecond "fact"\nthird fact\nfourth fact\n', encoding="utf-8")
         self.memory = self.root / "answer.json"
-        self.state = self.root / "reads.json"
         self.hash = text_reader.source_snapshot(self.source)[0]
 
     def read(self, **options):
         args = dict(source=self.source, lines=[], find=[], context=0, max_chars=24000,
                     after_line=0, source_hash=None, memory_dir=None, memory=None,
-                    scope=None, memory_offset=0, memory_hash=None, read_state=None,
-                    session=None, reread=False)
+                    scope=None, memory_offset=0, memory_hash=None)
         args.update(options)
         output = io.StringIO()
         with redirect_stdout(output):
@@ -59,8 +57,9 @@ class TextMemoryTest(unittest.TestCase):
         self.save(scope="question B", answer="Another answer")
         self.assertEqual(set(json.loads(self.memory.read_text())["entries"]), {"question A", "question B"})
         miss = self.read(memory=self.memory, scope="question C", find=["third"])
-        self.assertEqual(miss["memory"]["status"], "scope-miss")
-        self.assertEqual(miss["lines"][0]["number"], 3)
+        self.assertEqual(miss["memory"]["status"], "candidates")
+        self.assertFalse(miss["lines"])
+        self.assertEqual(set(json.loads(miss["memory"]["text"])["entries"]), {"question A", "question B"})
         self.source.write_text("new fact", encoding="utf-8")
         result = self.read(memory=self.memory, scope="question A", find=["new"])
         self.assertEqual(result["memory"]["status"], "stale")
@@ -105,37 +104,62 @@ class TextMemoryTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "continuation"):
             self.read(memory=self.memory, scope="question A", memory_offset=1)
 
-    def test_read_state_suppresses_only_current_context_and_version_with_escape_hatch(self):
-        options = dict(read_state=self.state, session="context-1")
-        first = self.read(lines=["1:3"], **options)
-        second = self.read(lines=["2:4"], **options)
-        self.assertEqual([v["number"] for v in second["lines"]], [4])
-        self.assertEqual(second["suppressed_lines"], 2)
-        self.assertIsNone(second["next_after_line"])
-        reread = self.read(lines=["2:4"], reread=True, **options)
-        self.assertEqual([v["number"] for v in reread["lines"]], [2, 3, 4])
-        new = self.read(lines=["1:4"], read_state=self.state, session="context-2")
-        self.assertEqual(len(new["lines"]), 4)
-        self.source.write_text("changed", encoding="utf-8")
-        self.assertEqual(self.read(**options)["lines"][0]["text"], "changed")
-        self.assertNotIn("answer", json.loads(self.state.read_text()))
-        with self.assertRaisesRegex(ValueError, "together"):
-            self.read(read_state=self.state)
+    def test_lost_output_does_not_suppress_evidence_or_write_state(self):
+        before = sorted(self.root.iterdir())
+        self.read(lines=["1:3"])  # Caller lost or truncated this response.
+        retried = self.read(lines=["1:3"])
+        self.assertEqual([v["number"] for v in retried["lines"]], [1, 2, 3])
+        continued = self.read(lines=["1:4"], after_line=2, source_hash=self.hash)
+        self.assertEqual([v["number"] for v in continued["lines"]], [3, 4])
+        self.assertEqual(before, sorted(self.root.iterdir()))
 
-    def test_budgeted_ranges_continue_and_failure_does_not_mark_emitted(self):
+    def test_budgeted_ranges_continue_with_explicit_cursor(self):
         self.source.write_text("\n".join(f'{n} "quote" \\ ' + "ю" * 20 for n in range(1, 31)), encoding="utf-8")
-        options = dict(read_state=self.state, session="one", max_chars=450)
+        options = dict(max_chars=450)
         numbers = []
         for _ in range(30):
             result = self.read(**options)
             numbers.extend(v["number"] for v in result["lines"])
             if result["next_after_line"] is None:
                 break
+            options.update(after_line=result["next_after_line"], source_hash=result["source_hash"])
         self.assertEqual(numbers, list(range(1, 31)))
-        before = self.state.read_bytes()
-        with self.assertRaisesRegex(ValueError, "max-chars"):
-            self.read(**{**options, "max_chars": 10, "reread": True})
-        self.assertEqual(before, self.state.read_bytes())
+
+    def test_memory_without_exact_scope_returns_candidates_without_source_decode(self):
+        self.save()
+        with mock.patch.object(text_reader, "_source_lines", side_effect=AssertionError("decoded source")):
+            for scope in (None, "Paraphrased question"):
+                result = self.read(memory=self.memory, scope=scope, find=["first"])
+                self.assertEqual(result["memory"]["status"], "candidates")
+                self.assertFalse(result["lines"])
+                entry = json.loads(result["memory"]["text"])["entries"]["question A"]
+                self.assertTrue(entry["source_current"])
+                self.assertEqual(entry["limits"], "Does not establish other cases")
+
+    def test_candidate_continuation_retains_stale_labels_and_unresolved_limits(self):
+        self.save(answer="Older answer " * 60)
+        self.source.write_text("new evidence", encoding="utf-8")
+        self.hash = text_reader.source_snapshot(self.source)[0]
+        self.save(scope="question B", answer="Unresolved " * 60, status="unresolved",
+                  cite=[], quote=[], limits="Not proof of absence")
+        pages, offset, digest = [], 0, None
+        for _ in range(100):
+            result = self.read(memory=self.memory, memory_offset=offset, memory_hash=digest,
+                               max_chars=700)
+            self.assertFalse(result["lines"])
+            page = result["memory"]
+            self.assertEqual(page["status"], "candidates")
+            pages.append(page["text"])
+            offset, digest = page["next_offset"], page["memory_hash"]
+            if offset is None:
+                break
+        else:
+            self.fail("Candidate continuation did not terminate")
+        entries = json.loads("".join(pages))["entries"]
+        self.assertFalse(entries["question A"]["source_current"])
+        self.assertTrue(entries["question B"]["source_current"])
+        self.assertEqual(entries["question B"]["status"], "unresolved")
+        self.assertEqual(entries["question B"]["limits"], "Not proof of absence")
 
     def test_quote_locator_collisions_and_foreign_files_fail_without_changes(self):
         for options in ({"quote": ["2=wrong quote"]}, {"cite": ["100"]},
@@ -152,10 +176,6 @@ class TextMemoryTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.read(memory=self.memory, scope="question A")
         self.assertEqual(before, self.memory.read_bytes())
-        with self.assertRaises(ValueError):
-            self.read(read_state=self.source, session="one")
-        with self.assertRaises(ValueError):
-            self.read(memory=self.memory, scope="question A", read_state=self.memory, session="one")
 
     def test_cli_save_and_read_and_alias_safety(self):
         saved = run_corpus_raw("save-answer", self.source, "--memory", self.root / "cli.json",
@@ -175,7 +195,7 @@ class TextMemoryTest(unittest.TestCase):
             with self.assertRaises((ValueError, OSError)):
                 self.save(memory=alias)
             with self.assertRaises((ValueError, OSError)):
-                self.read(read_state=alias, session="one")
+                self.read(memory=alias, scope="question A")
             self.assertEqual(self.source.read_bytes(), original)
 
 

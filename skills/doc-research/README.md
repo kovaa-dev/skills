@@ -44,7 +44,7 @@ verification limitations. The caller remains responsible for any downstream deci
 
 After reading any relevant analytical memory, search only missing evidence. For a direct question, use the authorized source and retain its version and line/page locations.
 
-For local text, `read-text` combines memory lookup, source hashing and scoped retrieval; `save-answer` adds provenance to the prepared answer. No index is required. Optional per-context range tracking avoids repeated output, and the complete JSON response has a character budget. See [commands and limits](references/evidence-schema.md#lightweight-memory-and-existing-work). Ordinary `rg`, readers, connectors and existing memory owners remain valid; no chat hooks are installed.
+For local text, `read-text` combines memory lookup, current source hashing and scoped retrieval; `save-answer` adds provenance to the prepared answer. No index is required. Unknown/rephrased scopes return existing candidate findings for assessment before a new search. Reading is read-only, with explicit continuation after actually received lines and a whole-response character budget; it never marks generated output as read. See [commands and limits](references/evidence-schema.md#lightweight-memory-and-existing-work). Ordinary `rg`, readers, connectors and existing memory owners remain valid; no chat hooks are installed and saving does not capture the final chat response automatically.
 
 For indexed work with authorized storage, ordinary scoped retrieval is available without a question plan:
 
