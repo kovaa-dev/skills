@@ -1,12 +1,12 @@
 # Quality gates
 
-Apply these checks in proportion to the stakes of the answer. Do not add ceremony to a trivial lookup. They are not weakened by the selected effort profile; effort changes bounded retrieval budgets, not evidence validity, authorization, or safety.
+Apply these checks to new, changed, disputed, or unverified claims in proportion to the stakes. An applicable completed check in trusted current findings satisfies the gate; a new session or final synthesis is not a reason to repeat it. Effort changes retrieval budgets, not evidence validity, authorization, or safety.
 
 ## Coverage
 
 - Every question facet is supported, refuted, conflicted, unresolved with a reason, or explicitly outside the selected corpus.
 - Each material question can be traced to evidence, conflicts, or an unresolved status in the existing context/notes. Create a coverage matrix only when it reduces coordination work; duplicate passages do not count as additional coverage.
-- Search included exact identifiers and material synonyms where wording may differ.
+- When retrieval was needed, search included exact identifiers and material synonyms where wording may differ.
 - Definitions, appendices, amendments, referenced schedules, and exclusions were considered when applicable.
 - Reusable definitions were checked at the concrete use sites relevant to the question. Table notes, role restrictions, and conditional assertions can strengthen a generic type's requirements; generic XSD validity alone does not establish business applicability. Resolve a discovered reference chain with targeted reads, not a whole-document reread.
 - Universal claims were checked across every applicable variant, message/file type, schema declaration, or table branch; the first matching instance was not treated as proof of a shared pattern.
@@ -49,10 +49,10 @@ Apply these checks in proportion to the stakes of the answer. Do not add ceremon
 - Irrelevant tools and references were not loaded, probed, or proposed.
 - The final reasoning context contains selected evidence, not the whole corpus or raw tool logs.
 - Duplicate passages and repeated summaries were removed.
-- Independent operations were batched when useful; dependent queries and context reads refined the evidence without a named-gap gate or fixed round count. Per-call limits and continuation remained valid.
-- Saved claims have valid citation provenance, and an analyst checked support, original context, and relevant variants/exceptions according to exact/control intent. Lexical query roles did not substitute for verification. Any worker stayed inside its authorized assignment.
-- Relevant known memory was checked before retrieval on every route; reuse matched the actual question, scope, and source generation. An unchanged verified repeat needed no worker/search/reopen; subset updates preserved other facets and conflicts. New source generations did not retain old corpus-wide completeness claims.
-- New search outcomes, findings, unresolved limits, and locators were saved in the authorized owner before completion, without requiring an announced repeat. No helper/DB was created solely to save a note; unchanged notes were not rewritten. If storage was unauthorized, unavailable, or failed, a resume block and that limitation were returned instead of claiming persistence.
+- Independent operations were batched within the combined outer-tool output budget; dependent queries refined the evidence without a named-gap gate or fixed round count. Truncated output continued from omitted ranges, not a replay of visible passages. Structured-source discovery returned navigation separately from content matches.
+- Saved claims have valid citation provenance copied from checked retrieval, not reconstructed line numbers. An analyst checked support, original context, and relevant variants/exceptions according to exact/control intent. Lexical query roles did not substitute for verification. Any worker stayed inside its authorized assignment without routine coordinator-message overhead.
+- Relevant memory was read and assessed before source-content search, not merely listed or read after a speculative query. Reuse matched question, scope, verification provenance, and source generation. An unchanged covered repeat needed no worker/search/reopen; subset updates preserved other facets and conflicts. New source generations did not retain old corpus-wide completeness claims.
+- New search outcomes and answer-ready findings were saved before completion within authority. All requested list items, role mappings, conditions, units and citations survived both persistence and final synthesis; coverage was not asserted for omitted facts. No helper/DB was created solely to save a note; unchanged notes were not rewritten. If storage was unauthorized, unavailable, or failed, a resume block and that limitation were returned instead of claiming persistence.
 - One analytical owner retains findings, conflicts, and progress; helpers maintain their own retrieval locators/continuation. Notes, task receipts, and Research state did not become competing ledgers. An unresolved question could be saved without invented claims.
 - Initial effort budgets were treated as adjustable starting points. Actual task/resource exhaustion was reported as a limit, not negative evidence.
 - Repeated tool failures changed the method rather than producing blind retries.

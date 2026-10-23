@@ -7,19 +7,19 @@ description: Search and synthesize large documents or collections with bounded r
 
 Answer from authorized sources using the smallest sufficient context. Preserve conditions, exceptions, versions, and reopenable source locations throughout retrieval and synthesis.
 
-## Required outcomes, conditional machinery
+## First action: read memory, then decide whether to search
 
-These actions are mandatory when triggered. Preserve working search, tools, notes, and verified context. Change methods only for a concrete quality, latency, or whole-task cost benefit, including setup, validation, persistence, and handoff. No routing report or numeric estimate is needed for an obvious choice.
+This ordering applies to every route, including one-off requests. Before any content search, read relevant memory from the known store or designated artifact folder. Listing filenames is not reading memory. If discovery is needed, list that location, then read the relevant record; do not batch discovery with speculative source searches. A tool may conditionally read existing memory OR, only when none exists, return source navigation in the same call. An absent store is a miss, not a setup gate. Do not scan the machine for memory.
 
-| When | Required action |
-| --- | --- |
-| Every task, before retrieval | Check relevant known memory; reuse current evidence/findings after checking question, scope, identity/generation, and limitations. Retrieve only missing/changed material. |
-| Independent operations can share a call without losing evidence | Batch them; refine dependent queries after reading results. |
-| Decisive context or a variant is missing | Expand the selected unit, continue, or change the query/tool before concluding. |
-| New search results or analytical state, with storage authorized | Persist compact search outcomes, findings, and unresolved state on every route; write only missing/changed state. Do not predict whether the user will return. |
-| A method repeatedly fails, truncates evidence, or requires state repair | Switch to the simplest sufficient authorized route; do not weaken evidence/access checks. |
+Check question, scope, verification provenance, source identity/generation, and recorded limits. A source hash or authoritative revision check may accompany the memory read; it need not emit source content. Reuse a generation already established for the same source snapshot in this session. A timestamp alone does not prove freshness. Then:
 
-Indexing, JSON plans, ledgers, setup checks, installation, and delegation are mechanisms, not universal prerequisites. Safety, permission, validity, and conflict preservation are never optional.
+- **Covered and current:** answer from saved findings and citations. No search, passage reopen, re-verification, worker, or memory rewrite merely because this is a new session. Preserve unresolved limits too.
+- **Partly covered:** retrieve only missing details or affected claims. Known valid findings remain usable.
+- **Absent, stale, disputed, or unknown provenance:** establish the affected evidence from originals; a matching hash or a `verified` label alone does not certify correctness.
+
+A receipt-aware search may perform this gate internally before executing a query. A plain `rg`, browser search, or connector call does not. Batch independent operations only after their dependencies are resolved.
+
+Use an available hash facility without setup. When using POSIX `shasum`, set `LC_ALL=C` for that command to avoid locale-dependent startup failures; other platforms may use their existing equivalent.
 
 ## Route and effort
 
@@ -33,31 +33,39 @@ Choose `compact`, `balanced` (default), or `thorough`; raise only conflicted/hig
 
 Size alone never requires an index. Scoped `rg`, source reads, existing tools, `search`, `search-many`, `get`, and `schema-query` are normal options. Verifiable connector evidence needs no local export/cache; cached reuse requires trustworthy generation and query equivalence.
 
+Preserve a working route unless a concrete quality, latency, or whole-task cost benefit justifies changing it, including setup, verification, persistence, and handoff. No routing report, numeric estimate, index, JSON plan, setup check, or delegation is a universal prerequisite.
+
 ## Freshness, memory, and context isolation
-
-Memory is part of every Direct, Retrieval, and Research task, including apparently one-off questions. Before searching, check relevant state in the known store or designated artifact folder, not the machine. An absent store is a miss, not a setup gate. After searching, record query/scope, source generation, result locators, coverage limits and continuation; use the existing receipt store or a compact note for non-helper searches. Batch writes instead of adding a model turn per query, and flush new search/analysis state before completion or handoff. Do not duplicate helper receipts in notes or persist raw search output.
-
-Storage and model context are independent: a no-history session can reuse saved memory. An unchanged verified repeat needs no new search or passage reopen. A changed question, scope, or generation requires checking affected evidence and completeness, not restarting everything.
 
 Durable writes require a persistence request or established write authority for the location, not mere filesystem writability. Use an established authorized location without asking about future reuse. If authority or a suitable location is absent, or saving fails, answer normally, disclose that memory was not persisted, and provide the compact resume block. Never bypass an explicit no-storage restriction.
 
-Use the existing analytical store or a small Markdown/JSON note; helper receipts/Research databases are alternatives, not prerequisites. Keep question/scope, source identity and hash/authoritative version, supported findings with original locators, conditions/exceptions, unresolved ambiguities/conflicts, and a needed next action. Update affected items in place, not repeated answers or competing ledgers. Unchanged memory needs no rewrite, validation timestamp, or extra save check. Verify actual writes and report the location. Never create an index just to save a note.
+Save new search/analysis state before completion or handoff on every route, without predicting a return visit. Use one existing analytical owner or a Markdown/JSON note; never create an index just to save it. Keep:
 
-A matching hash proves freshness, not correctness; recheck unknown provenance, disputes, or new details. Simple notes need no reference or conversion. Read [evidence schema](references/evidence-schema.md) only for helper state/commands.
+- Question/scope, source identity and hash/authoritative version, verification basis and original locators. Copy checked locators from retrieval; do not reconstruct line numbers while saving or answering.
+- **Answer-ready facts:** every requested list item and its attributes, role mappings, units, requiredness, conditions and exceptions, exact wording when needed. A locator or “see table” is not a replacement for an already established fact. Preserve ambiguity instead of inventing precision.
+- Search outcome/coverage and continuation, unresolved conflicts/gaps, and a next action only if needed. Do not copy helper receipts, raw tool output, or reasoning traces.
+
+Use these same findings for the answer; do not compose a separate lossy memory summary. Before saving, check from the evidence already in context that a new agent could answer all covered parts without reopening the unchanged source. Save missing verified details, not new speculative conclusions. Compact means no repetition, not omitted answer content. Update affected entries in place; batch writes. A confirmed successful write needs no full reread or separate model turn just to echo it. Report the location; unchanged memory needs no rewrite, validation stamp, or confirmation log.
+
+Storage and model context are independent: a no-history session can reuse saved findings. Simple notes need no reference or conversion. Read [evidence schema](references/evidence-schema.md) only for helper state/commands.
 
 ## Retrieve and verify
 
-1. Reuse known current findings/context; search missing material using exact identifiers, relevant variants, and version filters.
-2. Read enough of the matching unit: headings, conditions, definitions, parent context, and relevant table/schema structure. Initial budgets are adjustable; resource ceilings require continuation, not incomplete conclusions.
-3. Verify semantic coverage. Lexical hits, query roles, candidate counts, and structural declarations are not proof of completeness. Check definitions **and concrete use sites**: these may strengthen requirements or exclude participants. A required child inside an optional parent is not universally required.
-4. Examine contrary evidence/exceptions for universal, negative, disputed, or high-risk claims. Reuse a current completed check rather than repeat it ceremonially.
-5. Persist new search outcomes, verified findings, and unresolved limits under the memory contract above. Edit ordinary notes normally; use helpers for their own structured state. Retain the same conditions in memory and the answer. Formatting cleanup cannot turn an ambiguous source into an exact formula.
+For a cold or partial miss, minimize model roundtrips and accumulated output, not the size of each useful passage:
 
-No fixed round count determines completion. `evidence-pack` is a batching helper, not the workflow; its plan/verification tags and examples are in [evidence schema](references/evidence-schema.md).
+1. If locations are unknown in a structured source, first retrieve navigation only: its map/headings, not headings mixed with semantic keyword matches. For Markdown, `rg -n '^#{1,3} ' SOURCE.md` is one available option. Then search inside selected sections and follow relevant references. For unstructured sources use scoped identifier search. Broaden only when selected sections are insufficient; skip navigation when locations are known.
+2. Batch independent reads of complete relevant units, merging overlapping ranges. Return line/page labels with the text so citations can be copied exactly. Include table notes, parents and definitions together where possible. Keep the **combined output within the outermost tool/wrapper budget**, not just each nested command's limit. Split an oversized batch, not its evidence into arbitrary tiny snippets. If output is truncated, continue omitted ranges instead of replaying already visible material. Refine dependent queries after seeing evidence.
+3. Use narrative/tables for business meaning and schema/use sites for unresolved structural constraints. Do not automatically read both entire representations. Check definitions **and concrete use sites** when applicability depends on them; a required child inside an optional parent is not universally required.
+4. Verify coverage and contrary evidence for universal, negative, disputed, or high-risk claims. Candidate counts, lexical matches and declarations are not semantic proof. Reuse context already checked; reopen only a missing qualifier, variant, exact quote, contradiction, or changed evidence—not to reassure yourself before writing.
+5. Save the answer-ready findings above and synthesize from them. Preserve every requested part, its conditions and citations when shortening the answer. Formatting cleanup cannot turn ambiguity into an exact formula.
+
+Truncation requires scoped continuation or a larger coherent read, never a completeness claim. No fixed round count determines completion. After two equivalent failures, change to the simplest sufficient authorized method. `evidence-pack` is an optional batching helper; its contracts are in [evidence schema](references/evidence-schema.md).
 
 ## Model and subagent routing
 
 Keep interpretation local unless authorized delegation has a concrete cost, latency, or independent-verification benefit. Read [orchestration](references/orchestration.md) only then. Give a bounded worker the question, source boundary, selected evidence, output contract, and stopping rule—not full history. Preserve qualifications and locators in synthesis; serialize analytical writes. Parallelism alone does not prove savings.
+
+A bounded worker returns its result once; do not add coordinator-message calls for routine progress unless requested or needed to resolve a blocker. This does not suppress required user-facing progress updates.
 
 ## Evidence and safety invariants
 
@@ -67,7 +75,7 @@ Keep interpretation local unless authorized delegation has a concrete cost, late
 - Keep output artifacts distinct from originals, databases, and other inputs. Research evidence must remain within its frozen corpus scope.
 - Do not infer corpus-wide absence from incomplete coverage. Use enumeration/control coverage for “all”, “none”, shared patterns, and exceptions.
 - Do not install or connect tools unless they materially improve the selected path and current authority permits it. Read [ingestion](references/ingestion.md) for OCR, conversion, archives, layout, and schema validation; read [source routing](references/source-routing.md) for remote connectors.
-- After two equivalent failures, change method or report the limitation. Never upload confidential data without authorization for that service and scope.
+- Never upload confidential data without authorization for that service and scope.
 
 ## Conditional references
 

@@ -29,7 +29,9 @@ The index is rebuildable retrieval data, including a structural node graph for s
 
 Catalog registration can derive opaque stable project/corpus IDs from canonical context while keeping a separate editable human-readable label; source-routing rules own the exact identity contract.
 
-Every route checks relevant known memory before retrieval and saves new search/analysis state before completion when writing is authorized, even without an announced repeat. A small Markdown/JSON note can hold compact non-helper search outcomes and supported findings with scope, source generation, locators, conditions, and unresolved limits; no index or special schema is required. Reuse an existing owner, update only changed state, and report its location; unchanged notes need no rewrite or session stamp. If storage is unauthorized, unavailable, or fails, return a compact resume block and disclose that it was not persisted. The canonical contract is in [SKILL.md](SKILL.md#freshness-memory-and-context-isolation).
+Every route reads relevant known memory **before searching source content**; listing the artifact folder does not count. A current complete result can answer an unchanged request without search, source reopening, or another write. Partial memory narrows retrieval to missing facts. New findings are saved within write authority, even without an announced repeat, as answer-ready facts/tables with scope, source generation, citations and limits—not just pointers to omitted answers. The canonical [read-before-search](SKILL.md#first-action-read-memory-then-decide-whether-to-search) and [persistence](SKILL.md#freshness-memory-and-context-isolation) contracts also cover unavailable storage and unknown provenance.
+
+On a cold miss, the agent uses known locations or a navigation-only section map, then searches selected sections. It batches complete relevant units within the combined outer-tool output limit and continues omitted ranges after truncation, avoiding repeated dumps. Memory and the final response use the same supported findings and original citations. These rules target avoidable work; instruction loading and authorized persistence still have a cost, so savings require whole-task measurement.
 
 Generated databases belong in an authorized derived-data location, separate from originals and other inputs. Use task-local temporary paths when persistence is not authorized; a trusted project/runtime cache requires established write authority, not merely a writable path. Existing compatible tools/stores need no migration solely for this skill. A connector can supply verifiable evidence without a cache; reusable caching requires reliable identity, generation, scope, and locators.
 
@@ -40,11 +42,11 @@ verification limitations. The caller remains responsible for any downstream deci
 
 ## Quick start
 
-For a direct question, search/read the authorized source and retain its version and line/page locations. For indexed work, ordinary scoped retrieval is available without a question plan:
+After reading any relevant analytical memory, search only missing evidence. For a direct question, use the authorized source and retain its version and line/page locations. For indexed work with authorized storage, ordinary scoped retrieval is available without a question plan:
 
 ```bash
 scripts/corpus index CORPUS_PATH --db index.sqlite
-scripts/corpus search index.sqlite "CargoMass" --mode literal
+scripts/corpus search index.sqlite "CargoMass" --mode literal --receipts-db receipts.sqlite
 scripts/corpus get index.sqlite PASSAGE_ID --around "CargoMass"
 scripts/corpus schema-query index.sqlite CargoMass --kind element
 ```
