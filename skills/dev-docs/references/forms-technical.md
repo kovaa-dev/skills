@@ -7,7 +7,9 @@ Selected old layer tasks first follow [on-touch conversion](legacy-transition.md
 ## Lean canonical queue entries
 
 Illustrative docs/queue.md. These entries share one owner/context where appropriate.
-The linked specification contains the acceptance question; its full text is not copied here.
+Link the relevant contract, documentation, or result question. A short acceptance/context
+note is sufficient when useful; follow [work-context placement](documentation.md#work-context-and-results)
+for longer material.
 
 ```md
 # Work queue
@@ -45,7 +47,8 @@ The same entry may implement several requirements and produce code, documents, o
 
 ## Result or investigation section
 
-Use a named section in the specification or a separate artifact only when useful:
+Use an existing relevant result/documentation section or a separate artifact when its
+content is independently useful; a repair or execution brief needs no new file by default:
 
 ```md
 ## Representation result

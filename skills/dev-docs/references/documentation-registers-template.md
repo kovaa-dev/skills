@@ -14,6 +14,9 @@ Old task/card authoring is legacy: [convert before continuing](legacy-transition
 
 ## Before creating a document
 
+Select [documentation purpose and ownership](documentation.md#documentation-purpose-and-ownership)
+for descriptions, references, guides/procedures, obligations, work context, and results.
+Those materials need no universal R/Q record or a separate form for every document type.
 Check for an existing canonical owner. Choose one independently useful contract/question/
 result; an inline section or queue entry can suffice. Preserve descriptive filenames,
 stable IDs, project language, and real links. Do not generate placeholder files as backlog
@@ -23,7 +26,8 @@ or reintroduce PRD/layer cards from an old form.
 
 - Requirement and work IDs are unique/stable; references resolve.
 - Applicability, acceptance, and current versus historical state are unambiguous.
-- Requirements/rationale are not copied into queue/index views.
+- Queue/index context stays concise; explanation/summaries link their canonical sources
+  without creating competing normative contracts or work states.
 - Each work item has one canonical state and meaningful result boundary; concrete waits
   cross queue files correctly and do not create self/cyclic blocking.
 - Completed/cancelled results remain visible with honest verification limits.

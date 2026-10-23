@@ -1,7 +1,7 @@
 # Navigation and settings
 
 Use [requirements](requirements.md), [queues](work-queue.md), and
-[governance](documentation.md). New navigation points to specifications and canonical work;
+[governance](documentation.md). New navigation points to useful documentation and canonical work;
 old task entrypoints explicitly route through [conversion](legacy-transition.md).
 
 ## Minimal navigation
@@ -13,6 +13,8 @@ Illustrative links below are placeholders for documents that actually exist:
 # Documentation
 
 - [Personal preferences contract](../wiki/personal-preferences.md).
+- [Settings API reference](../reference/settings-api.md).
+- [Settings operation and recovery](../operations/settings-sync.md).
 - [Work and completed results](../queue.md).
 - [Accepted architecture choices](../architecture/decisions/index.md).
 - Legacy tasks: historical/unconverted sources only; selected work is captured into

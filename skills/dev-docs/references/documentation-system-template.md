@@ -1,4 +1,4 @@
-# Bootstrap for requirements and queues
+# Bootstrap for documentation, requirements, and queues
 
 Use [governance](documentation.md), [requirements](requirements.md), and
 [work queues](work-queue.md). This guide creates the new scheme, not a legacy PRD/layer
@@ -9,12 +9,16 @@ an explicit full transition uses [migration](governance-migration.md).
 
 Determine the agreed result and discussion/write authority. Init is not a prerequisite
 for grooming or ordinary maintenance. Reuse existing project paths and documents.
-Create only the specification and queue needed now; navigation, decision/artifact
-directories, and history files appear only when they have real content.
+Select material under [documentation purpose and ownership](documentation.md#documentation-purpose-and-ownership).
+Create/update only documents needed for the actual question, obligations, and registered
+work. Navigation, decision/artifact directories, and history files appear with real content;
+a documentation-only correction does not require a new specification or queue.
 
 Illustrative placement, not a mandatory tree:
 
 - docs/wiki/personal-settings.md: related requirements and shared rationale.
+- docs/reference/settings-api.md: sourced API behavior, when readers need that reference.
+- docs/operations/settings-sync.md: operation/diagnosis/recovery procedure, when useful.
 - docs/queue.md: canonical lean work entries and completed-result links.
 - docs/architecture/decisions/: independently useful decisions, if needed.
 - docs/development/documentation-index.md: navigation/settings, if the project needs it.
@@ -29,8 +33,8 @@ entry per item and cross-queue waits.
 Use the project's existing automatically read entrypoint. State the selected skill
 source and the new normal route in one concise pointer. For example:
 
-> For requirements, work queues, decisions, and documentation continuity, read the
-> selected dev-docs source. Use specifications and lean queue entries. PRD/layer-task
+> For product/technical documentation, requirements, work queues, and decisions, read
+> the selected dev-docs source and its material/owner route. PRD/layer-task
 > tracking is legacy: before continuing selected old work, convert its affected
 > requirements/results and resume at the new canonical records. Do not migrate unrelated
 > backlog implicitly; use an explicit migrate request for a one-shot transition.
@@ -44,9 +48,10 @@ selection does not need to be requested again for ordinary maintenance.
 
 Classify existing obligations, plans, technical decisions, source facts, verification,
 and navigation by meaning. A file named PRD may contain a valuable contract, historical
-work, or both. Capture the selected contract and remaining work into the new owners;
-preserve acceptance, exceptions, open questions, historical results, and old navigation
-through explicit converted notices.
+work, or both. Capture only the selected scope into appropriate owners; preserve
+acceptance, exceptions, questions, historical results, and useful descriptions/procedures.
+Use [range-specific conversion notices](legacy-transition.md#convert-before-continuing)
+so unconverted parts remain discoverable and active.
 
 A local conversion does not require reorganizing every directory or claiming that the
 whole project adopted the new source. State any binding old-format conflict. Read-only

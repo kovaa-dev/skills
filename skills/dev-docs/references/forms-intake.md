@@ -17,9 +17,9 @@ Next result: reproduce and restore the agreed behavior.
 Scheduling: <priority/deferral reason and review trigger when deferred>.
 ```
 
-Keep environment, expected versus actual result, reproduction, causal hypotheses,
-and verification beside the affected contract or useful artifact. Link the unchanged
-requirement rather than creating a duplicate obligation to repair it.
+Place environment, reproduction, hypotheses, and verification under
+[work-context ownership](documentation.md#work-context-and-results). Link an existing
+requirement when violated; documentation/source-only corrections need no invented R-ID.
 
 ## Research or technical finding
 
@@ -37,7 +37,8 @@ research. A separately completed investigation leaves significant unresolved fix
 
 ## Product idea
 
-Capture a requested idea as a draft requirement/question in its owning specification.
+Capture a requested idea as a draft/proposed obligation or an open question in its
+appropriate owner under [documentation purpose](documentation.md#documentation-purpose-and-ownership).
 Preserve source, potential value, known boundaries, and open questions without inventing
 acceptance or a predetermined implementation. Add queue work only when a concrete
 discovery/delivery result is assigned or meets the registration threshold.

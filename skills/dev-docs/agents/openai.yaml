@@ -1,4 +1,4 @@
 interface:
   display_name: "kovaa: dev docs"
-  short_description: "Requirements, work queues, and legacy conversion"
-  default_prompt: "Use $dev-docs to maintain specifications, requirements, lean work queues, and results; convert selected legacy tasks before continuing, and use migrate for an explicit one-shot transition."
+  short_description: "Documentation, requirements, and work queues"
+  default_prompt: "Use $dev-docs to maintain product and technical documentation in its owning sources, with requirements and lean work queues where applicable; convert selected legacy scope before continuing, and use migrate for a one-shot transition."

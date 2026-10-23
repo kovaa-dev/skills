@@ -1,9 +1,9 @@
 ---
 name: dev-docs
 description: >-
-  Maintain requirements, specifications, lean work queues, decisions, and verification
-  without duplicating contracts. Use for product grooming, documentation maintenance,
-  bugs, research and other deliverables, change-impact and consistency checks.
+  Maintain product and technical documentation, requirements, lean work queues,
+  decisions, and verification without duplicating contracts. Use for product grooming,
+  references and guides, bugs, research, change-impact and consistency checks.
   Before continuing selected legacy task/PRD or undocumented-requirement work,
   convert its affected scope to requirements and queue entries. Use migrate for an
   explicitly requested one-shot transition; legacy task tracking is deprecated.
@@ -13,26 +13,31 @@ description: >-
 
 ## Default model and first action
 
-The current model is requirements-driven: specifications describe the agreed result,
-queue entries request work, and artifacts/verification record what was delivered.
-PRD/product-task and layer-task tracking is officially **legacy**. It remains readable
-only while unconverted records remain; do not create new legacy cards or extend that
-workflow as the default.
+The current work model is requirements-driven: specifications own obligations, queues
+request work, and results record delivery/verification. Descriptions, API references,
+guides, and runbooks maintain product/system knowledge through their own useful reading
+routes. PRD/product-task and layer-task tracking is officially **legacy**: it remains
+operational for unconverted scope, with historical sources still accessible afterward.
+Do not create new legacy cards or extend that workflow as the default.
 
 1. Read applicable project instructions and the selected canonical skill source. Respect
    explicit project/user constraints, existing paths, language, and accepted contracts.
-2. Identify the selected work and affected contracts. Before changing or executing a
+2. Identify the reader's question and material type using
+   [documentation purpose and ownership](references/documentation.md#documentation-purpose-and-ownership).
+   Reuse its owning document; requirements and queue entries are created only when their
+   meanings and registration rules apply.
+3. Identify the selected work and affected contracts. Before changing or executing a
    legacy task/PRD, or continuing work on a requirement not yet captured in this model,
    follow [on-touch conversion](references/legacy-transition.md). Do this within the
    authorized work; no init, full-backlog migration, or new permission ceremony is needed.
    Read-only requests produce a proposal only. An explicit prohibition on migration or
    a conflicting binding project instruction must be surfaced, not silently bypassed.
-3. Continue from the resulting specification/requirement and queue entry, not the old
-   card. Reuse an existing canonical record and conversion mapping before creating one.
+4. Continue from the owning records for the selected scope. Reuse canonical documents
+   and conversion mappings before creating anything.
    Do not migrate unrelated linked history merely because it was encountered.
    Resolve [current contracts, proposals, and history](references/requirements.md#current-contract-and-nonbinding-material)
    before treating found text as binding; follow retirement/replacement notices.
-4. Do not invent accepted requirements, owners, constraints, implementation evidence,
+5. Do not invent accepted requirements, owners, constraints, implementation evidence,
    approval, or missing historical facts. Preserve unknowns as questions.
 
 This entrypoint, forms, bootstrap, and migration references all use the new model.
@@ -42,8 +47,8 @@ rewrite an installed pinned copy or every consuming project.
 
 ## Read only what the work needs
 
-- Canonical ownership, decision approval, history, proportionality, and document
-  granularity: [documentation governance](references/documentation.md).
+- Documentation types, canonical ownership, decision approval, work-context placement,
+  proportionality, and granularity: [documentation governance](references/documentation.md).
 - Requirements, specification files, stable IDs, revisions, rationale, applicability,
   implementation prerequisites, proposal/retirement lifecycle, conflicts, and impact analysis:
   [requirements](references/requirements.md).
@@ -72,20 +77,21 @@ where they affect the result. Compact reading must still preserve cross-cutting 
 
 ## Ordinary work and actions
 
-Ordinary maintenance is the default: capture/convert the affected scope, maintain its
-requirements and queue entry, then reconcile documentation with the delivered result.
-Preserve compatible project conventions without requiring adoption. A file rewrite or
-whole-repository reorganization is not implied by this routine path.
+Ordinary maintenance updates the material that answers the selected question. Capture
+applicable obligations or convert selected legacy scope when needed; use the queue's
+registration threshold for independently tracked work. A local documentation edit within
+existing work does not need another R/Q record. Preserve compatible conventions without
+requiring adoption or a whole-repository reorganization.
 
 - **discover** — refine an idea/current product into draft, proposed, or accepted requirements,
   open questions, and the nearest useful deliverable. Groom specifications and prepare
   work separately; unknown implementation can become research without changing an
   accepted product requirement to draft. Respect discussion/read-only mode.
-- **init** — when explicitly requested, adopt the minimum requirements/wiki and queue
-  entrypoints through a complete project-local skill copy or a pinned public source.
+- **init** — when explicitly requested, adopt the needed documentation entrypoints through
+  a complete project-local skill copy or a pinned public source.
   Create only needed documents; no layer registry, empty template tree, or legacy tracker.
 - **audit** — read-only consistency and impact review of the selected scope. Classify
-  specifications, requirements, decisions, queues, artifacts, and legacy sources by
+  descriptions, guides/procedures, specifications, decisions, queues, results, and legacy sources by
   meaning, regardless of directory. Show conflicting formulations, applicability,
   consequences, and proposed resolutions. Do not certify factual claims or product
   behavior without the necessary source-grounded research/verification.
@@ -99,22 +105,16 @@ whole-repository reorganization is not implied by this routine path.
   Installing/updating rules does not imply a full backlog conversion: remaining legacy
   records follow the on-touch path unless a one-shot migration was requested.
 
-For already accepted, authorized work, a short execution brief restores scope, expected
-result, affected contracts, and checks. The user's request may already authorize that
-same work; do not ask again merely to change a status. New product/public/ownership
-choices require their normal acceptance. Routine reversible details remain independent
-engineering choices.
-
 ## Completion and boundaries
 
-Before closing work, reconcile the delivered result against the applicable requirement
-revisions and preserved contracts. Keep verification next to its owning specification
-or artifact; the queue holds a concise result link. Historical completion is not proof
-of the current revision. Research completion is not implementation completion.
+Use [closure reconciliation](references/documentation.md#implementation-closure-reconciliation)
+for the selected result and material type. Work readiness, execution briefs, completion,
+and history follow [work queues](references/work-queue.md); requirement revisions and
+applicability follow [requirements](references/requirements.md).
 
-Check affected links/anchors, ID uniqueness, requirement/work dependencies, canonical
-queue ownership, conversion/retirement redirects, proposal separation, and current versus
-historical applicability.
+Check affected links/anchors and, where those records exist, ID uniqueness, dependencies,
+canonical queue ownership, conversion/retirement redirects, proposal separation, and
+current versus historical applicability.
 Successful lint does not prove semantic compatibility. State unconverted scope, unresolved
 conflicts, missing sources, and verification limits honestly.
 

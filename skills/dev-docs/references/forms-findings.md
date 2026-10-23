@@ -9,8 +9,9 @@ observation/audit record. Otherwise keep the observation with its owning contrac
 and link necessary work in the queue. Do not create a second execution plan.
 
 An optional observation records: stable identity, original source/version, confirmed
-observation versus hypothesis, impact/severity, responsible owner, linked requirement,
-remediation Q entry, and closure verification. Preserve closed observations.
+observation versus hypothesis, impact/severity, responsible owner, applicable contract/source,
+remediation Q entry when independently actionable, and closure verification.
+Preserve closed observations.
 Finding states such as OPEN/PARTIAL/CLOSED describe the observation's disposition,
 not a copied work status. A significant unresolved finding needs visible remediation
 or an explicit accepted deferral with a review condition.

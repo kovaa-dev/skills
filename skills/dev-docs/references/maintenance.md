@@ -15,10 +15,10 @@ actionable blockers, and significant enduring risks. A local defect fully fixed 
 current work does not require another item. Report other observations without automatically
 creating a backlog. Check for duplicates and preserve useful sources when merging.
 
-A minimum queue entry identifies the observed/desired result, source, known impact,
-next useful action/result, and state. Assign an accountable owner before execution.
-Detailed reproduction, causal hypotheses, research support, acceptance, and verification
-belong with the affected specification or result artifact. Link rather than copy them.
+Use the [canonical work entry](work-queue.md#one-work-item-one-result-boundary), preserving
+known impact and the next useful outcome. Place reproduction, causal hypotheses, research,
+and verification under [documentation ownership](documentation.md#work-context-and-results):
+a short note can suffice; useful descriptions/procedures belong in their existing owners.
 No PRD, complete design, estimate, stage, or separate issue document is required just
 to preserve a finding.
 
@@ -27,10 +27,8 @@ not prove "no defect". A small diagnosis/fix can be one work item; a separately 
 investigation links every significant unresolved fix as remaining work. Completing
 research does not complete remediation or implement the product requirement.
 
-Unclear behavior/questions stay beside their contract. ready work has adequate scope,
-authority, inputs, acceptance, and target. need-info names the needed decision;
-blocked names the missing external result. Do not demand repeated grooming or start
-permission when the user's instruction already authorizes the accepted result.
+Keep unclear behavior/questions with their owner; follow
+[queue readiness](work-queue.md#state-and-readiness) for execution and actual waits.
 
 ## Severity and order
 

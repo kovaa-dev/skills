@@ -1,10 +1,60 @@
 # Documentation governance
 
-The current model is [requirements/specifications](requirements.md), [work queues](work-queue.md),
-decisions, and result artifacts. The old PRD/layer-task workflow is legacy:
+The work model uses [requirements/specifications](requirements.md), [work queues](work-queue.md),
+decisions, and results alongside product/system descriptions and instructions. The old PRD/layer-task workflow is legacy:
 [convert selected material before continuing](legacy-transition.md).
 [Bootstrap](documentation-system-template.md) and [forms](documentation-registers-template.md)
 apply these rules without becoming competing policy sources.
+
+## Documentation purpose and ownership
+
+Choose the material by the reader's question before selecting a form or creating IDs.
+A document may contain clearly separated kinds of content; split only when their readers,
+sources, or maintenance boundaries make that useful. These are responsibilities, not a
+mandatory directory tree:
+
+| Material | Question and canonical owner |
+| --- | --- |
+| Requirements/specification | What must hold, for whom, and under which conditions? [Requirement rules](requirements.md) own obligations and their acceptance. |
+| System description/reference | How does the current product/system work? Architecture, API, data-model, configuration, and code descriptions own sourced implementation facts. |
+| Guide/runbook | How does a reader use, operate, diagnose, migrate, or recover it? Own preconditions, ordered steps, expected results, limits, and recovery where relevant. |
+| Rationale/decision | Why this goal or choice? The owning block or TD/ADR records reasoning and decision acceptance. |
+| Work context | What does this execution need? An executor plan or existing work note/section holds useful reproduction, hypotheses, and implementation detail. |
+| Result/verification | What was produced or checked? The appropriate result record/artifact owns observations, baseline, method, and limits. |
+| Overview/navigation | Where is the answer and how do the parts fit? Own the reader's overview and links to detailed owners. |
+| Queue | Which independently useful work is requested and in what state? [Queue rules](work-queue.md) own registration, readiness, waits, and history. |
+
+Describing an existing API or updating a runbook does not by itself create a product
+obligation. Source factual descriptions from the relevant code/configuration/interface,
+observed behavior, or established sources; identify version and uncertainty where useful.
+Recording a fact does not accept it as the desired invariant. If actual behavior conflicts
+with an accepted requirement, distinguish the observation from the required behavior.
+
+Update or create descriptions and instructions when a changed system or reader's actual
+question makes them useful. Requirements and delivery records do not replace those
+explanations. A documentation-only correction uses the existing owner without inventing
+R-IDs or another Q entry inside already tracked work. Independently assigned/deferred
+outcomes follow the queue's registration rule.
+
+Canonical ownership prevents competing normative sources or work states. Overviews,
+guides, and references may summarize and explain for their audience, linking to the
+owning contract where it matters; they need not become link-only pages. Check their
+accuracy together with affected sources.
+
+## Work context and results
+
+Keep durable product/system knowledge in its owning document, and the selected work's
+state in its canonical queue entry. Keep short-lived plans, investigation trails, and
+reproduction detail in the executor's working context or an existing relevant note/section.
+Persist only what is needed for continuation, handoff, traceability, or a useful result,
+within the existing write authority. A short context/acceptance note can fit inline in
+the queue when sufficient; longer material is linked rather than copied into every view.
+
+Do not force each repair to create an artifact file or append its incident history to
+the specification. Create a separate document only for independently useful content.
+Verification can live in an existing result, release, or relevant documentation section,
+with the exact contract/source baseline and honest limits. Preserve useful findings in
+the appropriate description, procedure, requirement, or decision.
 
 ## Necessity, sufficiency, and proportionality of a solution
 
@@ -35,8 +85,11 @@ Classify existing generic evidence by meaning without inventing missing facts.
 
 Preserve explicit user decisions and binding project instructions. A new product/public,
 ownership/data, architectural, or material operational choice needs a rationale and
-acceptance source. The user may accept an unambiguous package or authorize a policy that
-covers a class of choices; do not generalize a vague acknowledgment to unstated decisions.
+acceptance source. Acceptance may come from the user, an authorized decision owner,
+or application of a previously accepted policy within its stated bounds. Record the
+applicable authority/source; stricter binding project/user requirements still apply.
+The user may accept an unambiguous package or authorize a class of choices; do not
+generalize a vague acknowledgment to unstated decisions.
 Silence, a file, a passing test, or an agent recommendation is not user acceptance.
 
 Routine reversible implementation details, editorial corrections, applying accepted rules,
@@ -48,7 +101,9 @@ Record the problem, selected option, relevant alternatives including deferral/si
 options, necessity/sufficiency, consequences, verification/revisit conditions, and date/source.
 If no stable discussion URL exists, preserve an accurate accepted statement and date;
 do not fabricate a quotation or link. Use a named block when sufficient; a separate
-TD/ADR is useful only for a genuinely independently maintained decision.
+TD/ADR is useful only for a genuinely independently maintained decision. Decision
+acceptance can precede implementation; do not require verification that can only exist
+after executing the accepted choice. Investigate essential feasibility questions separately.
 
 When sources disagree, classify scope, applicability, acceptance, and historical versus
 current state. Explicit new user decisions replace earlier ones only in their stated scope.
@@ -60,15 +115,10 @@ do not select a convenient source or weaken another obligation for implementatio
 
 ### Product decision history
 
-Living requirements keep stable IDs and change through accepted semantic revisions.
-Record old and new meaning, reason, date/source, applicability, and affected checks.
-A changed obligation does not require a replacement PRD or a new task containing the
-same product requirement. A genuinely independent obligation receives its own ID.
-
-Completed queue results and original verification remain historical. A new regression
-or changed scope creates new work when it crosses the registration threshold; it does
-not reopen a done entry or rewrite its result. Preserve legacy closure/history under
-[the transition rules](legacy-transition.md#history-and-unresolved-material).
+Requirement identity, semantic revisions, applicability, and preserved meaning follow
+[the requirement lifecycle](requirements.md#identity-state-and-revision). Work completion
+and later regressions follow [queue history](work-queue.md#completion-history-and-current-truth).
+Legacy facts follow [the transition rules](legacy-transition.md#history-and-unresolved-material).
 
 ## Project documentation consistency check
 
@@ -96,11 +146,16 @@ unrequested corpus research workflow.
 
 ## Implementation closure reconciliation
 
-Before marking work done, compare the delivered outcome with applicable requirement
-revisions, accepted decisions, preserved contracts, and the agreed delivery target.
+Before marking work done, compare the delivered outcome with the agreed question/result,
+applicable requirement revisions and decisions where present, preserved contracts, and
+the delivery target. For descriptions/guides, check relevant sources, audience usefulness,
+and examples/procedures as feasible; disclose unverified steps and source gaps.
 
-- Material discrepancies require a recorded decision, not an undocumented implementation detail.
-- Update affected canonical documentation in the same workstream.
+- Resolve discrepancies with accepted obligations before closure: correct the result or
+  obtain the normal accepted change. Source-backed factual/editorial corrections follow
+  ordinary documentation maintenance.
+- Update affected requirements, system descriptions/references, and user/operational
+  instructions in the same workstream when their content changes or is needed.
 - Keep superseded meaning/reasons/acceptance accessible; Git history alone is not the
   explanation for why the current contract replaced an accepted one.
 - The queue links to the actual result and its verification; it does not copy the specification.
@@ -135,21 +190,14 @@ Preserve unknowns as questions; coordinate schema changes with actual parsers.
 
 ## Granularity of any document
 
-One document covers one coherent contract, independently useful question/result, or
+One document covers one coherent reader question, explanation, contract, result, or
 operational procedure. A technical layer does not justify a giant file; do not split
 mechanically by line count or create a micro-file for each sentence.
 
-| Material | Unit and placement |
-| --- | --- |
-| Specification | Related requirements for one capability/contract; shared context once |
-| Requirement | Separately meaningful obligation with stable ID/anchor inside its specification |
-| Queue entry | One independently useful result boundary; inline entries are sufficient |
-| Shared rationale | Named block in its owning specification/thematic page |
-| Decision | One choice and its consequences; TD/ADR only when useful independently |
-| Research/report/dataset | One question or produced result; large inputs/logs remain linked artifacts |
-| Verification | Checks of identified contract revisions/results, beside the specification/artifact |
-| Navigation/code map | Routes, responsibilities, interfaces, and references; no second contract/work state |
-| Release record | Actual delivered version/target and verification, not a future plan |
+Use the [purpose/ownership table](#documentation-purpose-and-ownership) to choose placement.
+A requirement is addressable inside a specification; related content can share a document.
+Guides and runbooks may explain ordered procedures, including migration and rollback.
+Scheduling, assignees, progress, and completion of particular executions remain queue state.
 
 Use descriptive filenames and readable headings. Only independently addressable records
 need IDs; not every paragraph. Label links by purpose. Do not add universally mandatory
@@ -158,11 +206,13 @@ micro-documents.
 
 ### Minimum-context route
 
-1. Read applicable instructions/settings and locate the selected outcome.
-2. If legacy/uncaptured, follow [on-touch conversion](legacy-transition.md) before continuing.
-3. Resolve the owning requirement's current revision, state, and applicability; read its
-   acceptance, rationale/decisions, and direct prerequisites needed for this result.
-   Follow replacement notices; proposals/history are context, not current obligations.
+1. Read applicable instructions/settings; identify the reader's question, material type,
+   and existing owner under [documentation purpose](#documentation-purpose-and-ownership).
+2. For selected legacy work or an applicable uncaptured obligation, follow
+   [on-touch conversion](legacy-transition.md). A factual description needs no invented requirement.
+3. Read relevant sources and context for that material. When requirements/decisions apply,
+   resolve their current revision, acceptance, and applicability under
+   [the lifecycle](requirements.md#current-contract-and-nonbinding-material).
 4. Identify changed/preserved contracts and relevant consumers, including cross-cutting
    ownership, security, durability, and operational constraints.
 5. Use headings/search and targeted locators; load only relevant versions/history and
@@ -181,9 +231,8 @@ material questions. Do not turn every remark or idea into a requirement/work ite
 Discussion/read-only mode writes nothing. A later write grant captures only the agreed
 scope, not every prior conversation.
 
-Specifications own obligations and acceptance; rationale/decisions own reasons and
-choices; queues own work state and concrete waits; artifacts own produced content and
-verification. Overview pages link to these owners. A technical choice need not be
+Maintain the owner selected under [documentation purpose](#documentation-purpose-and-ownership)
+and [work-context placement](#work-context-and-results). A technical choice need not be
 architectural, and a bugfix against a clear contract need not create a decision.
 
 Use project checks for affected links, anchors, schema, and whitespace. Do not manually

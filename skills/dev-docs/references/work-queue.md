@@ -1,20 +1,21 @@
 # Work queues and delivered results
 
-The queue requests outcomes against [requirements](requirements.md); it does not own
-their normative text. Use [maintenance](maintenance.md) for intake/severity and
-[on-touch conversion](legacy-transition.md) before continuing old task-based work.
+The queue requests work and links its owning contract, documentation, or question;
+[requirements](requirements.md) retain their normative text. Use [maintenance](maintenance.md)
+for intake/severity and [on-touch conversion](legacy-transition.md) before continuing old task-based work.
 
 ## One work item, one result boundary
 
 Use a short canonical entry with a stable project-wide ID, default Q-001, a result-oriented
-title, status, and links to the relevant requirement/specification or artifact question.
+title, status, and links to the relevant contract, documentation, or result/question.
 Include owner, priority, work kind, delivery target, or an exact wait only when useful
 for selecting/executing the work. Put shared owner/context at queue level where practical.
 
 The entry may live inline in a shared Markdown queue; one file per item is not required.
-Keep acceptance details, reasoning, implementation plans, research material, and full
-verification beside the owning specification or result artifact. Link to them. A separate
-artifact document is needed only when the result warrants it; a named section can suffice.
+Keep only the context needed to select/execute the work, including a short result or
+acceptance note when sufficient. Link larger context according to
+[documentation ownership and work-context placement](documentation.md#work-context-and-results);
+do not turn a lean queue into a requirement catalog or require an artifact file per repair.
 
 Work can implement several requirements or have no new product requirement: a repair,
 investigation, documentation update, dataset, experiment, configuration, or external action.
@@ -45,12 +46,14 @@ does not make accepted requirements draft or require a separate research item.
 A substantial feasibility question may make investigation ready while implementation
 waits for its accepted result.
 
-A short execution brief restores the agreed result, affected/preserved contracts, and
-checks. The initial user request may already authorize this work; do not add a redundant
-confirmation merely for a status change. New choices follow decision governance.
+A short execution brief restores the selected result, sources, target, applicable/preserved
+contracts where present, and checks. It can be a concise response or executor plan;
+a separate brief document is not required. The initial user request may already authorize
+this work; do not add a redundant confirmation merely for a status change. New choices
+follow [decision governance](documentation.md#decision-approval).
 
-Before execution, resolve the linked contract's current revision/state and applicability
-under the [requirement lifecycle](requirements.md#current-contract-and-nonbinding-material).
+When a contract applies, resolve its current revision/state and applicability before
+execution under the [requirement lifecycle](requirements.md#current-contract-and-nonbinding-material).
 Ready proposal-evaluation work is not authority to deliver an unaccepted replacement.
 If the target changed or was retired, reconcile the unfinished entry before continuing;
 keep historical completion against its original baseline.
@@ -103,7 +106,7 @@ action, require confirmation of the intended effect; retries must not blindly re
 
 ## Delivery interface
 
-The executor receives the selected item, applicable requirement revisions, preserved
+The executor receives the selected item, sources and applicable requirement revisions, preserved
 contracts, input artifacts, acceptance/result destination, and authority/constraints.
 The returned result identifies produced artifacts, checks, delivery target/version, and
 remaining gaps. Keep retries/attempt logs outside the lean queue.

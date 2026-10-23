@@ -14,7 +14,8 @@ only in chat, a checklist, a task, or another noncanonical source.
 
 Reading an unrelated legacy link is not a request to migrate it or the entire backlog.
 Convert the selected outcome and the directly necessary shared contracts/prerequisites.
-Reuse an existing specification, requirement, queue item, or conversion mapping.
+The unit may be a section/range inside a larger source. Reuse existing canonical owners
+and conversion mappings; source-wide conversion requires coverage of all its active content.
 
 Authorized project work includes its necessary documentation continuity. Do not require
 init, selection of an adoption method, or separate approval just for this bounded
@@ -37,26 +38,32 @@ or disputed contract. Independent already-authorized work may continue.
    targeting the current contract. Preserve proven obsolete material as nonbinding history
    with a successor/retirement notice under the [lifecycle](requirements.md#retiring-stale-material);
    conversion must not resurrect it as a current obligation.
-3. **Capture actual work.** Add/reuse lean queue entries only for remaining independently
-   useful outcomes. Research is work with an answer/artifact, not a fake product
-   requirement. Map waits to specific supplying work/results; preserve unresolved
+3. **Capture actual work.** Add/reuse remaining independently useful outcomes under
+   [current queue registration/readiness](work-queue.md). Preserve legacy state as history,
+   not proof of current readiness. Research is work with an answer/artifact, not a fake
+   product requirement. Map waits to specific supplying work/results; preserve unresolved
    external prerequisites explicitly. Import completed outcomes into queue history with
    the original result/date/limits when this source is being converted.
-4. **Switch the reading route.** Add an explicit legacy-converted notice at the old
-   source/its existing navigation: continue at the exact new requirement/specification,
-   queue item(s), and result locator. Keep original IDs, closure facts, acceptance, and
-   verification accessible as history. Exclude the old body from the active contract.
-   The new specification and work must be understandable without reading old tasks.
+4. **Switch the selected reading route.** Mark the exact converted sections/ranges and
+   link their new owners, applicable queue entries, and results from the old source and
+   affected navigation. Only those ranges become historical for current execution.
+   For a partial source, add a prominent notice identifying converted ranges and the
+   remaining active legacy sections/work. Keep that remainder readable and operational
+   under on-touch conversion; do not archive the whole body or retire its remaining work.
+   Keep original IDs, closure facts, acceptance, and verification accessible. The converted
+   scope must be usable without old task text as required context.
 5. **Verify and continue.** Compare the captured contract against the source, including
    exceptions, questions, historical results, and cross-links. Verify IDs, redirects,
-   dependencies, and applicable checks. Continue execution/status/closure only in the
-   new canonical records. Do not maintain two live contracts or two execution states.
+   dependencies, applicable checks, and discoverability of the unconverted remainder.
+   Continue the selected converted scope only in its new canonical records; its old
+   formulation/status is historical. Do not duplicate live contracts or execution state.
 
 A minimal mapping may live in the converted source's notice, for example legacy ID to
 requirement IDs, queue IDs, and result link. It is provenance/navigation, not a second
-tracker. On repeated entry, follow this mapping and update existing records: conversion
-must not duplicate them. Missing/partial mappings remain explicit and do not imply that
-the whole source or project has been migrated.
+tracker. For partial conversion, name both the converted ranges/destinations and residual
+active legacy ranges in the source notice. On repeated entry, follow the mapping and reuse
+the existing records. Mark the entire source converted only after checking every active
+part for a destination or accepted historical/inapplicable disposition.
 
 ## History and unresolved material
 

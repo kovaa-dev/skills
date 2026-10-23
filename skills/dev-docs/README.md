@@ -1,7 +1,7 @@
 # dev-docs
 
-An agent skill for requirements-driven documentation: living specifications, addressable
-requirements, lean work queues, shared rationale/decisions, and verified deliverables.
+An agent skill for product and technical documentation: sourced system descriptions,
+references and guides, living requirements, lean work queues, decisions, and verified results.
 
 PRD/product-task and layer-task tracking is officially legacy. Before continuing selected
 legacy work, the agent captures its affected contract and remaining work into the new
@@ -11,7 +11,7 @@ implicitly.
 ## When to use it
 
 - Groom desired behavior, constraints, acceptance, and material open questions.
-- Maintain specifications and their implementation/verification state.
+- Maintain descriptions, API references, guides/runbooks, and specifications in their owners.
 - Plan code, research, documents, data, and other outcomes in lean queues.
 - Analyze affected and preserved contracts, prerequisites, and conflicting obligations.
 - Keep proposed replacements distinct from current contracts; retire stale routes with
@@ -23,9 +23,9 @@ implicitly.
 ## How the transition works
 
 **Ordinary work:** capture the selected legacy requirement/task first, preserve its meaning
-and history, link the old source to the new owners, then continue from the specification
-and queue entry. Repeated entry reuses the same IDs and mapping. No init or complete
-backlog migration is required.
+and history, link converted sections to their new owners, then continue from those records.
+Unconverted sections of a shared source remain explicitly active until their own conversion.
+Repeated entry reuses the same IDs and mapping. No init or complete backlog migration is required.
 
 **One-shot migrate:** convert the entire agreed scope, including active and completed
 work, decisions, questions, acceptance sources, and verification. Reconcile the reading
@@ -50,7 +50,7 @@ one canonical work entry and cross-queue waits.
 
 ## Contents
 
-- [SKILL.md](SKILL.md): current default, mandatory on-touch route, and actions.
+- [SKILL.md](SKILL.md): material/owner route, mandatory on-touch conversion, and actions.
 - [Requirements](references/requirements.md): identity, revisions, rationale, applicability,
   dependencies, conflicts, and impact.
 - [Work queues](references/work-queue.md): readiness, multiple queues, result/history, and targets.
@@ -58,6 +58,7 @@ one canonical work entry and cross-queue waits.
 - [One-shot migration](references/governance-migration.md): full agreed scope.
 - [Governance](references/documentation.md), [grooming](references/product-discovery.md),
   [maintenance](references/maintenance.md), and [forms](references/documentation-registers-template.md).
+  Governance covers documentation purpose, decision acceptance, and work-context placement.
 - [Legacy recognition](references/task-tracker.md): compatibility reader, not old authoring rules.
 
 The skill ships Markdown guidance, not a tracker runtime or implicit automation. It

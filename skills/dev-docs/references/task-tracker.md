@@ -10,7 +10,7 @@ it does not authorize new legacy cards or continued task-based execution.
 | Legacy material | Destination/handling |
 | --- | --- |
 | PRD-NNN outcome, behavior, constraints, acceptance | Canonical specification requirements and acceptance scenarios. |
-| Layer task scope, steps, prerequisites | Remaining result-oriented queue work; keep implementation detail with its owning contract/artifact when useful. |
+| Layer task scope, steps, prerequisites | Remaining result-oriented queue work; place useful detail under [work-context ownership](documentation.md#work-context-and-results). |
 | Bug/deferred fix | Queue work linked to the violated requirement; no duplicate requirement for unchanged behavior. |
 | Investigation | Queue work plus its question, method, and result artifact. |
 | TD/ADR | Existing decision remains canonical when applicable; capture separately addressable obligations without duplicating the choice. |

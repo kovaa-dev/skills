@@ -33,7 +33,7 @@ Grooming has two outputs:
    Agreed obligations become accepted; uncertain desired outcomes remain draft and
    coherent alternatives awaiting a decision remain proposed.
 2. A prepared queue: independently useful deliverables, priorities, exact prerequisite
-   suppliers, owner/authority, target, and links to acceptance in the owning contract/artifact.
+   suppliers, owner/authority, target, and concise acceptance or links to its existing owner.
 
 Shared rationale belongs in one named block. Requirements in different specifications
 can refer to the same reason or decision without depending on one another. Check the
@@ -60,9 +60,9 @@ Research support does not itself approve a decision.
 
 ## Start and respond to new questions
 
-For already agreed, ready work, restore the result, scope, applicable/preserved contracts,
-checks, and delivery target in a short execution brief. Existing user authorization may
-already cover that brief. Do not repeat grooming or ask again for a status transition.
+Start prepared work using [queue readiness and execution briefs](work-queue.md#state-and-readiness).
+Keep the brief in the existing execution context rather than creating another document
+by default.
 
 When a question arises, determine its effect:
 

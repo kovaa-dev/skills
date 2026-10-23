@@ -25,5 +25,7 @@ Use detailed temporary coverage only for full/large migration or required audit 
 
 Source-to-destination mapping must account for questions, exceptions, dependencies,
 and completed/cancelled outcomes, not merely renamed files. Repeated entry reuses existing
-destinations. Do not mark open/unmapped material migrated or preserve a permanent second
+destinations. A partial-source notice identifies converted ranges and residual active
+legacy sections under [on-touch conversion](legacy-transition.md#convert-before-continuing).
+Do not mark open/unmapped material migrated or preserve a permanent second
 tracker. Cleanup/deletion follows explicit authority and verified recovery.

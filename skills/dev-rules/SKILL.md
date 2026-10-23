@@ -103,13 +103,13 @@ own contract.
 Use the lifecycle and canonical records defined by the active documentation policy.
 When that policy is dev-docs, PRD/layer-task tracking is legacy: before continuing
 selected legacy work or an uncaptured requirement, follow its on-touch conversion and
-resume from the resulting specification/requirement and queue entry. Do not duplicate
-its migration or status schema here, require a separate init, or create new legacy cards.
-For ready/planned work, restore the expected result, affected/preserved contracts,
-checks, and delivery target in a short execution brief. The initial user request may
-already authorize that same work; do not ask again merely for a state transition.
-New questions and unmet prerequisite results follow the documentation policy's
-need-info/blocked meanings; ordinary reversible details remain executor decisions.
+resume from the resulting canonical records for that scope. Documentation-only work
+uses the documentation policy's material/owner route without inventing requirements.
+Do not duplicate its migration or status schema here, require a separate init, or create
+new legacy cards.
+Use that policy's readiness, execution-brief, and missing-input route rather than
+restating its lifecycle here. Ordinary reversible details remain executor decisions
+within the confirmed scope.
 
 Before coding, state `Source: <user-explicit or canonical link>` and, for new or changed
 user-facing behavior, briefly define:

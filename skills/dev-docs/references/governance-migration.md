@@ -20,8 +20,8 @@ where they retain original content safely. Do not recreate historical sources fr
 
 ## Perform the transition
 
-1. **Classify and reconcile.** Separate obligations, rationale/decisions, questions,
-   work, source facts, and verification. Resolve [current/proposed/historical state](requirements.md#current-contract-and-nonbinding-material)
+1. **Classify and reconcile.** Separate obligations, rationale/decisions, descriptions,
+   procedures, questions, work, source facts, navigation, and verification. Resolve [current/proposed/historical state](requirements.md#current-contract-and-nonbinding-material)
    and replacement lineage; preserve candidates as candidates and obsolete text as history,
    not newly accepted obligations. Check applicable accepted contracts for conflicts before
    consolidating; expose both formulations and resolve only the affected choices under
@@ -30,7 +30,9 @@ where they retain original content safely. Do not recreate historical sources fr
    each independently useful remaining outcome has one queue entry. Reuse already
    converted records and stable IDs. Several old cards may share a requirement; a card
    may contribute several obligations and results. Do not mechanically turn old task
-   IDs/checklist lines into requirements or rename all history.
+   IDs/checklist lines into requirements or rename all history. Descriptions and
+   procedures retain their own owners under [documentation purpose](documentation.md#documentation-purpose-and-ownership);
+   do not convert factual/reference material into invented obligations.
 3. **Move content, not dependencies on old docs.** Preserve accepted scope, applicability,
    implementation prerequisites, cross-cutting constraints, questions, rationale,
    technical choices, acceptance sources, and verification. New records are sufficient
@@ -42,11 +44,12 @@ where they retain original content safely. Do not recreate historical sources fr
    Do not label historical work current production verification, reopen done, or lose
    unfinished work inside an archive. Queues may be partitioned with global IDs and
    cross-queue waits; avoid duplicate canonical entries.
-5. **Retire old operational routing.** Mark legacy sources as historical/converted and
-   replace active entrypoints with requirements/queues. Preserve old links through
-   clear redirects/aliases when needed. Rewrite affected templates, bootstrap, local
-   rule copies, and parser routing so new work does not regenerate legacy tasks.
-   Keep explicit on-touch routing for every residual unconverted record.
+5. **Retire converted operational routing.** Apply the
+   [range-specific notices](legacy-transition.md#convert-before-continuing) to converted
+   source sections and their entrypoints. A shared source's out-of-scope remainder stays
+   active and discoverable under on-touch conversion; whole-source retirement requires
+   complete coverage. Preserve old links and update affected templates, bootstrap,
+   local rules, and parser routing so new work does not regenerate legacy tasks.
 6. **Verify the entire agreed scope.** Reconcile source-to-destination coverage,
    requirement/work graph integrity, all relevant exceptions/questions/results, current
    versus historical applicability, proposal targets, retirement redirects, and affected

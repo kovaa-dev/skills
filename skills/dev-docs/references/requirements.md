@@ -1,7 +1,8 @@
 # Requirements and specifications
 
-This is the canonical model for new and converted documentation. Apply
-[documentation governance](documentation.md), [work queues](work-queue.md), and the
+This reference owns the model for new and converted requirements/specifications.
+Other documentation follows [purpose and ownership](documentation.md#documentation-purpose-and-ownership);
+registered work follows [queues](work-queue.md), and selected legacy scope follows
 [on-touch transition](legacy-transition.md). Legacy task schemas are not an alternative
 for new work.
 
@@ -48,7 +49,8 @@ Unavailable feasibility proof does not erase an already accepted obligation.
 silently replace the current contract before that condition holds.
 
 Keep the ID when clarifying or revising the same obligation. Record a semantic revision,
-previous and new meaning, reason, date, and acceptance source when the contract changes.
+previous and new meaning, reason, date, acceptance source, applicability, and affected
+checks when the contract changes.
 Editorial corrections need not create a semantic revision. A new independently useful
 obligation gets a new ID; a truly different replacement links to what it supersedes.
 
@@ -211,8 +213,9 @@ Maintain useful requirement-to-code/test links in their owning sources; derive r
 views/search rather than maintaining duplicate manual registries.
 
 A short impact result lists affected IDs/revisions, preserved obligations, selected
-checks, unresolved assumptions, and any required decisions. Keep it with the work's
-result or owning specification, not as a copied requirement catalog in the queue.
+checks, unresolved assumptions, and any required decisions. Place it with the relevant
+work context or result under [documentation ownership](documentation.md#work-context-and-results),
+not as a copied requirement catalog in the queue.
 No tag/index/LLM guarantees complete discovery. Missing mapping or checks is a disclosed
 gap; run broader affected checks when a concrete unresolved concern justifies them.
 

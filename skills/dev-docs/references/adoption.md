@@ -7,7 +7,8 @@ A full backlog transition uses the separately requested [one-shot migration](gov
 ## Routine maintenance without adoption
 
 Selecting dev-docs for authorized work does not require init, a global policy migration,
-or an adoption-mode field. Maintain the affected scope using the new model:
+or an adoption-mode field. Maintain the affected scope using
+[documentation purpose and ownership](documentation.md#documentation-purpose-and-ownership):
 
 - Preserve compatible project paths, language, stable IDs, accepted meaning, history, and
   explicit constraints. Reuse existing specifications/wiki and queue locations.
@@ -16,7 +17,7 @@ or an adoption-mode field. Maintain the affected scope using the new model:
 - Faithful capture of an existing accepted contract is continuity, not a new product
   decision. Do not ask again merely to convert the selected item or start already
   authorized work. Do not infer write permission from a read-only request.
-- Create only material needed for the actual contract/result; no empty indexes, layers,
+- Create only material needed for the actual question/contract/result; no empty indexes, layers,
   PRDs, or ADRs to satisfy a template.
 - Do not change binding agent instructions/hooks/CI or bulk-delete/restructure sources
   without the corresponding scope. If explicit project constraints prohibit conversion,
