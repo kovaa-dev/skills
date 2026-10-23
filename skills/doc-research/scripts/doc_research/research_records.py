@@ -180,6 +180,16 @@ def write_research_record(
             verified = int(verified_raw)
             if verified not in {0, 1}:
                 raise ValueError("--verified must be true or false")
+        if existing is not None and args.verified is None:
+            evidence_values = {
+                "facet_id": facet_id, "corpus_id": corpus_id, "finding": finding,
+                "source": source, "source_version": source_version, "source_hash": source_hash,
+                "page": page, "section": section, "passage_id": passage_id,
+                "excerpt": excerpt, "interpretation": interpretation, "confidence": confidence,
+            }
+            if any(existing[key] != value for key, value in evidence_values.items()):
+                # Verification belongs to the reviewed evidence, not its mutable ID.
+                verified = 0
         connection.execute(
             """
             INSERT INTO evidence(

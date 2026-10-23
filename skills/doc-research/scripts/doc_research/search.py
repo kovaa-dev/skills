@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import re
 from pathlib import Path
 
-from .common import MAX_BATCH_QUERIES, MAX_FILTER_TEXT, MAX_QUERY_TEXT, database, emit_json, load_bounded_json, lower_level_purpose_record, lower_level_task_receipt, optional_research_text, required_record_id, required_research_text
+from .common import MAX_BATCH_QUERIES, MAX_FILTER_TEXT, MAX_QUERY_TEXT, database, emit_json, load_bounded_json, lower_level_purpose_record, lower_level_task_receipt, normalize_text, optional_research_text, required_record_id, required_research_text
 from .index import bounded_rows, index_fingerprint, like_contains, literal_query, prefix_query, require_current_schema, require_database, search_row_locator, select_search_rows, validate_output_paths
 from .receipts import lookup_cached_receipt, receipt_cache_id, save_cached_receipt
 from .research_links import link_receipt_to_research, validate_research_receipt_link
-from .common import SQLITE_OPERATIONAL_ERROR
+from .common import SQLITE_OPERATIONAL_ERROR, sqlite3
 
 
 FTS_BOOLEAN_OPERATORS = (" AND ", " OR ", " NOT ", " NEAR ")
@@ -64,10 +66,13 @@ def register_task_results(args: argparse.Namespace, payload: dict[str, object]) 
 def resolved_query_mode(query: str, requested_mode: str) -> str:
     if requested_mode != "auto":
         return requested_mode
-    padded = f" {query.upper()} "
+    # FTS operators are uppercase; ordinary title words such as "and" are not
+    # a request to interpret surrounding punctuation as an FTS expression.
+    padded = f" {query} "
     if any(operator in padded for operator in FTS_BOOLEAN_OPERATORS):
         return "fts"
-    if '"' in query or "(" in query or ")" in query:
+    # Parentheses alone commonly belong to titles and section identifiers.
+    if '"' in query or re.search(r"\bNEAR\s*\(", query):
         return "fts"
     if "*" in query:
         return "prefix"
@@ -75,7 +80,7 @@ def resolved_query_mode(query: str, requested_mode: str) -> str:
 
 
 def deduplicate_batch_snippets(
-    payload: dict[str, object], seen_passages: set[tuple[object, object]]
+    payload: dict[str, object], seen_passages: set[tuple[object, object, object]]
 ) -> int:
     raw_results = payload.get("results")
     if not isinstance(raw_results, list):
@@ -91,7 +96,8 @@ def deduplicate_batch_snippets(
         passage_id = result.get("passage_id")
         source_hash = result.get("source_hash")
         text = result.get("text")
-        key = (source_hash, passage_id)
+        # The same passage can expose different evidence for different queries.
+        key = (source_hash, passage_id, text)
         if passage_id is not None and isinstance(text, str):
             if key in seen_passages:
                 removed_characters += len(text)
@@ -111,7 +117,16 @@ def deduplicate_batch_snippets(
     return duplicate_count
 
 
-def search_payload(args: argparse.Namespace) -> dict[str, object]:
+def _attach_content_hashes(results: list[dict[str, object]], rows: list[sqlite3.Row]) -> None:
+    by_id = {row["passage_id"]: row for row in rows}
+    for result in results:
+        text = str(by_id[result["passage_id"]]["full_text"] or "")
+        result["_content_hash"] = hashlib.sha256(normalize_text(text).encode("utf-8")).hexdigest()
+
+
+def search_payload(
+    args: argparse.Namespace, *, include_content_hash: bool = False
+) -> dict[str, object]:
     db_path = require_database(args.db)
     if (args.research_db is None) != (args.facet_id is None):
         raise ValueError(
@@ -292,6 +307,8 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
                         results, characters, truncated = bounded_rows(
                             cached_rows, args.max_chars, args.max_total_chars
                         )
+                        if include_content_hash:
+                            _attach_content_hashes(results, cached_rows)
                         aliases_by_id = {
                             reference["passage_id"]: reference.get("also_in")
                             for reference in references
@@ -349,6 +366,8 @@ def search_payload(args: argparse.Namespace) -> dict[str, object]:
     results, characters, output_truncated = bounded_rows(
         selected_rows, args.max_chars, args.max_total_chars
     )
+    if include_content_hash:
+        _attach_content_hashes(results, selected_rows)
     for index, result in enumerate(results):
         aliases = duplicate_locators.get(index)
         if aliases:
@@ -515,7 +534,7 @@ def command_search_many(args: argparse.Namespace) -> int:
     outputs: list[dict[str, object]] = []
     characters = 0
     processed = 0
-    seen_passages: set[tuple[object, object]] = set()
+    seen_passages: set[tuple[object, object, object]] = set()
     duplicate_snippets_removed = 0
     for item in selected:
         namespace = argparse.Namespace(

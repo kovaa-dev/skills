@@ -4,7 +4,7 @@ Use this reference only when the selected evidence spans several directories or 
 
 ## Logical union, physical isolation
 
-Do not build one opaque mega-index. Keep one local index and receipt store per independently versioned or permissioned corpus, then register them in one logical `catalog.sqlite`. The catalog stores routing metadata, logical project membership, and composite locator-only receipts; it does not copy passages, findings, or credentials. One corpus may belong to several overlapping projects without duplicating its index. One `research.sqlite` may bind to a frozen concrete subset of that catalog when a single investigation intentionally spans its corpora.
+Keep independently permissioned/versioned corpora identifiable and isolated. Several sources do not by themselves require indexes or a catalog: a few scoped reads may suffice. When reusable cross-corpus routing is selected, use separate indexes/receipt stores and one logical `catalog.sqlite`. It stores routing metadata, project membership, and composite locator-only receipts, not passages, findings, or credentials. One corpus may belong to several projects without duplicating its index. One `research.sqlite` may bind to a frozen concrete subset for an investigation that spans those corpora.
 
 ```text
 local/normalized corpus A -> index A + receipts A --+
@@ -54,9 +54,9 @@ Use `catalog-project-put` for an explicit project or additional anchor. Repeated
 
 A catalog entry with adapter `external` is a coverage descriptor, not an executable connector. The helper reports it as unsearched unless the caller explicitly accepts a partial local search. Never imply that a remote source was searched merely because it was registered. To make it participate in repeatable helper search, materialize an authorized, versioned export and register the resulting local index.
 
-## First durable run
+## First catalog-backed run
 
-For each local or materialized corpus, create its own index and receipt store. Then register it once:
+Only when catalog-backed retrieval is selected, reuse or create each required local/materialized index and receipt store and register it once. Simple persistent notes do not require this setup:
 
 ```bash
 scripts/corpus index CORPUS_A --db corpus-a.index.sqlite
@@ -85,7 +85,7 @@ scripts/corpus catalog-search catalog.sqlite "search terms" --access-boundary wo
 scripts/corpus catalog-get catalog.sqlite CORPUS_A_ID=12 CORPUS_B_ID=7
 ```
 
-Skip `catalog-info --live` on routine searches when no source changed; `catalog-search` validates selected local bindings and checks its deterministic composite receipt. A hit returns locators without passage text. Without durable-write authority, add `--read-only`: current catalog/member receipts may be reused, but misses are not persisted and research state cannot be linked. Continue the same query only when `next_offset` is returned. `has_more` means another local page is available; `coverage_complete: false` and `unsearched_corpora` describe an external or unavailable-source gap, not a continuation. Use `--allow-partial` only when that gap is acceptable for the current claim; an incomplete search cannot support a corpus-wide absence claim.
+Skip `catalog-info --live` on routine searches when no source changed; `catalog-search` validates selected local bindings and checks its deterministic composite receipt. A hit rehydrates bounded snippets and locators from the current index; the receipt itself stores only locators. Without durable-write authority, add `--read-only`: current catalog/member receipts may be reused, but misses are not persisted and research state cannot be linked. Continue the same query only when `next_offset` is returned. `has_more` means another local page is available; `coverage_complete: false` and `unsearched_corpora` describe an external or unavailable-source gap, not a continuation. Use `--allow-partial` only when that gap is acceptable for the current claim; an incomplete search cannot support a corpus-wide absence claim.
 
 For `catalog-get`, resume with returned `--offset` and `--start-char` positions. A deferred item is not missing, and a truncated passage is not complete evidence. Preserve the same selected IDs/order and source generation when continuing; changed generations require fresh locators.
 
@@ -128,7 +128,7 @@ For an answer, an authorized project tool or connector must provide identifiable
 
 A **verified locator** has been reopened successfully and matched to the intended record, version/generation, location, and authorization context. Two remote searches are **receipt-equivalent** only when every field in the equivalence key matches; a continuation cursor extends that receipt rather than defining a different query. A remote receipt is **current** only while the adapter confirms the same generation and equivalence semantics; elapsed time alone neither proves nor disproves freshness, and a timestamp counts only when the source documents it as the generation token. Missing generation/equivalence guarantees prohibit cached reuse and negative-search proof; missing verifiable source identity or locators limits output to leads until checked against originals.
 
-Probe only the connector selected for the active sources. If an authorized connection already exists, use it in the current retrieval instead of merely recommending it. If the runtime provides a scoped connector/plugin installation action and the user has already authorized that connector and data scope, perform the installation, verify identity/generation/locator behavior, and continue retrieval. Otherwise request authorization with the exact connector, affected sources, expected gain, installation or connection action, permission/data scopes, external-transfer implications, verification step, and local-export fallback with its limitation. Connecting an account, granting new scopes, accepting terms, or uploading source data always requires explicit authority. Do not silently fall back before offering a materially better connector, and do not repeat the proposal in an unchanged environment.
+Probe only the connector selected for the active sources. Use an existing authorized connection when it is the sufficient low-cost route; an equivalent current export or another capable reader need not be replaced. Acquire a missing connector only when needed for correctness or a concrete net gain after setup: if the runtime and existing authority permit installation, install, verify source/locator behavior, and use it; otherwise request authorization with the exact connector, sources, scopes, transfer implications, verification, and fallback limitation. Connecting an account, granting new scopes, accepting terms, or uploading data requires explicit authority. Do not silently lower evidence quality, block unaffected work for a preferred product, or repeat an unchanged proposal.
 
 ## ZIP safety
 

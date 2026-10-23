@@ -886,7 +886,7 @@ class EvidencePackCliTest(CorpusCliTestCase):
                     {
                         "worker_input_cost_ratio": 0.01,
                         "worker_output_cost_ratio": 0.01,
-                        "worker_startup_tokens": 0,
+                        "worker_startup_tokens": 800,
                         "expected_parent_turns": 1,
                         "finding_tokens_per_facet": 1,
                         "minimum_savings_fraction": 0,
@@ -1069,7 +1069,7 @@ class EvidencePackCliTest(CorpusCliTestCase):
             saved_findings = run_corpus("findings-save", receipt, findings)
             self.assertEqual(saved_findings.returncode, 0, saved_findings.stderr)
 
-    def test_parent_context_cost_can_select_isolated_worker_without_profile(self) -> None:
+    def test_parent_context_alone_does_not_imply_worker_savings(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = root / "source.md"
@@ -1099,6 +1099,9 @@ class EvidencePackCliTest(CorpusCliTestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)
             self.assertEqual(
-                payload["routing"]["recommendation"], "low-overhead-worker"
+                payload["routing"]["recommendation"], "coordinator-direct"
             )
             self.assertEqual(payload["routing"]["parent_context_tokens"], 165000)
+            self.assertEqual(payload["routing"]["reason"], "incomplete-worker-costs")
+            self.assertIsNone(payload["routing"]["estimated_delegated_cost_units"])
+            self.assertFalse(pack.exists())

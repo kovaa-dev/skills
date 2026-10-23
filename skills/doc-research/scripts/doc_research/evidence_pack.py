@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import tempfile
 from pathlib import Path
@@ -1227,7 +1228,7 @@ def _receipt_facets(facets: list[dict[str, object]]) -> list[dict[str, object]]:
                     )
                     if fact.get(key) is not None
                 }
-                for fact in facet.get("schema_facts", [])
+                for fact in (facet.get("schema_facts") or facet.get("schema_locators", []))
                 if isinstance(fact, dict)
             ],
             "checks": [
@@ -1262,6 +1263,14 @@ def _receipt_gaps(facets: list[dict[str, object]]) -> list[dict[str, object]]:
     for facet in facets:
         if _verified_finding(facet) is not None:
             continue
+        finding = facet.get("finding")
+        if isinstance(finding, dict):
+            gaps.append({
+                "facet_id": facet["id"],
+                "reason": f"finding-{finding['status']}",
+                **({"finding_reason": finding["reason"]} if finding.get("reason") else {}),
+            })
+            continue
         support = bool(facet.get("support_passage_ids")) or _schema_role_covered(
             facet, "support"
         )
@@ -1287,7 +1296,7 @@ def _warm_facets(receipt: dict[str, object]) -> list[dict[str, object]]:
             continue
         if raw.get("stale"):
             continue
-        if raw.get("kind") == "schema" and _verified_finding(raw) is None:
+        if raw.get("kind") == "schema" and not isinstance(raw.get("finding"), dict):
             continue
         output.append(
             {
@@ -1389,12 +1398,12 @@ def _verified_finding(facet: dict[str, object]) -> dict[str, object] | None:
     return None
 
 
-def _routing_profile(path: Path | None) -> dict[str, float]:
+def _routing_profile(path: Path | None) -> dict[str, float | None]:
     defaults = {
         "parent_input_cost_ratio": 1.0,
-        "worker_input_cost_ratio": 1.0,
-        "worker_output_cost_ratio": 1.0,
-        "worker_startup_tokens": 0.0,
+        "worker_input_cost_ratio": None,
+        "worker_output_cost_ratio": None,
+        "worker_startup_tokens": None,
         "parent_context_tokens": 0.0,
         "expected_parent_turns": 1.0,
         "expected_delegated_parent_turns": 1.0,
@@ -1415,6 +1424,8 @@ def _routing_profile(path: Path | None) -> dict[str, float]:
     for key, value in raw.items():
         if not isinstance(value, (int, float)) or isinstance(value, bool):
             raise ValueError(f"Routing profile {key} must be numeric")
+        if not math.isfinite(value):
+            raise ValueError(f"Routing profile {key} must be finite")
         profile[key] = float(value)
     for key in (
         "parent_input_cost_ratio",
@@ -1424,9 +1435,9 @@ def _routing_profile(path: Path | None) -> dict[str, float]:
         "expected_delegated_parent_turns",
         "finding_tokens_per_facet",
     ):
-        if profile[key] <= 0:
+        if profile[key] is not None and profile[key] <= 0:
             raise ValueError(f"Routing profile {key} must be positive")
-    if profile["worker_startup_tokens"] < 0:
+    if profile["worker_startup_tokens"] is not None and profile["worker_startup_tokens"] < 0:
         raise ValueError("Routing profile worker_startup_tokens must not be negative")
     if profile["parent_context_tokens"] < 0:
         raise ValueError("Routing profile parent_context_tokens must not be negative")
@@ -1443,7 +1454,7 @@ def _route_evidence(
     if facets_needing_model == 0:
         return {
             "recommendation": "receipt-only",
-            "reason": "verified-finding-hit",
+            "reason": "saved-finding-hit",
             "estimated_evidence_tokens": 0,
             "estimated_finding_tokens": 0,
         }
@@ -1469,13 +1480,35 @@ def _route_evidence(
     )
     if parent_context_tokens < 0:
         raise ValueError("--parent-context-tokens must not be negative")
-    if direct_turns <= 0 or delegated_parent_turns <= 0:
+    if not math.isfinite(direct_turns) or not math.isfinite(delegated_parent_turns) or direct_turns <= 0 or delegated_parent_turns <= 0:
         raise ValueError("Expected routing turns must be positive")
     direct_cost = (
         (parent_context_tokens + evidence_tokens)
         * profile["parent_input_cost_ratio"]
         * direct_turns
     )
+    has_cost_signal = (
+        args.routing_profile is not None
+        or args.parent_context_tokens is not None
+        or args.expected_direct_turns is not None
+        or args.expected_delegated_parent_turns is not None
+    )
+    missing_worker_costs = [key for key in (
+        "worker_input_cost_ratio", "worker_output_cost_ratio", "worker_startup_tokens",
+    ) if profile[key] is None]
+    if missing_worker_costs:
+        return {
+            "recommendation": "coordinator-direct",
+            "reason": "incomplete-worker-costs" if has_cost_signal else "no-routing-cost-signal",
+            "estimated_evidence_tokens": evidence_tokens,
+            "estimated_finding_tokens": finding_tokens,
+            "parent_context_tokens": round(parent_context_tokens),
+            "expected_direct_turns": direct_turns,
+            "expected_delegated_parent_turns": delegated_parent_turns,
+            "estimated_direct_cost_units": round(direct_cost, 3),
+            "estimated_delegated_cost_units": None,
+            "missing_cost_inputs": missing_worker_costs,
+        }
     delegated_cost = (
         parent_context_tokens
         * profile["parent_input_cost_ratio"]
@@ -1488,12 +1521,6 @@ def _route_evidence(
         * delegated_parent_turns
     )
     threshold = direct_cost * (1 - profile["minimum_savings_fraction"])
-    has_cost_signal = (
-        args.routing_profile is not None
-        or args.parent_context_tokens is not None
-        or args.expected_direct_turns is not None
-        or args.expected_delegated_parent_turns is not None
-    )
     if has_cost_signal and delegated_cost <= threshold:
         recommendation = "low-overhead-worker"
         reason = "measured-worker-break-even"
@@ -1520,8 +1547,8 @@ def _route_evidence(
 def _finding_payload(facets: list[dict[str, object]]) -> list[dict[str, object]]:
     output: list[dict[str, object]] = []
     for facet in facets:
-        finding = _verified_finding(facet)
-        if finding is not None:
+        finding = facet.get("finding")
+        if isinstance(finding, dict):
             claim_passage_ids = {
                 passage_id
                 for claim in finding.get("claims", [])
@@ -1615,12 +1642,29 @@ def evidence_pack_payload(args: argparse.Namespace) -> dict[str, object]:
 
     reused_facets: list[dict[str, object]] = []
     missing_questions: list[dict[str, object]] = []
-    retrieval_budget = {key: getattr(args, key) for key in ("limit_per_query", "max_passages_per_question", "max_passages")}
+    reopened_for_depth: set[str] = set()
+    retrieval_budget = {key: getattr(args, key) for key in (
+        "limit_per_query", "max_passages_per_question", "max_passages",
+        "max_passage_chars", "max_total_chars",
+    )}
     for question in questions:
         key = (question["id"], facet_hash(question))
         previous = previous_facets.get(key)
-        if previous is not None and any(value > previous.get("retrieval_budget", {}).get(name, 0) for name, value in retrieval_budget.items()):
-            previous = None
+        if previous is not None and any(
+            value > previous.get("retrieval_budget", {}).get(name, 0)
+            for name, value in retrieval_budget.items()
+        ):
+            old_budget = previous.get("retrieval_budget", {})
+            candidate_budget_increased = any(
+                retrieval_budget[name] > old_budget.get(name, 0)
+                for name in ("limit_per_query", "max_passages_per_question", "max_passages")
+            )
+            if candidate_budget_increased or question["kind"] == "schema":
+                previous = None
+            else:
+                # More passage context needs reopening, not repeating the search.
+                previous.pop("finding", None)
+                reopened_for_depth.add(str(question["id"]))
         if previous is None:
             missing_questions.append(question)
         else:
@@ -1658,10 +1702,14 @@ def evidence_pack_payload(args: argparse.Namespace) -> dict[str, object]:
     }
     facets = [facet_by_id[str(question["id"])] for question in questions]
     for facet in facets:
-        facet["retrieval_budget"] = retrieval_budget
+        # A smaller later output budget does not erase previously covered depth.
+        facet["retrieval_budget"] = {
+            name: max(value, facet.get("retrieval_budget", {}).get(name, 0))
+            for name, value in retrieval_budget.items()
+        }
         prior = next((value for value in (previous_receipt or {}).get("facets", [])
-                      if value["id"] == facet["id"] and value["facet_hash"] == facet["facet_hash"]), None)
-        if prior is not None and facet in searched_facets:
+                      if value["id"] == facet["id"]), None)
+        if prior is not None and (facet in searched_facets or facet["id"] in reopened_for_depth):
             if prior.get("finding"):
                 # One replaceable review input, not a second evidence authority or
                 # growing history. Old IDs retain their original fingerprint.
@@ -1677,7 +1725,7 @@ def evidence_pack_payload(args: argparse.Namespace) -> dict[str, object]:
     locator_passage_ids = [
         int(passage_id)
         for facet in reused_facets
-        if _verified_finding(facet) is None
+        if not isinstance(facet.get("finding"), dict)
         for passage_id in facet["passage_ids"]
     ]
     passage_ids = list(dict.fromkeys([*locator_passage_ids, *searched_passage_ids]))
@@ -1750,7 +1798,7 @@ def evidence_pack_payload(args: argparse.Namespace) -> dict[str, object]:
         _route_evidence(
             args,
             int(retrieved.get("characters", 0)) + schema_characters,
-            len(facets) - finding_hits,
+            sum(not isinstance(facet.get("finding"), dict) for facet in facets),
         )
         if args.execution_route == "auto"
         else {
@@ -1766,7 +1814,7 @@ def evidence_pack_payload(args: argparse.Namespace) -> dict[str, object]:
     if routing["recommendation"] == "receipt-only":
         last_execution: dict[str, object] = {
             "route": "coordinator-warm",
-            "reason": "verified-finding-receipt",
+            "reason": "saved-finding-receipt",
         }
     elif args.execution_route == "auto":
         last_execution = {
@@ -1792,7 +1840,7 @@ def evidence_pack_payload(args: argparse.Namespace) -> dict[str, object]:
 
     receipt_gaps = _receipt_gaps(facets)
     requested_ids = {str(question["id"]) for question in questions}
-    generated_reasons = {"no-material-result", "support-not-found", "control-not-found", "candidates-require-verification", "new-evidence-needs-review"}
+    generated_reasons = {"no-material-result", "support-not-found", "control-not-found", "candidates-require-verification", "new-evidence-needs-review", "finding-unresolved", "finding-conflicted"}
     receipt_gaps.extend(gap for gap in (previous_receipt or {}).get("gaps", [])
                         if gap.get("facet_id") in requested_ids and gap.get("reason") not in generated_reasons)
     retained_facets = [facet for facet in (previous_receipt or {}).get("facets", []) if facet["id"] not in requested_ids]
@@ -1883,7 +1931,7 @@ def evidence_pack_payload(args: argparse.Namespace) -> dict[str, object]:
                     "control" if facet.get("requires_check") else "exact"
                 ),
                 "coverage": coverage,
-                "evidence_status": "verified" if _verified_finding(facet) else "unverified-candidates",
+                "evidence_status": facet["finding"]["status"] if isinstance(facet.get("finding"), dict) else "unverified-candidates",
                 "query_continuations": facet.get("query_continuations", []),
                 **({"previous_finding": facet["previous_finding"]} if facet.get("previous_finding") else {}),
                 "passage_ids": facet["passage_ids"],
@@ -1915,7 +1963,7 @@ def evidence_pack_payload(args: argparse.Namespace) -> dict[str, object]:
         "fallback_search_count": fallback_search_count,
         "receipt_hits": receipt_hits,
         "finding_hits": finding_hits,
-        "requested_findings_current": finding_hits == len(facets) and not receipt_gaps,
+        "requested_findings_current": finding_hits == len(facets) and not receipt_gaps and not task_receipt["conflicts"],
         "searched_facets": [str(question["id"]) for question in missing_questions],
         "characters": int(retrieved.get("characters", 0)) + schema_characters,
         "passage_characters": retrieved.get("characters", 0),
@@ -1927,12 +1975,13 @@ def evidence_pack_payload(args: argparse.Namespace) -> dict[str, object]:
         "passages": passages,
         "schema_facts": schema_facts,
         "findings": _finding_payload(facets),
-        "gaps": receipt_gaps,
+        "gaps": task_receipt["gaps"],
+        "conflicts": task_receipt["conflicts"],
         "next_mode": task_receipt["next_mode"],
         "routing": routing,
         "next_action": (
-            {"kind": "answer-from-findings", "save_findings": False}
-            if routing["recommendation"] == "receipt-only"
+            {"kind": "answer-from-findings" if task_receipt["next_mode"] == "direct" else "review-saved-findings-and-gaps", "save_findings": False}
+            if all(isinstance(facet.get("finding"), dict) for facet in facets)
             else {
                 "kind": "delegate-pack",
                 "save_findings": True,
@@ -1975,7 +2024,8 @@ def evidence_pack_payload(args: argparse.Namespace) -> dict[str, object]:
             "characters": payload["characters"],
             "facets": visible_facets,
             "findings": payload["findings"],
-            "gaps": receipt_gaps,
+            "gaps": payload["gaps"],
+            "conflicts": payload["conflicts"],
             "next_mode": payload["next_mode"],
             "task_receipt_path": str(task_receipt_path),
             "pack_path": str(pack_path),

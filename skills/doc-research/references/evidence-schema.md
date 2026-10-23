@@ -1,6 +1,12 @@
 # Evidence ledger
 
-Use a research ledger only when several documents support consequential conclusions, conflicts/completeness must be explicit, or investigation state must resume later. Choosing the Research route does not itself require or authorize `research.sqlite`: without durable-write authority, keep the same facet/evidence/conflict/gap model task-local and return a compact resume block. Direct and Retrieval need only citations plus compact receipts for indexed queries; they do not need facets or evidence rows.
+This reference owns helper storage contracts, not a prerequisite for keeping ordinary notes. Apply the save/reuse triggers in `SKILL.md` on every route. Use a research ledger when its structured updates materially help a long or multi-source investigation. Choosing Research does not itself require or authorize `research.sqlite`. Direct and Retrieval may preserve findings in a simple note; they need no facets or database rows.
+
+## Lightweight memory and existing work
+
+A small Markdown/JSON note or compatible project store is a complete analytical owner when it meets the task's needs. Keep the question and scope, source identity/generation, selected supported findings with stable locators, necessary conditions, unresolved ambiguities/conflicts, and next action if any. No fixed field names, receipt conversion, index, or extra reference load is required. Edit it normally and update affected entries rather than appending a transcript. Do not create a second note when an existing store already owns these findings.
+
+For a repeat, check the known note's question/scope, verification provenance and source generation. Reuse current supported findings without automatic rereading; retain known limits. Leave unchanged notes untouched: no session stamp, duplicate summary, or ceremonial save. Unverified notes are leads, and changed/disputed facts or missing qualifiers require targeted verification. A hash match does not certify a conclusion. A current unresolved result can avoid repeating an exhausted query but cannot become a positive or negative answer merely because it was saved.
 
 ## Fields
 
@@ -25,7 +31,7 @@ Use a research ledger only when several documents support consequential conclusi
 | `conflict` | Competing source or interpretation that affects the conclusion |
 | `verified` | Whether the decisive passage was checked in immediate context or against the rendered original |
 
-Use only fields that affect the current task. A compact in-session table is enough for one-off work. For reusable or resumable findings, choose the task receipt or a separate `research.sqlite`/compatible analytical store according to the investigation's needs; do not store durable findings inside the rebuildable FTS index.
+These are semantic requirements for relevant evidence, not mandatory columns for a simple note. A compact in-session record is enough for one-off work with no save trigger. Use a note, helper task receipt, or separate `research.sqlite`/compatible analytical store according to the task; do not store durable findings inside the rebuildable FTS index.
 
 ## Memory levels and resume
 
@@ -38,7 +44,7 @@ Use only the memory roles that the task needs. Retrieval memory and analytical o
 | Task receipt | One active task/request family: corpus/index fingerprint, question/scope-aware facet hashes, search-receipt IDs, decisive locators, checks, and optionally bounded findings, conflicts, and gaps | Optional task/session KV or `evidence-pack --task-receipt` JSON; upsert affected facets atomically, retaining unrelated findings and conflicts |
 | Research state | One investigation: facets, selected evidence, conflicts, gaps, status, and next action | Durable records in `research.sqlite` or one compatible project store; retained only while the investigation or its audit value requires it |
 
-Choose one analytical owner: task receipt, Research state, or an existing compatible store. A pack receipt may hold retrieval metadata alongside Research without duplicating its conclusions/progress. A direct or scoped answer needs no task receipt. Helpers maintain locators and continuation; analysts should not repair their JSON by hand. Example task-receipt shape:
+Choose one analytical owner: a note, task receipt, Research state, or compatible existing store. A pack receipt may hold retrieval metadata alongside Research without duplicating its conclusions/progress. A direct or scoped answer needs no task receipt. Helpers maintain their own locators and continuation; use their commands rather than hand-repairing helper JSON. This does not restrict editing ordinary notes. Example helper task-receipt shape:
 
 ```json
 {
@@ -49,7 +55,7 @@ Choose one analytical owner: task receipt, Research state, or an existing compat
   "question_set_hash": "full request hash for audit",
   "execution": {
     "cold": {"route": "coordinator-direct", "reason": "bounded-inline-evidence"},
-    "last": {"route": "coordinator-warm", "reason": "verified-finding-receipt"}
+    "last": {"route": "coordinator-warm", "reason": "saved-finding-receipt"}
   },
   "optimization": {
     "index": "reused",
@@ -89,7 +95,7 @@ A task receipt may contain bounded atomic findings from selected passages or str
 
 Reuse is question- and scope-aware. `facet_hash` includes the question text, stable ID, normalized query plan, requested versions/filters, and relevant kind/verification/group/selection options; query similarity alone cannot establish unchanged meaning. The corpus fingerprint must also match. A changed question with identical terms must not receive an old answer. A version mismatch, malformed finding, missing citation provenance, outside evidence ID, or changed corpus fails closed for verified reuse. A source-local fact may remain true after a corpus change, but earlier corpus-wide completeness does not. Recheck affected evidence and coverage before reusing that conclusion.
 
-Upsert affected facets atomically rather than replacing the entire request family. Preserve unrequested facets and analytical conflicts; return only the requested subset. Retrieval hits cannot clear an analyst's unresolved gap or conflict. Refreshing budgets must actually widen candidate/context selection where requested, without silently treating old bounds as complete. Prune only under explicit lifecycle/cleanup authority, not as a side effect of a subset follow-up.
+Upsert affected facets atomically rather than replacing the entire request family. Return requested findings while keeping retained gaps and conflicts visible. An unchanged repeat reuses unresolved/conflicted findings too, without certifying them or automatically retrying an exhausted search. Refine the question/query or increase retrieval depth/breadth to investigate further. Retrieval hits cannot clear an analyst's unresolved gap or conflict. Larger budgets must actually widen candidate/context selection; smaller display budgets do not invalidate a current finding. Prune only under explicit lifecycle/cleanup authority, not as a side effect of a subset follow-up.
 
 After a source-generation change, retained unrequested facets are stale and their findings unresolved, not silently deleted or reused. Re-retrieving an unchanged question may retain one bounded `previous_finding` snapshot with its old provenance for review; it is not current evidence or an accumulating history. Saving the replacement finding removes that snapshot.
 
@@ -104,7 +110,21 @@ scripts/corpus research-init research.sqlite --scope "question" --corpus CORPUS_
 scripts/corpus research-info research.sqlite --resume
 ```
 
-For independent facet batches, optional `evidence-pack --execution-route auto --pack-output ...` combines receipt reuse, searches, enumeration continuation, indexed schema lookup, unique passage retrieval, and interpretation cost estimation. It accepts up to 50 facets and 20 planned queries per facet. Without cost signals it returns inline evidence; an exact verified hit returns findings with no search or passage reopen. `search --receipts-db`, `search-many`, `schema-query`, and `get` are also normal routes and may refine a pack's results. With a task receipt and facet selected, helpers register retrieved locators automatically. Use `findings-save` only when that receipt is the analytical owner. A connector can provide verifiable evidence without implementing reusable memory; caching requires the stronger receipt-equivalence contract in source routing.
+For ordinary `search --receipts-db`, a missing explicitly writable receipt store is created on save; `--read-only-receipts` treats a missing store as a cache miss without creating it. Existing foreign, corrupt, or mismatched stores still fail closed instead of being overwritten.
+
+For independent facet batches, optional `evidence-pack --execution-route auto --pack-output ...` combines receipt reuse, searches, enumeration continuation, indexed schema lookup, unique passage retrieval, and interpretation cost estimation. It accepts up to 50 facets and 20 planned queries per facet. Without explicit worker costs it returns inline evidence; an unchanged saved finding returns with its status and locators, without search or passage reopen. `search --receipts-db`, `search-many`, `schema-query`, and `get` are also normal routes and may refine a pack's results. With a task receipt and facet selected, helpers register retrieved locators automatically. Use `findings-save` only when that receipt is the analytical owner. A connector can provide verifiable evidence without implementing reusable memory; caching requires the stronger receipt-equivalence contract in source routing.
+
+A pack question plan is needed only for that helper, not for ordinary research:
+
+```json
+{"questions":[{"id":"types","question":"Which message types and signers exist?","kind":"enumeration","group_by":"section","max_items":12,"verification":"control","queries":[{"query":"message signer","role":"support"},{"query":"optional required","role":"check"}]}]}
+```
+
+```bash
+scripts/corpus evidence-pack CORPUS questions.json --db index.sqlite --task-receipt task-receipt.json
+```
+
+`kind: lookup` selects bounded facts; `enumeration` broadens grouped candidates; `schema` adds structural facts. `verification: exact` requires authoritative support; `control` additionally checks contrary evidence and exceptions. Neither a tag nor a query count proves completeness. Cost routing and worker output are separate opt-ins, not required for batching.
 
 To extend an existing task receipt with scoped passage evidence, select its facet on search/get. The retained flag name `--gap-facet` selects the owner; it does not require proving a gap:
 
@@ -163,14 +183,14 @@ Reuse current receipts when they answer the same question and scope. A partial r
 - Link conflicting rows rather than silently selecting the convenient one.
 - Prefer primary/controlling sources; label secondary material.
 - A missing result is not evidence of absence until the search scope, terms, versions, and unreadable sources have been checked.
-- Reopen the original source for decisive claims. Retrieval ranking alone is not verification.
+- Verify decisive claims against originals when first establishing them or when freshness, scope, provenance, dispute, or needed detail changes. Do not repeat already completed verification solely because a new session started. Retrieval ranking alone is not verification.
 - A generated or approved report may support a claim about its own issuance or decision status, but cannot independently validate the evidence it summarizes.
 
-Create rows only for evidence used in the analysis. Pass rows forward and reopen the original for quotations, context, tables, or disputes.
+Create rows only for evidence used in the analysis. Pass the verified evidence forward; reopen the original when a quotation, context, table relationship, or dispute is not already verified in the retained material.
 
 ## Synthesis
 
-Draft from verified evidence in the selected analytical owner, not session memory. Map material conclusions to source locators. Preserve applicability, conditions, exceptions, versions, and disagreements when shortening findings or combining a worker's results. If several rows depend on one ambiguous passage, report one shared uncertainty rather than multiplying confidence. A required child field within a conditional parent must retain that condition in the final answer.
+Draft from verified evidence already in context or in the selected analytical owner, not unsupported recollection. No persisted ledger is required to use evidence just checked in this session. Map material conclusions to source locators. Preserve applicability, conditions, exceptions, versions, and disagreements when shortening findings or combining a worker's results. If several rows depend on one ambiguous passage, report one shared uncertainty rather than multiplying confidence. A required child field within a conditional parent must retain that condition in the final answer.
 
 ## Internal and delivered state
 

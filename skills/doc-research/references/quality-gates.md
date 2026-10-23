@@ -5,7 +5,7 @@ Apply these checks in proportion to the stakes of the answer. Do not add ceremon
 ## Coverage
 
 - Every question facet is supported, refuted, conflicted, unresolved with a reason, or explicitly outside the selected corpus.
-- A compact coverage matrix maps each material facet to evidence IDs, conflicts, and status; duplicate passages do not count as additional coverage.
+- Each material question can be traced to evidence, conflicts, or an unresolved status in the existing context/notes. Create a coverage matrix only when it reduces coordination work; duplicate passages do not count as additional coverage.
 - Search included exact identifiers and material synonyms where wording may differ.
 - Definitions, appendices, amendments, referenced schedules, and exclusions were considered when applicable.
 - Reusable definitions were checked at the concrete use sites relevant to the question. Table notes, role restrictions, and conditional assertions can strengthen a generic type's requirements; generic XSD validity alone does not establish business applicability. Resolve a discovered reference chain with targeted reads, not a whole-document reread.
@@ -32,7 +32,7 @@ Apply these checks in proportion to the stakes of the answer. Do not add ceremon
 
 ## Counter-evidence verification
 
-- For a consequential or disputed conclusion, run one targeted pass for contrary language, exceptions, newer versions, and alternative interpretations instead of repeating the entire investigation.
+- For a consequential or disputed conclusion, check contrary language, exceptions, applicable newer versions, and alternative interpretations. Reuse a current completed check; otherwise perform a targeted pass rather than repeating the entire investigation.
 - Check whether apparently independent findings derive from the same passage or copied source.
 - If the counter-evidence pass changes the conclusion, update the evidence rows and confidence; do not preserve the earlier wording as if it remained supported.
 
@@ -44,15 +44,16 @@ Apply these checks in proportion to the stakes of the answer. Do not add ceremon
 ## Context and tool efficiency
 
 - The selected route is sufficient for the question. Scoped raw reading/search, indexed search/get, structural lookup, and optional evidence packs are valid choices; source size alone did not require an index.
-- The user received one concise route/tool update: selected adapter plus use/install/setup/fallback decision for every materially relevant external capability. Existing useful tools were used, not merely recommended.
-- A missing materially useful tool was either installed in an authorized isolated scope and exercised on a representative input, or proposed with an exact setup action, scope, expected gain, permission/data implications, verification, and fallback limitation. No silent downgrade preceded that decision.
+- The existing sufficient route was preserved unless a concrete whole-task benefit justified changing it. A routine tool choice did not require a route report or setup announcement; material access/setup choices and evidence limitations were disclosed.
+- A missing capability needed for correctness or a concrete net improvement was acquired within authority or proposed with scope, verification, and a fallback limitation. A missing preferred product did not block an equivalent available method.
 - Irrelevant tools and references were not loaded, probed, or proposed.
 - The final reasoning context contains selected evidence, not the whole corpus or raw tool logs.
 - Duplicate passages and repeated summaries were removed.
 - Independent operations were batched when useful; dependent queries and context reads refined the evidence without a named-gap gate or fixed round count. Per-call limits and continuation remained valid.
 - Saved claims have valid citation provenance, and an analyst checked support, original context, and relevant variants/exceptions according to exact/control intent. Lexical query roles did not substitute for verification. Any worker stayed inside its authorized assignment.
 - When memory was used, reuse matched the actual question, scope, and source generation. An unchanged verified repeat needed no worker/search/reopen; subset updates preserved other facets and conflicts. New source generations did not retain old corpus-wide completeness claims.
-- One analytical owner retains findings, conflicts, and progress; helpers maintain retrieval locators/continuation. Optional task receipts and Research state did not become competing ledgers. An unresolved facet could be saved without invented claims.
+- When the save trigger applied, the authorized analytical owner (including an ordinary note) actually retained reusable findings, unresolved limits, and locators, and its location was handed off. No helper/DB was created solely to save a note. If writing was not authorized or failed, a resume block and that limitation were returned instead of claiming persistence.
+- One analytical owner retains findings, conflicts, and progress; helpers maintain their own retrieval locators/continuation. Notes, task receipts, and Research state did not become competing ledgers. An unresolved question could be saved without invented claims.
 - Initial effort budgets were treated as adjustable starting points. Actual task/resource exhaustion was reported as a limit, not negative evidence.
 - Repeated tool failures changed the method rather than producing blind retries.
 

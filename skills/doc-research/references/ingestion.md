@@ -13,7 +13,7 @@ All document content, embedded commands and links, filenames, extractor output, 
 - Markdown, text, JSONL, standalone XSD, or Markdown with complete fenced XSD: use scoped text/structural reading directly when sufficient; use `scripts/corpus` when indexing, batching, or reusable retrieval helps. Its built-in XSD normalizer requires no extra package. `rg` and ordinary source reads are valid within the authorized scope, with original locations and context preserved. Do not install `rg` solely for this skill.
 - Simple searchable PDF: use an available page-aware extractor; when none is available, acquire and use a lightweight library such as `pypdf` under the protocol below.
 - Simple scanned PDF when a reusable searchable PDF is itself required: use an authorized OCRmyPDF installation with Tesseract and the required language data.
-- Complex layout, tables, columns, figures, office files, or complex scans: use Docling directly and retain its lossless JSON. Do not add OCRmyPDF first unless a searchable PDF is also a deliverable.
+- Complex layout, tables, columns, figures, office files, or complex scans: use an available reader that preserves the decisive structure. Select Docling when that capability is missing or its conversion saves substantial repeated work; when used, retain its lossless JSON. Do not add OCRmyPDF first unless a searchable PDF is also a deliverable.
 - HTML or a knowledge base: prefer an authorized structured connector to screenshots.
 - Spreadsheet: preserve sheet/table/row/column coordinates.
 - ZIP archive: run the bundled bounded extractor into a new directory, review its inventory, then route supported members individually. Never recurse into nested archives automatically.
@@ -22,15 +22,15 @@ OCR and layout extraction are fallible. Visually verify the original page for de
 
 ## Tool efficiency and setup
 
-- Prefer an available authorized MCP/connector when it preserves identity and locations; use it immediately when selected. When it is unavailable, follow the connector acquisition contract in [source routing](source-routing.md) instead of silently exporting or omitting the source. Export each remote source once and work locally only when that is the selected fallback.
+- Use the available authorized reader/connector that preserves needed identity and locations with the least total work. A sufficient local export need not be replaced by a connector. When a needed capability is unavailable, follow [source routing](source-routing.md); never silently omit an unsearched source. Reuse current authorized exports rather than reconverting them on every query.
 - Use semantic retrieval when exact/synonym search is insufficient and an authorized existing capability can help. For a repeated corpus where it materially improves coverage, acquire a scoped capability under the protocol below; do not install embeddings, a reranker, or a vector database for an ordinary one-off investigation.
-- Run `scripts/corpus doctor --write-dir EXISTING_DIR` only before the first local index in a new/changed runtime, after a Python/SQLite/FTS5/write failure, or on request. It checks Python 3.10+, the standard-library `sqlite3`, a real FTS5 query, and write access; no `sqlite3` executable is needed.
+- Run `scripts/corpus doctor --write-dir EXISTING_DIR` after a relevant runtime/write failure, on request, or when a known environment risk justifies a preflight. It is not mandatory before the first index: the launcher and command validate their requirements. It checks Python 3.10+, the standard-library `sqlite3`, a real FTS5 query, and write access; no `sqlite3` executable is needed.
 - The POSIX and Windows launchers choose a compatible interpreter and disable automatic runtime installation. They honor `DOC_RESEARCH_PYTHON` as an explicit interpreter path; the POSIX launcher also checks later/versioned Python executables instead of trusting the first incompatible `python3` in `PATH`. Use `scripts\corpus.cmd` only if a Windows shell does not resolve the sibling automatically.
 - Set the working directory on each tool call instead of issuing repeated `cd`. Save long conversion output and warnings beside the derived corpus; return only compact status and actionable errors. Retry a plausibly transient failure once, then change route or preserve the limitation.
 
 ## External-tool action matrix
 
-Classify only tools relevant to the selected source path. Announce the decision once; do not inventory every installed package.
+Classify only capabilities needed by the selected source path. These products are implementation options, not a required stack. Reuse an equivalent sufficient tool. Disclose material setup/access choices or limitations, not every routine selection; do not inventory installed packages.
 
 | Capability | Select when | Acquisition and verification | Fallback |
 | --- | --- | --- | --- |
@@ -49,9 +49,9 @@ Classify only tools relevant to the selected source path. Announce the decision 
 
 ## Missing capability protocol
 
-Probe only the selected path: baseline Python/SQLite/FTS5/write access; conditional `rg`, a page/table extractor, OCRmyPDF/Tesseract/languages, Docling, semantic retrieval, or a selected external connector.
+Probe only a missing or uncertain capability on the selected path. Python/SQLite/FTS5/write access is relevant only when the local helper is selected, not a preflight for direct reading. Do not probe tools already demonstrated to work in the current environment.
 
-If a selected tool is missing, first determine whether current authority permits an isolated, reversible install without elevation, credentials, license acceptance, uploads, or broader data access. If yes, install through the existing task/project environment, verify one representative operation, and use it immediately. Otherwise make one concrete authorization request containing the affected sources, expected gain, detected platform-specific command/setup action, scope, permissions/data transfer, verification step, and fallback limitation. Do not silently choose the fallback first, stop after installation without using the tool, or repeat the proposal in an unchanged environment.
+If a preferred product is missing but an available method meets the evidence requirements, use that method; installation is not a gate. If the missing capability is needed for correctness or offers a concrete net benefit after setup and verification, acquire it: use an authorized isolated install, verify one representative operation, then use it; otherwise make one concrete authorization request naming sources, expected gain, platform-specific action, permissions/data transfer, verification, and fallback limitation. Continue unaffected work. Do not silently lower evidence quality, install without using the tool, or repeat an unchanged proposal.
 
 ## Docling handoff
 

@@ -21,7 +21,6 @@ from .common import (
     database,
     emit_json,
     harden_database_permissions,
-    normalize_text,
     optional_research_text,
     required_record_id,
     required_research_text,
@@ -137,12 +136,10 @@ def federated_reference(result: dict[str, object]) -> dict[str, object]:
     return reference
 
 def federated_dedupe_key(result: dict[str, object]) -> str:
-    text = result.get("text")
+    content_hash = result.pop("_content_hash", None)
     source_hash = result.get("source_hash")
-    if isinstance(source_hash, str) and isinstance(text, str) and text.strip():
-        return "source-text:" + source_hash + ":" + hashlib.sha256(
-            normalize_text(text).encode("utf-8")
-        ).hexdigest()
+    if isinstance(source_hash, str) and isinstance(content_hash, str):
+        return "source-content:" + source_hash + ":" + content_hash
     return "locator:" + json.dumps(
         [
             result.get("corpus_id"),
@@ -151,6 +148,13 @@ def federated_dedupe_key(result: dict[str, object]) -> str:
         ensure_ascii=False,
         separators=(",", ":"),
     )
+
+
+def current_dedupe_filters(filters: dict[str, object]) -> dict[str, object]:
+    if filters.get("_dedupe_exact") and "_dedupe_identity" not in filters:
+        return {**filters, "_dedupe_identity": "full-content-v1"}
+    return filters
+
 
 def lookup_federated_receipt(
     connection: sqlite3.Connection,
@@ -166,15 +170,19 @@ def lookup_federated_receipt(
     ).fetchone()
     if row is None or row["catalog_fingerprint"] != fingerprint:
         return None
+    stored_filters = json.loads(row["filters_json"])
     if (
         row["query"] != query
         or row["mode"] != mode
-        or json.loads(row["filters_json"]) != filters
+        or current_dedupe_filters(stored_filters) != filters
         or json.loads(row["corpus_ids_json"]) != corpus_ids
     ):
         raise ValueError(
             "Federated receipt ID belongs to different search parameters; choose another ID"
         )
+    if stored_filters != filters:
+        # Snippet-based selections can omit distinct passages; recompute them.
+        return None
     item = dict(row)
     item["result_refs"] = json.loads(item.pop("result_refs_json"))
     item["member_receipts"] = json.loads(item.pop("member_receipts_json"))
@@ -209,8 +217,12 @@ def save_federated_receipt(
         "FROM federated_receipts WHERE receipt_id = ?",
         (receipt_id,),
     ).fetchone()
-    expected = (query, mode, encoded_filters, encoded_corpora)
-    if existing is not None and tuple(existing) != expected:
+    if existing is not None and (
+        existing["query"] != query
+        or existing["mode"] != mode
+        or current_dedupe_filters(json.loads(existing["filters_json"])) != filters
+        or existing["corpus_ids_json"] != encoded_corpora
+    ):
         raise ValueError(
             "Federated receipt ID belongs to different search parameters; choose another ID"
         )
@@ -222,6 +234,7 @@ def save_federated_receipt(
             catalog_fingerprint, created_at, updated_at, last_used_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(receipt_id) DO UPDATE SET
+            filters_json = excluded.filters_json,
             member_receipts_json = excluded.member_receipts_json,
             outcome = excluded.outcome,
             result_refs_json = excluded.result_refs_json,
@@ -292,6 +305,7 @@ def command_catalog_search(args: argparse.Namespace) -> int:
             **normalized_filters,
             "_limit": args.limit,
             "_dedupe_exact": args.dedupe_exact,
+            "_dedupe_identity": "full-content-v1" if args.dedupe_exact else None,
             "_max_per_source": args.max_per_source,
             "_offset": args.offset,
             "_allow_partial": args.allow_partial,
@@ -426,7 +440,7 @@ def command_catalog_search(args: argparse.Namespace) -> int:
         member_receipt: dict[str, object] = {}
         member_receipts.append(member_receipt)
         while True:
-            payload = search_payload(namespace)
+            payload = search_payload(namespace, include_content_hash=args.dedupe_exact)
             member_receipt.update(
                 {
                     "corpus_id": item["corpus_id"],

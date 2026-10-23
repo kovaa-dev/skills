@@ -10,7 +10,7 @@ Read this reference only when converting the selected `compact`, `balanced`, or 
 
 These are soft starting budgets, not caps on research rounds or prerequisites for a larger first read. Choose enough breadth and depth for the question: a table, amendment, enumeration, or parent/child constraint may need more context immediately. Keep each call inside the tool's resource limits, consume valid continuation, and refine queries as evidence reveals useful terms or cross-references. Do not mistake exhausted output for an exhausted source.
 
-Batch independent searches and reads with `evidence-pack`, `search-many`, or available parallel calls. Sequential refinement is normal when the next query depends on the previous result. Reuse current query receipts and exact verified findings, but retrieve again when the question, source generation, coverage, or needed context changes. No named-gap declaration or pack-first gate is required.
+Batch independent searches and reads with existing tools, `search-many`, or `evidence-pack` when the bundle reduces roundtrips without losing evidence. Sequential refinement is normal when the next query depends on the previous result. Reuse current notes, query receipts, and exact verified findings; retrieve only missing or affected material when question, generation, coverage, or needed context changes. No named-gap declaration or pack-first gate is required. Saving and reusing memory under the entrypoint's trigger is not an effort trade-off.
 
 ## Map profiles to existing controls
 

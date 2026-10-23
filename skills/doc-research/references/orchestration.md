@@ -12,11 +12,11 @@ scripts/corpus evidence-pack CORPUS_PATH QUESTIONS_PATH --db INDEX_PATH --task-r
 
 The helper returns one of three outcomes:
 
-- `receipt-only`: current verified findings for the requested question/scope are returned without searches, passage reopen, or a worker;
+- `receipt-only`: current saved findings for the requested question/scope are returned without searches, passage reopen, or a worker; unresolved/conflicted findings remain limitations, not verified answers;
 - `coordinator-direct`: bounded evidence is returned inline;
 - `low-overhead-worker`: stdout names `pack_path`, containing the materialized evidence for a fresh worker.
 
-Without a measured routing profile or runtime context signal, `auto` chooses coordinator interpretation. A cost estimate is not authorization to launch a worker. Use runtime capabilities and measured results; do not assume a model or reasoning downgrade will improve cost or quality.
+Without explicit worker startup/input/output costs, `auto` keeps coordinator interpretation. Parent context alone does not establish a cheap worker: unknown startup must not be treated as zero. Supply known parent context/remaining turns when estimating handoff costs. A cost estimate is not authorization to launch a worker. Use runtime capabilities and measured results; do not assume a model or reasoning downgrade will improve cost or quality.
 
 When runtime usage is available, pass `--parent-context-tokens`, `--expected-direct-turns`, and `--expected-delegated-parent-turns`, or use `--routing-profile` with measured relative costs:
 
@@ -40,7 +40,7 @@ Explicit routes support tests and recorded execution: `coordinator-warm` require
 
 ## Ownership and task boundaries
 
-The coordinator owns the question, authorized corpus, final synthesis, and one analytical state owner. Deterministic helpers own hashing, indexing, search receipts, locators, continuation, and structural extraction. Independent search/read operations can be batched or run in parallel; dependent refinement remains sequential.
+The coordinator owns the question, authorized corpus, final synthesis, and one analytical state owner, including a simple note when sufficient. Helpers own only their own structured state; ordinary notes and useful direct source reads need no helper. Batch independent search/read operations when this avoids model roundtrips without losing context; dependent refinement remains sequential. Apply the entrypoint's save trigger before a handoff, including after direct work.
 
 Delegate only a bounded independent interpretation, source partition, specialized extraction, or material verification when the task and environment authorize it. Use the smallest useful worker set; never start one worker per passage or routine lookup. Parallelism can reduce latency but does not establish token savings. Keep one writer per task receipt or research store, and do not maintain competing copies of findings and conflicts.
 
