@@ -28,9 +28,14 @@ class TextMemoryTest(unittest.TestCase):
 
     def save(self, **options):
         args = dict(source=self.source, memory=self.memory, source_hash=self.hash,
-                    scope="question A", answer='Answer: second "fact" (source line 2).',
-                    answer_file=None, basis="Checked original table", coverage="Line 2; no pending search",
-                    limits="Does not establish other cases", cite=["2"], quote=['2=second "fact"'])
+                    scope="question A", points_file=None, reviewed=["fact"])
+        point = dict(text=options.pop("answer", 'Answer: second "fact" (source line 2).'),
+                     status="confirmed", basis="Checked original table", coverage="Line 2; no pending search",
+                     limits="Does not establish other cases", cite=["2"], quote=['2=second "fact"'])
+        for key in tuple(point) + ("depends_on", "exact"):
+            if key in options:
+                point[key] = options.pop(key)
+        args["points"] = json.dumps(options.pop("points", {"fact": point}))
         args.update(options)
         output = io.StringIO()
         with redirect_stdout(output):
@@ -47,7 +52,7 @@ class TextMemoryTest(unittest.TestCase):
             warm = self.read(memory=self.memory, scope="question A", find=["second"])
         self.assertEqual(warm["memory"]["status"], "current")
         self.assertFalse(warm["lines"])
-        self.assertIn('second "fact"', json.loads(warm["memory"]["text"])["answer"])
+        self.assertIn('second "fact"', json.loads(warm["memory"]["text"])["points"]["fact"]["text"])
         self.assertEqual(before, (self.memory.read_bytes(), self.memory.stat().st_mtime_ns))
         self.assertFalse(self.save()["changed"])
         self.assertEqual(before, (self.memory.read_bytes(), self.memory.stat().st_mtime_ns))
@@ -75,7 +80,7 @@ class TextMemoryTest(unittest.TestCase):
                   cite=[], quote=[])
         with mock.patch.object(text_reader, "_select_ranges", side_effect=AssertionError("searched")):
             result = self.read(memory=self.memory, scope="missing item", find=["missing item"])
-        entry = json.loads(result["memory"]["text"])
+        entry = json.loads(result["memory"]["text"])["points"]["fact"]
         self.assertEqual(entry["status"], "unresolved")
         self.assertEqual(entry["limits"], "Not corpus-wide absence")
 
@@ -95,8 +100,8 @@ class TextMemoryTest(unittest.TestCase):
         else:
             self.fail("Memory continuation did not terminate")
         self.assertGreater(len(pages), 1)
-        assembled = json.loads("".join(pages))
-        self.assertEqual(assembled["answer"], answer)
+        assembled = json.loads("".join(pages))["points"]["fact"]
+        self.assertEqual(assembled["text"], answer)
         self.assertEqual(assembled["limits"], "Does not establish other cases")
         self.save(answer="changed answer")
         with self.assertRaisesRegex(ValueError, "Memory changed"):
@@ -132,7 +137,7 @@ class TextMemoryTest(unittest.TestCase):
                 result = self.read(memory=self.memory, scope=scope, find=["first"])
                 self.assertEqual(result["memory"]["status"], "candidates")
                 self.assertFalse(result["lines"])
-                entry = json.loads(result["memory"]["text"])["entries"]["question A"]
+                entry = json.loads(result["memory"]["text"])["entries"]["question A"]["points"]["fact"]
                 self.assertTrue(entry["source_current"])
                 self.assertEqual(entry["limits"], "Does not establish other cases")
 
@@ -156,10 +161,11 @@ class TextMemoryTest(unittest.TestCase):
         else:
             self.fail("Candidate continuation did not terminate")
         entries = json.loads("".join(pages))["entries"]
-        self.assertFalse(entries["question A"]["source_current"])
-        self.assertTrue(entries["question B"]["source_current"])
-        self.assertEqual(entries["question B"]["status"], "unresolved")
-        self.assertEqual(entries["question B"]["limits"], "Not proof of absence")
+        older, newer = (entries[key]["points"]["fact"] for key in ("question A", "question B"))
+        self.assertFalse(older["source_current"])
+        self.assertTrue(newer["source_current"])
+        self.assertEqual(newer["status"], "unresolved")
+        self.assertEqual(newer["limits"], "Not proof of absence")
 
     def test_quote_locator_collisions_and_foreign_files_fail_without_changes(self):
         for options in ({"quote": ["2=wrong quote"]}, {"cite": ["100"]},
@@ -178,9 +184,11 @@ class TextMemoryTest(unittest.TestCase):
         self.assertEqual(before, self.memory.read_bytes())
 
     def test_cli_save_and_read_and_alias_safety(self):
+        points = {"fact": {"text": "first fact", "status": "confirmed", "basis": "original",
+                           "coverage": "line 1", "cite": ["1"]}}
         saved = run_corpus_raw("save-answer", self.source, "--memory", self.root / "cli.json",
                                "--scope", "question", "--source-hash", self.hash,
-                               "--answer", "first fact", "--basis", "original", "--coverage", "line 1", "--cite", "1")
+                               "--points", json.dumps(points), "--reviewed", "fact")
         self.assertEqual(saved.returncode, 0, saved.stderr)
         warm = run_corpus_raw("read-text", self.source, "--memory", self.root / "cli.json", "--scope", "question")
         self.assertEqual(warm.returncode, 0, warm.stderr)
@@ -197,6 +205,105 @@ class TextMemoryTest(unittest.TestCase):
             with self.assertRaises((ValueError, OSError)):
                 self.read(memory=alias, scope="question A")
             self.assertEqual(self.source.read_bytes(), original)
+
+    def test_ambiguous_literal_never_promoted_by_save_or_warm_read(self):
+        self.source.write_text("Components: A, B, date, UUID\nPrinted: TX_A_ _B_date_UUID.xml\n", encoding="utf-8")
+        self.hash = text_reader.source_snapshot(self.source)[0]
+        points = {
+            "components": {"text": "Components are A, B, date, UUID", "status": "confirmed",
+                           "basis": "Read the component definition", "coverage": "line 1", "cite": ["1"]},
+            "template": {"text": "Possibly TX_A_B_date_UUID.xml", "status": "interpretation",
+                         "basis": "Whitespace normalization would produce this spelling", "coverage": "line 2",
+                         "limits": "Exact delimiters unresolved; do not use as a validated template", "cite": ["2"],
+                         "quote": ["2=TX_A_ _B_date_UUID.xml"], "exact": ["TX_A_B_date_UUID.xml"]},
+        }
+        self.save(points=points, reviewed=["components"])
+        before = self.memory.read_bytes()
+        with mock.patch.object(text_reader, "_source_lines", side_effect=AssertionError("reverified source")):
+            warm = self.read(memory=self.memory, scope="question A")
+        returned = json.loads(warm["memory"]["text"])["points"]
+        self.assertTrue(returned["components"]["reusable"])
+        self.assertFalse(returned["template"]["reusable"])
+        self.assertEqual(returned["template"]["status"], "interpretation")
+        self.assertFalse(self.save(points=points, reviewed=[])["changed"])
+        promoted = {**points["template"], "status": "confirmed"}
+        with self.assertRaisesRegex(ValueError, "exact literals"):
+            self.save(points={"template": promoted}, reviewed=["template"])
+        self.assertEqual(self.memory.read_bytes(), before)
+        # Verbatim spelling can be retained; the helper still does not certify its applicability.
+        literal = "TX_A_ _B_date_UUID.xml"
+        self.save(points={"template": {**promoted, "text": "Printed spelling: " + literal,
+                                      "exact": [literal]}}, reviewed=["template"])
+
+    def test_correction_invalidates_only_dependents_and_requires_explicit_review(self):
+        base = dict(text="first fact", status="confirmed", basis="Read source", coverage="line 1", cite=["1"])
+        points = {"base": base, "derived": {**base, "depends_on": ["base"]},
+                  "downstream": {**base, "depends_on": ["derived"]}, "independent": base}
+        self.save(points=points, reviewed=list(points))
+        before = self.memory.read_bytes()
+        correction = {**base, "text": "Corrected first fact"}
+        with self.assertRaisesRegex(ValueError, "actual analyst review"):
+            self.save(points={"base": correction}, reviewed=[])
+        self.assertEqual(before, self.memory.read_bytes())
+        result = self.save(points={"base": correction}, reviewed=["base"])
+        self.assertEqual(set(result["invalidated"]), {"derived", "downstream"})
+        saved = json.loads(self.memory.read_text())["entries"]["question A"]["points"]
+        self.assertEqual(saved["independent"]["status"], "confirmed")
+        self.assertEqual(saved["derived"]["status"], "unresolved")
+        self.assertEqual(len(saved), 4)  # Correction replaces the point, not an appended conflicting copy.
+        self.assertIn("review_required", saved["downstream"])
+        with self.assertRaisesRegex(ValueError, "actual analyst review"):
+            self.save(points={"derived": points["derived"]}, reviewed=[])
+        self.save(points={key: points[key] for key in ("derived", "downstream")}, reviewed=["derived", "downstream"])
+        self.assertFalse(self.save(points={"base": correction}, reviewed=[])["changed"])
+
+    def test_invalid_dependencies_and_unsupported_confirmation_leave_memory_untouched(self):
+        self.save()
+        before = self.memory.read_bytes()
+        base = dict(text="fact", status="confirmed", basis="Read source", coverage="line 1", cite=["1"])
+        for points in (
+            {"a": {**base, "depends_on": ["missing"]}},
+            {"a": {**base, "depends_on": ["b"]}, "b": {**base, "depends_on": ["a"]}},
+            {"a": {**base, "status": "interpretation", "limits": "Uncertain"}, "b": {**base, "depends_on": ["a"]}},
+            {"a": {**base, "status": "unresolved"}},
+            {"a": {**base, "status": []}},
+            {"a": {key: value for key, value in base.items() if key != "status"}},
+        ):
+            with self.assertRaises(ValueError):
+                self.save(points=points, reviewed=list(points))
+            self.assertEqual(self.memory.read_bytes(), before)
+
+    def test_duplicate_input_and_whole_answer_memory_fail_closed(self):
+        self.save()
+        before = self.memory.read_bytes()
+        result = run_corpus_raw("save-answer", self.source, "--memory", self.memory,
+                                "--scope", "question A", "--source-hash", self.hash,
+                                "--points", '{"fact": {}, "fact": {}}')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Duplicate", result.stderr)
+        self.assertEqual(before, self.memory.read_bytes())
+        self.memory.write_text(json.dumps({"kind": text_memory.NOTE_KIND, "source": str(self.source),
+                                           "entries": {"old": {"answer": "Whole answer", "status": "supported"}}}))
+        old = self.memory.read_bytes()
+        with self.assertRaisesRegex(ValueError, "point-scoped"):
+            self.read(memory=self.memory)
+        with self.assertRaisesRegex(ValueError, "point-scoped"):
+            self.save()
+        self.assertEqual(old, self.memory.read_bytes())
+
+    def test_partial_refresh_does_not_relabel_untouched_points_current(self):
+        self.save()
+        self.source.write_text(self.source.read_text() + "new evidence\n", encoding="utf-8")
+        self.hash = text_reader.source_snapshot(self.source)[0]
+        new = dict(text="new evidence", status="confirmed", basis="Read appended line", coverage="line 5", cite=["5"])
+        self.save(points={"new": new}, reviewed=["new"])
+        result = self.read(memory=self.memory, scope="question A", find=["first"])
+        self.assertEqual(result["memory"]["status"], "partial")
+        self.assertFalse(result["lines"])
+        points = json.loads(result["memory"]["text"])["points"]
+        self.assertFalse(points["fact"]["source_current"])
+        self.assertFalse(points["fact"]["reusable"])
+        self.assertTrue(points["new"]["reusable"])
 
 
 if __name__ == "__main__":
