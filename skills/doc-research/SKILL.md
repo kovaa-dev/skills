@@ -15,7 +15,7 @@ Read known memory before source-content retrieval. Establish the **current** sou
 - **Partial:** retrieve only missing or affected evidence; keep valid findings and unresolved limits.
 - **Absent, stale, disputed, or unverified:** establish the affected evidence from originals.
 
-Combine lookup, freshness and first retrieval instead of separate list/hash/search turns. For local text the reader does this without an index. Batch terms covering the requested topics. For Markdown with large embedded code/schema blocks, start with `--prose`: it selects whole prose paragraphs and matching table rows with headers/titles, retaining original spelling and line numbers without loading the code duplicates.
+Combine lookup, freshness and first retrieval instead of separate list/hash/search turns. For local text the reader does this without an index. Batch terms covering the requested topics. For Markdown with large embedded code/schema blocks, start with `--prose`: it diversifies results across terms and returns original paragraphs/tables with titles and line numbers, without loading code duplicates. Results are not in source order; use the returned continuation, not the largest line number.
 
 ```bash
 scripts/corpus read-text SOURCE --memory-dir NOTES --prose --find TOPIC --find OTHER_TOPIC

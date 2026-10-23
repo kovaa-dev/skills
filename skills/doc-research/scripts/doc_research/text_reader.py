@@ -63,10 +63,10 @@ def _select_ranges(lines: list[str], requested: list[str], find: list[str],
 
 
 def _prose_ranges(lines: list[str], requested: list[str], find: list[str],
-                  context: int) -> tuple[list[tuple[int, int]], int]:
+                  context: int) -> tuple[list[int], int]:
     """Select original prose, not a generated summary or a schema substitute.
 
-    Markdown table rows retain their header and preceding title; paragraphs are
+    Markdown tables retain their header and preceding title; paragraphs are
     kept whole. Explicitly scoped code is still excluded in this opt-in view.
     The ordinary reader remains the way to inspect code/use-site constraints.
     """
@@ -84,8 +84,9 @@ def _prose_ranges(lines: list[str], requested: list[str], find: list[str],
             code.add(number)
             fence = (match[1][0], len(match[1]))
 
-    selected: set[int] = set()
-    omitted_matches = 0
+    in_scope = {n for start, end in allowed for n in range(start, end + 1)}
+    omitted_matches = sum(n in code and (not needles or any(term in lines[n - 1].casefold() for term in needles))
+                          for n in in_scope)
     headings: list[int] = []
     heading_at: dict[int, tuple[int, ...]] = {}
     for number, line in enumerate(lines, 1):
@@ -97,35 +98,62 @@ def _prose_ranges(lines: list[str], requested: list[str], find: list[str],
                 headings.append(number)
         heading_at[number] = tuple(headings)
 
-    for start, end in allowed:
-        for number in range(start, end + 1):
-            if needles and not any(term in lines[number - 1].casefold() for term in needles):
+    # Parse each block once. A whole table preserves conditions in neighbouring
+    # fields; repeatedly scanning backwards for every matching row is quadratic.
+    blocks: list[tuple[list[int], set[int]]] = []
+    number = 1
+    while number <= len(lines):
+        if number in code or not lines[number - 1].strip():
+            number += 1
+            continue
+        start = number
+        table = lines[number - 1].lstrip().startswith("|")
+        number += 1
+        while number <= len(lines) and number not in code and lines[number - 1].strip():
+            line = lines[number - 1].lstrip()
+            if line.startswith("|") != table or line.startswith("#"):
+                break
+            number += 1
+        end = number - 1
+        matches = {i for i, term in enumerate(needles)
+                   if any(term in lines[n - 1].casefold() for n in range(start, end + 1) if n in in_scope)}
+        if not matches and (needles or not any(n in in_scope for n in range(start, end + 1))):
+            continue
+        selected = set(heading_at[start])
+        if table:
+            selected.update(n for n in range(max(1, start - 6), start)
+                            if n not in code and lines[n - 1].strip())
+        selected.update(n for n in range(max(1, start - context), min(len(lines), end + context) + 1)
+                        if n not in code)
+        blocks.append((sorted(selected), matches))
+
+    # Diversify by query rather than spending every page on the first document
+    # section. There is no top-k cutoff: all selected evidence remains reachable.
+    queues = [[i for i, (_, matches) in enumerate(blocks) if term in matches]
+              for term in range(len(needles))] if needles else [list(range(len(blocks)))]
+    for queue in queues:
+        queue.sort(key=lambda i: (-len(blocks[i][1]), i))
+    positions = [0] * len(queues)
+    emitted_blocks: set[int] = set()
+    emitted_lines: set[int] = set()
+    ordered: list[int] = []
+    while True:
+        advanced = False
+        for q, queue in enumerate(queues):
+            while positions[q] < len(queue) and queue[positions[q]] in emitted_blocks:
+                positions[q] += 1
+            if positions[q] == len(queue):
                 continue
-            if number in code:
-                omitted_matches += 1
-                continue
-            if not lines[number - 1].strip():
-                continue
-            selected.update(heading_at[number])
-            low = high = number
-            if lines[number - 1].lstrip().startswith("|"):
-                # Keep each matching row verbatim and the column names. Do not
-                # copy every row of a large table for a single matching field.
-                table_start = number
-                while table_start > 1 and lines[table_start - 2].lstrip().startswith("|") and table_start - 1 not in code:
-                    table_start -= 1
-                selected.update(range(table_start, min(table_start + 2, len(lines) + 1)))
-                # Markdown table labels/titles often aren't ATX headings.
-                selected.update(n for n in range(max(1, table_start - 6), table_start)
-                                if n not in code and lines[n - 1].strip())
-            else:
-                while low > 1 and lines[low - 2].strip() and low - 1 not in code and not lines[low - 2].lstrip().startswith(("|", "#")):
-                    low -= 1
-                while high < len(lines) and lines[high].strip() and high + 1 not in code and not lines[high].lstrip().startswith(("|", "#")):
-                    high += 1
-            selected.update(n for n in range(max(1, low - context), min(len(lines), high + context) + 1)
-                            if n not in code)
-    return _merge([(n, n) for n in selected]), omitted_matches
+            index = queue[positions[q]]
+            emitted_blocks.add(index)
+            for n in blocks[index][0]:
+                if n not in emitted_lines:
+                    ordered.append(n)
+                    emitted_lines.add(n)
+            advanced = True
+        if not advanced:
+            break
+    return ordered, omitted_matches
 
 
 def _is_link(info: os.stat_result) -> bool:
@@ -319,32 +347,35 @@ def command_read_text(args: object) -> int:
         if args.after_line > len(lines):
             raise ValueError("--after-line is outside the source")
         if prose:
-            ranges, omitted = _prose_ranges(lines, args.lines, args.find, context)
-            result["view"] = "prose; fenced code excluded, use ordinary view for schema/code evidence"
+            numbers, omitted = _prose_ranges(lines, args.lines, args.find, context)
+            result["view"] = "prose; query-diversified order; fenced code excluded; ordinary view for code evidence"
             result["excluded_code_matches"] = omitted
+            result["total_selected_lines"] = len(numbers)
+            if args.after_line:
+                if args.after_line not in numbers:
+                    raise ValueError("--after-line is not in this selection; keep selectors unchanged")
+                numbers = numbers[numbers.index(args.after_line) + 1:]
         else:
             ranges = _select_ranges(lines, args.lines, args.find, context)
-        result["total_selected_lines"] = sum(end - start + 1 for start, end in ranges)
+            result["total_selected_lines"] = sum(end - start + 1 for start, end in ranges)
+            numbers = [n for start, end in ranges for n in range(max(start, args.after_line + 1), end + 1)]
         selected: list[dict[str, object]] = []
         result["lines"] = selected
         # Reserve the largest possible cursor/count before adding any content.
         result["next_after_line"] = max(1000, len(lines))
         used = len(_json(result)) + NEWLINE_CHARS
         finished = False
-        for start, end in ranges:
-            for number in range(max(start, args.after_line + 1), end + 1):
-                item = {"number": number, "text": lines[number - 1]}
-                size = len(_json(item)) + (1 if selected else 0)
-                if used + size > budget:
-                    if not selected:
-                        raise ValueError(f"Line {number} cannot fit; use --max-chars at least {used + size}")
-                    result["next_after_line"] = selected[-1]["number"]
-                    finished = True
-                    break
-                selected.append(item)
-                used += size
-            if finished:
+        for number in numbers:
+            item = {"number": number, "text": lines[number - 1]}
+            size = len(_json(item)) + (1 if selected else 0)
+            if used + size > budget:
+                if not selected:
+                    raise ValueError(f"Line {number} cannot fit; use --max-chars at least {used + size}")
+                result["next_after_line"] = selected[-1]["number"]
+                finished = True
                 break
+            selected.append(item)
+            used += size
         if not finished:
             result["next_after_line"] = None
     output = _json(result)

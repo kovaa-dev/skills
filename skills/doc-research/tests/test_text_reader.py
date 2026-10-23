@@ -23,7 +23,7 @@ class TextReaderTest(unittest.TestCase):
             self.assertEqual(selected[7], "| Field | Rule |")
             self.assertEqual(selected[9], "| Mass | kg  required |")
             self.assertEqual(selected[17], "continues on this line.")
-            self.assertNotIn(10, selected)
+            self.assertEqual(selected[10], "| Other | optional |")
             self.assertNotIn(13, selected)
             raw, _ = self.read(source, find=["Mass"], context=0)
             self.assertIn(13, [line["number"] for line in raw["lines"]])
@@ -52,6 +52,24 @@ class TextReaderTest(unittest.TestCase):
                 hit, _ = self.read(source, prose=True, memory_dir=memory, find=["Target"], context=None)
             self.assertFalse(hit["lines"])
             self.assertEqual(hit["memory"]["status"], "hit")
+
+    def test_prose_diversifies_topics_without_top_k_loss(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "spec.md"
+            source.write_text("# First\n\n" + "\n\n".join(f"Common field {i}" for i in range(80))
+                              + "\n\n# Last\n\nRare condition is not optional.\n", encoding="utf-8")
+            all_lines, cursor, generation = [], 0, None
+            while True:
+                result, _ = self.read(source, prose=True, context=None, find=["Common", "Rare"],
+                                      max_chars=950, after_line=cursor, source_hash=generation)
+                if not all_lines:
+                    self.assertTrue(any("Rare condition" in row["text"] for row in result["lines"]))
+                all_lines.extend(result["lines"])
+                cursor, generation = result["next_after_line"], result["source_hash"]
+                if cursor is None:
+                    break
+            self.assertEqual(len({row["number"] for row in all_lines}), len(all_lines))
+            self.assertEqual(sum("Common field" in row["text"] for row in all_lines), 80)
 
     def read(self, source: Path, **options: object) -> tuple[dict, str]:
         values = dict(source=source, lines=[], find=[], context=3, max_chars=24000,
