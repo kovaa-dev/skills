@@ -33,7 +33,10 @@ or disputed contract. Independent already-authorized work may continue.
    with stable requirement IDs, applicability/revision, acceptance method, rationale,
    and honest definition/verification state. Reuse matching obligations rather than
    creating one requirement per checkbox. Preserve technical decisions in their owner.
-   Record hypotheses as draft/questions, not accepted requirements.
+   Record hypotheses as draft/questions and coherent unaccepted alternatives as proposed,
+   targeting the current contract. Preserve proven obsolete material as nonbinding history
+   with a successor/retirement notice under the [lifecycle](requirements.md#retiring-stale-material);
+   conversion must not resurrect it as a current obligation.
 3. **Capture actual work.** Add/reuse lean queue entries only for remaining independently
    useful outcomes. Research is work with an answer/artifact, not a fake product
    requirement. Map waits to specific supplying work/results; preserve unresolved
@@ -65,7 +68,8 @@ Do not reopen or invent remaining work for a completed outcome merely to populat
 Preserve each independent obligation, accepted exception, question, decision, meaningful
 prerequisite, deferred result, and verification record. A task can map to several
 requirements and work entries; several tasks can map to one shared requirement.
-Conflicts remain unresolved with both formulations visible; migration does not choose
+Classify current, proposed, and historical applicability before calling two formulations
+conflicting. Unresolved current conflicts remain visible; migration does not choose
 one by recency, severity, or convenience.
 
 If a necessary prerequisite is still legacy, convert its minimum relevant contract/work

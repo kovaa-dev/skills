@@ -35,7 +35,8 @@ Use only fields needed for this contract; no per-line IDs or universal empty hea
 
 Distinguish:
 
-- definition state: draft, accepted, superseded, or retired;
+- definition state: draft, proposed, accepted, rejected, withdrawn, superseded, or retired;
+  use the [lifecycle meanings](#current-contract-and-nonbinding-material) below;
 - implementation/verification state: unknown, not implemented, partial, verified, or
   violated, with a locator/version where established;
 - work readiness: belongs to the queue, not the requirement's definition state.
@@ -55,6 +56,111 @@ References in current prose use the stable ID/anchor. Verification and delivery 
 identify the exact revision/baseline they checked. Do not carry an old green result
 forward as proof of a changed requirement. A requirements change may need work; it does
 not mechanically create a new queue entry or reopen a historical completed entry.
+
+## Current contract and nonbinding material
+
+Definition state is not a work status. Use compatible project tokens with these meanings:
+
+| State | Meaning and use |
+| --- | --- |
+| draft | Desired behavior or acceptance is incomplete; not a binding obligation. |
+| proposed | A coherent candidate awaiting a decision; may intentionally contradict the current contract. |
+| accepted | Agreed obligation, binding only for its stated applicability and activation condition. |
+| rejected | A candidate was considered and declined; retain the reason/source. |
+| withdrawn | A candidate was dropped without becoming a binding obligation; retain the reason/source. |
+| superseded | An accepted obligation/revision was replaced in a stated scope; link the successor and handoff boundary. |
+| retired | An accepted obligation ceased to apply without a successor; record the accepted reason and boundary. |
+
+Apply this distinction to requirements, decisions, and the rationale they cite. A proposal
+in an accepted specification needs its own explicit nonbinding state; it must not inherit
+acceptance from the file. An archive directory or old date alone does not establish state.
+
+Before starting/resuming work or using any found text as authority, resolve its canonical
+owner, definition state, acceptance source, revision, and applicability. Follow replacement
+notices to the current owner. Missing/looping redirects or incompatible successors leave
+only the affected authority question unresolved. Search snippets, old tasks, copied checklists, and cached
+context are locators, not independent authority. Read enough surrounding metadata to
+distinguish current text from candidates and history. Recheck at a material contract change;
+do not let an earlier context snapshot override an accepted update.
+
+Only accepted obligations applicable to the target baseline constrain ordinary delivery.
+Draft/proposed alternatives and rejected/withdrawn/superseded/retired text can explain a
+choice or investigation; they do not reintroduce obligations into that baseline.
+Unknown or contradictory acceptance/applicability remains an explicit question: do not
+pick the newest file, trust the folder name, or infer retirement from implementation.
+
+An accepted future replacement must state the handoff condition. Keep the previous
+contract applicable until that condition holds, and retain it for older supported
+versions/modes where needed. Mark supersession per affected scope/baseline rather than
+globally disabling an obligation still required elsewhere. Historical acceptance and
+verification retain their original revision and scope.
+
+Classify an apparent contradiction before resolving it: two current obligations need
+[conflict resolution](#conflicts-and-importance); a candidate versus the current contract
+needs a proposal decision; obsolete text versus the current contract needs route/history
+cleanup. Do not present all three as competing current requirements.
+
+## Proposed replacements
+
+Keep an unaccepted change separate from the accepted formulation. A candidate revision
+of the same obligation can be a named subsection or proposal document targeting the
+existing ID and semantic revision; do not overwrite the accepted text or issue a second
+current R-ID merely for a competing wording. A genuinely different replacement may
+have its own requirement ID. A technical alternative belongs in its decision owner.
+
+State the candidate's target ID/revision and scope, proposed behavior, rationale, material
+questions/decision criteria, and pending acceptance. Use a relation such as "proposes to
+replace", not an effective "supersedes". Link back to the current contract. Add an owner
+or revisit trigger when known/useful; do not create a new registry or queue entry for
+every idea. Rejected/withdrawn alternatives remain nonbinding history with their reason.
+
+A conflicting proposal alone does not block repair or implementation of the current
+accepted contract. Evaluation/research may be ready independently, and an explicitly
+authorized experiment may explore the candidate; neither accepts it for ordinary
+delivery or waives the current production contract. A queue priority/status, completed
+experiment, promising benchmark, or proposal timestamp is not acceptance.
+
+When the decision is made, first compare the candidate against the then-current target
+revision and preserved obligations; an old baseline must not silently undo intervening
+changes. Record acceptance or rejection/withdrawal at the owning contract/decision.
+For an accepted change, publish the semantic revision or successor, acceptance source,
+scope and activation boundary, then reconcile affected checks, references, and unfinished
+work. Supersede the prior meaning only where/when the accepted handoff applies. Reopening
+a rejected/withdrawn alternative requires an explicit new review, not incidental retrieval.
+
+## Retiring stale material
+
+Review touched material during ordinary work/grooming, affected contract changes, and
+scoped audits/migrations. Do not require a full backlog sweep or periodic service.
+Age, lack of recent implementation, an abandoned task, or a new proposal does not
+authorize retiring an accepted obligation; use an accepted replacement/retirement,
+an already accepted expiry condition, or an authorized decision.
+
+Within the affected scope:
+
+1. Establish whether the text is still applicable, a duplicate projection, a candidate,
+   or history. Preserve unresolved unique obligations/questions rather than calling
+   inconvenient content garbage. If current authority is unclear, resolve only the
+   affected decision/work; do not silently downgrade the requirement.
+2. For established supersession/retirement, record state, reason/date/source, affected
+   scope, and successor or explicit no-successor outcome at the original ID/anchor.
+   Keep a visible historical/nonbinding notice beside retained old text or on its
+   archive page. Preserve stable IDs, inbound links, and meaningful history; do not
+   reuse IDs or delete sources without the normal cleanup authority/recovery.
+3. Update affected active navigation, instructions/templates, copied summaries, and
+   current-contract links to the canonical owner. Keep proposal and history routes
+   visibly separate where they exist; same-file sections are sufficient. Existing
+   search/index tools may filter them from default current-contract views, but the
+   agent must still check state when retrieving them. No new tool is implied.
+4. Reconcile unfinished work and prerequisite links against the applicable replacement:
+   reuse/re-scope existing entries, or cancel obsolete work with a reason. Preserve
+   done/cancelled results and verification of the original baseline; never turn them
+   into proof of the replacement. Identify needed check/code changes as work rather
+   than claiming that a documentation edit changed the implementation.
+
+Correcting a proven stale route or recording an already accepted retirement needs no
+new product decision. Deciding that a still-accepted obligation should be dropped does.
+Repeated cleanup follows the existing current owner/notices without duplicating records.
 
 ## Shared rationale and decisions
 
@@ -112,9 +218,10 @@ gap; run broader affected checks when a concrete unresolved concern justifies th
 
 ## Conflicts and importance
 
-Before accepting a new or changed requirement, compare it with applicable accepted
-contracts in the affected area. Compare actor, object, condition/mode, time/version,
-observable result, bounds, and normative strength. Different modes or an explicitly
+Before accepting a new or changed requirement, resolve the
+[current contract and nonbinding material](#current-contract-and-nonbinding-material),
+then compare it with applicable accepted contracts in the affected area. Compare actor,
+object, condition/mode, time/version, observable result, bounds, and normative strength. Different modes or an explicitly
 superseded revision are not simultaneous contradictory obligations.
 
 Separate obligatory conditions from optimization goals/preferences. A strict cost

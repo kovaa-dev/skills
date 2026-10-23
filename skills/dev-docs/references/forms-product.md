@@ -69,3 +69,42 @@ gets a new ID, not a renamed completed task.
 Shared rationale can be a named block without an extra file/ID. A technical choice belongs
 in an existing decision block or [decision form](forms-decisions.md) when independently useful.
 Work to realize this contract belongs in the [queue](forms-technical.md).
+
+## A proposed revision and a historical redirect
+
+When proposing a revision to an existing accepted R-002, retain its accepted formulation.
+A separate candidate block can live in the same specification; it overrides any inherited
+accepted metadata. Illustrative only; use actual IDs/revisions and known facts:
+
+```md
+## Proposed change to R-002
+
+Definition: proposed. Target: R-002 revision 3, <link to current accepted formulation>.
+Proposes to replace: <exact behavior/scope; no effective supersession yet>.
+Rationale: <problem and expected benefit, with sources or labeled hypothesis>.
+
+Candidate: <alternative behavior, conditions and acceptance method>.
+Acceptance source: pending.
+Decision questions: <material trade-offs and criteria>.
+Revisit: <known owner/trigger when useful>.
+```
+
+An optimization proposal such as WebSocket delivery can coexist with the current
+cross-device settings contract. Neither a candidate implementation nor an experiment
+silently waives the currently accepted propagation/offline guarantees.
+
+For an established replacement, preserve an old anchor with a short notice rather than
+leaving historical wording looking current:
+
+```md
+###### R-017
+
+Definition: superseded in <scope/version>; historical, nonbinding for <current target>.
+Successor: <link to current requirement/revision>.
+Changed: <date, reason and acceptance source>.
+Historical formulation/results: <exact locator; retain original applicability>.
+```
+
+For retirement without a replacement, state retired and why there is no successor.
+Apply [the lifecycle](requirements.md#retiring-stale-material); do not use this notice to
+invent acceptance or disable obligations still applicable to supported baselines.

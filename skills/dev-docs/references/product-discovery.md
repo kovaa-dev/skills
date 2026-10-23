@@ -30,13 +30,16 @@ Grooming has two outputs:
 
 1. A coherent specification: desired behavior/result, rationale, applicability, examples,
    constraints, acceptance, conflicts, implementation prerequisites, and open questions.
-   Agreed obligations become accepted; uncertain desired outcomes remain draft.
+   Agreed obligations become accepted; uncertain desired outcomes remain draft and
+   coherent alternatives awaiting a decision remain proposed.
 2. A prepared queue: independently useful deliverables, priorities, exact prerequisite
    suppliers, owner/authority, target, and links to acceptance in the owning contract/artifact.
 
 Shared rationale belongs in one named block. Requirements in different specifications
 can refer to the same reason or decision without depending on one another. Check the
 affected area for conflicting or duplicate obligations before accepting new ones.
+Use the [proposal/retirement lifecycle](requirements.md#proposed-replacements) to review
+candidates and stale material in the touched area without dropping accepted obligations.
 Do not turn every grooming question into a work item.
 
 Knowing what is wanted does not require knowing every implementation detail.

@@ -30,6 +30,8 @@ workflow as the default.
 3. Continue from the resulting specification/requirement and queue entry, not the old
    card. Reuse an existing canonical record and conversion mapping before creating one.
    Do not migrate unrelated linked history merely because it was encountered.
+   Resolve [current contracts, proposals, and history](references/requirements.md#current-contract-and-nonbinding-material)
+   before treating found text as binding; follow retirement/replacement notices.
 4. Do not invent accepted requirements, owners, constraints, implementation evidence,
    approval, or missing historical facts. Preserve unknowns as questions.
 
@@ -43,7 +45,7 @@ rewrite an installed pinned copy or every consuming project.
 - Canonical ownership, decision approval, history, proportionality, and document
   granularity: [documentation governance](references/documentation.md).
 - Requirements, specification files, stable IDs, revisions, rationale, applicability,
-  implementation prerequisites, conflicts, and impact analysis:
+  implementation prerequisites, proposal/retirement lifecycle, conflicts, and impact analysis:
   [requirements](references/requirements.md).
 - Work selection, readiness, cross-queue waits, research and non-code results,
   completion/history, and delivery targets: [work queues](references/work-queue.md).
@@ -75,7 +77,7 @@ requirements and queue entry, then reconcile documentation with the delivered re
 Preserve compatible project conventions without requiring adoption. A file rewrite or
 whole-repository reorganization is not implied by this routine path.
 
-- **discover** — refine an idea/current product into draft or accepted requirements,
+- **discover** — refine an idea/current product into draft, proposed, or accepted requirements,
   open questions, and the nearest useful deliverable. Groom specifications and prepare
   work separately; unknown implementation can become research without changing an
   accepted product requirement to draft. Respect discussion/read-only mode.
@@ -111,7 +113,8 @@ or artifact; the queue holds a concise result link. Historical completion is not
 of the current revision. Research completion is not implementation completion.
 
 Check affected links/anchors, ID uniqueness, requirement/work dependencies, canonical
-queue ownership, conversion redirects, and current versus historical applicability.
+queue ownership, conversion/retirement redirects, proposal separation, and current versus
+historical applicability.
 Successful lint does not prove semantic compatibility. State unconverted scope, unresolved
 conflicts, missing sources, and verification limits honestly.
 

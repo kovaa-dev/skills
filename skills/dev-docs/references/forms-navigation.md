@@ -20,6 +20,10 @@ Illustrative links below are placeholders for documents that actually exist:
 ```
 
 Add only existing targets. No empty layer/decision registry is needed.
+Group current contracts, proposals under consideration, and history visibly when those
+routes exist; sections of the same document are enough. Historical links retain their
+baseline, while ordinary execution links resolve to the applicable current owner.
+Search results still require the [state/applicability check](requirements.md#current-contract-and-nonbinding-material).
 
 ## Multiple queues and views
 

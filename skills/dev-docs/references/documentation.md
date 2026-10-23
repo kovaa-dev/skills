@@ -54,7 +54,8 @@ When sources disagree, classify scope, applicability, acceptance, and historical
 current state. Explicit new user decisions replace earlier ones only in their stated scope.
 A proposal, later timestamp, technical choice, or code observation does not override an
 accepted product obligation. Delivered behavior is a preservation default, not automatic
-proof of the desired contract. Follow [conflict resolution](requirements.md#conflicts-and-importance);
+proof of the desired contract. Resolve [current, proposed, and obsolete material](requirements.md#current-contract-and-nonbinding-material)
+before [conflict resolution](requirements.md#conflicts-and-importance);
 do not select a convenient source or weaken another obligation for implementation convenience.
 
 ### Product decision history
@@ -159,8 +160,9 @@ micro-documents.
 
 1. Read applicable instructions/settings and locate the selected outcome.
 2. If legacy/uncaptured, follow [on-touch conversion](legacy-transition.md) before continuing.
-3. Read the owning requirement/specification, acceptance, rationale/decisions, and direct
-   prerequisites needed for this result.
+3. Resolve the owning requirement's current revision, state, and applicability; read its
+   acceptance, rationale/decisions, and direct prerequisites needed for this result.
+   Follow replacement notices; proposals/history are context, not current obligations.
 4. Identify changed/preserved contracts and relevant consumers, including cross-cutting
    ownership, security, durability, and operational constraints.
 5. Use headings/search and targeted locators; load only relevant versions/history and
@@ -191,7 +193,9 @@ policy and must not be silently disabled. Do not invent unavailable commands/too
 Follow the release policy for changelogs/versions; never manually edit generated fields
 merely because documentation changed. Preserve history through accessible immutable
 revisions when appropriate, with correct locators. Deletion needs explicit authority
-and verified recovery; archived text does not remain active policy.
+and verified recovery; archived text does not remain active policy. Apply the
+[stale-material lifecycle](requirements.md#retiring-stale-material) to remove obsolete
+routes without discarding unresolved obligations or treating proposals as replacements.
 
 Register significant unresolved/deferred bugs, findings, and assigned ideas under
 [maintenance](maintenance.md). An optional findings register describes observations and

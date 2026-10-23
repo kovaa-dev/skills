@@ -21,7 +21,9 @@ where they retain original content safely. Do not recreate historical sources fr
 ## Perform the transition
 
 1. **Classify and reconcile.** Separate obligations, rationale/decisions, questions,
-   work, source facts, and verification. Check accepted contracts for conflicts before
+   work, source facts, and verification. Resolve [current/proposed/historical state](requirements.md#current-contract-and-nonbinding-material)
+   and replacement lineage; preserve candidates as candidates and obsolete text as history,
+   not newly accepted obligations. Check applicable accepted contracts for conflicts before
    consolidating; expose both formulations and resolve only the affected choices under
    [decision governance](documentation.md#decision-approval).
 2. **Map meaning to destinations.** Each obligation has one canonical specification/ID;
@@ -47,8 +49,8 @@ where they retain original content safely. Do not recreate historical sources fr
    Keep explicit on-touch routing for every residual unconverted record.
 6. **Verify the entire agreed scope.** Reconcile source-to-destination coverage,
    requirement/work graph integrity, all relevant exceptions/questions/results, current
-   versus historical applicability, and affected links/checks. List residual sources and
-   unresolved conflicts; a partial conversion is not a completed full migration.
+   versus historical applicability, proposal targets, retirement redirects, and affected
+   links/checks. List residual sources and unresolved conflicts; a partial conversion is not a completed full migration.
 
 Progress and a compact source-to-requirement/work/result mapping belong with the migration
 work's result. A temporary detailed coverage file is appropriate for a full/large

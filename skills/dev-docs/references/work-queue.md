@@ -49,6 +49,12 @@ A short execution brief restores the agreed result, affected/preserved contracts
 checks. The initial user request may already authorize this work; do not add a redundant
 confirmation merely for a status change. New choices follow decision governance.
 
+Before execution, resolve the linked contract's current revision/state and applicability
+under the [requirement lifecycle](requirements.md#current-contract-and-nonbinding-material).
+Ready proposal-evaluation work is not authority to deliver an unaccepted replacement.
+If the target changed or was retired, reconcile the unfinished entry before continuing;
+keep historical completion against its original baseline.
+
 Do not duplicate canonical status in a card plus an index. If a project uses generated
 views, they project the canonical entry. A manual secondary view contains links, not an
 independently maintained copy of status, dependencies, or acceptance.

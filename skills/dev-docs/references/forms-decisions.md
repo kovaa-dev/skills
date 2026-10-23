@@ -102,6 +102,14 @@ a verification record that can only exist after implementing the approved choice
 ```
 
 TDs/ADRs do not contain phases, execution checklists, or a second work queue. Decision
-dependencies link only to decisions. For `superseded`, specify the reason, date, and
-canonical successor decision, if one exists; if rejected without a replacement, state
-that explicitly. Do not leave two active versions of a contract.
+dependencies link only to decisions. For `superseded`, specify the reason, date,
+applicability boundary, and canonical successor decision. Rejected/withdrawn candidates
+retain their disposition and reason; retirement without replacement names its acceptance
+source. Do not leave incompatible accepted versions applying to the same scope.
+
+A proposed replacement names its target decision/revision and links to the still-current
+choice. Keep the candidate separate and explicitly nonbinding, even if its containing
+specification is accepted. Acceptance records the scope and handoff condition before
+supersession becomes effective; rejected/withdrawn alternatives retain their reason.
+Follow the [proposal lifecycle](requirements.md#proposed-replacements); a proposed TD/ADR
+must not silently override an accepted requirement.

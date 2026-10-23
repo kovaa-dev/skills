@@ -14,6 +14,8 @@ implicitly.
 - Maintain specifications and their implementation/verification state.
 - Plan code, research, documents, data, and other outcomes in lean queues.
 - Analyze affected and preserved contracts, prerequisites, and conflicting obligations.
+- Keep proposed replacements distinct from current contracts; retire stale routes with
+  explicit successor/history notices.
 - Register significant bugs, findings, and assigned ideas without duplicating requirements.
 - Convert selected legacy material before continuing ordinary authorized work.
 - Perform an explicitly requested one-shot migration or governance-source update.
