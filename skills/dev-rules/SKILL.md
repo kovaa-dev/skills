@@ -96,6 +96,26 @@ Before the first write:
 5. Run the project bootstrap/route/resume command if one exists, and read only the rules
    it names and their immediate owner sources.
 
+### Branch naming
+
+An exact branch name supplied by the user, active task or PR, or an explicit project
+setting is authoritative. Reuse an existing branch only when it belongs to the same
+accepted work unit.
+
+When no exact name is supplied, name a new branch `<type>/<slug>`:
+
+- `<type>` is the Conventional Commit type that best describes the primary accepted
+  outcome. Use the project's configured types when present; otherwise choose from
+  `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`,
+  or `revert`.
+- `<slug>` is a concise lowercase ASCII kebab-case description of the outcome. When a
+  canonical task or issue identifier exists, place it before the slug and preserve its
+  canonical form, for example `fix/PROJ-123-login-timeout`.
+
+Choose the type from the work's primary outcome rather than an incidental implementation
+step, keep the name stable for the life of the work, and validate generated names with
+`git check-ref-format --branch` before creating the branch.
+
 When a task needs a separate workspace, first use the current environment's workspace
 management (for example its UI, API, or CLI) if available. Reuse a suitable workspace
 for the same task. Switch the active workspace when the environment supports it;
