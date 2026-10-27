@@ -29,16 +29,28 @@ for destructive operations, merge, release, or deploy.
 
 ## External project systems and communication
 
-For remote operations in project systems such as source hosting, issue trackers, and
-knowledge bases, use the configured MCP tools whenever they support the requested
-operation. Discover the available tools before concluding that an integration is missing.
-Do not replace a supported MCP operation with ad hoc HTTP requests, CLI wrappers, or
-browser automation unless the user or project explicitly selects another interface.
+For remote operations against a named project system, prefer its configured MCP tools
+over ad hoc HTTP requests, CLI wrappers, browser automation, or computer-control tools.
+Use bounded discovery rather than repeatedly checking every available integration:
 
-If MCP is unavailable or does not support the operation, briefly state the limitation
-and use an existing authorized API, CLI, or browser workflow when available. Tool choice
-does not expand the task or grant permission for external writes. Local filesystem and
-Git operations continue to use the appropriate local tools.
+1. First inspect the tool namespaces and catalog already exposed in the current session;
+   this does not require a tool call.
+2. If relevant MCP tools are deferred, perform at most one targeted discovery for the
+   service and requested operation during the task. Do not enumerate every server,
+   resource, or unrelated tool.
+3. Reuse that discovery result for the remainder of the task. Repeat it only when the
+   user says connections changed, the runtime exposes a changed tool inventory, or an
+   integration reports that reconnection is required.
+4. When a matching MCP supports the operation, do not load or use browser,
+   computer-control, generic HTTP, CLI, or orchestrator skills unless the user or project
+   explicitly selected that interface.
+5. Distinguish an unavailable integration from an unsupported operation and from a failed
+   supported call. A call failure is not evidence that the integration is unsupported.
+
+If no matching MCP is available or it does not support the operation, briefly state the
+limitation once and use an existing authorized native API or CLI, then browser UI when
+needed. Tool choice does not expand the task or grant permission for external writes.
+Local filesystem and Git operations continue to use the appropriate local tools.
 
 External project systems are read-only by default. Do not publish, send, submit, create,
 or edit comments, messages, reviews, task/issue text, status updates, or other
