@@ -102,15 +102,20 @@ An exact branch name supplied by the user, active task or PR, or an explicit pro
 setting is authoritative. Reuse an existing branch only when it belongs to the same
 accepted work unit.
 
-When no exact name is supplied, name a new branch `<type>/<slug>`:
+When no exact name is supplied, name a new branch
+`[<conventional-type>/][<issue-key>_]<short-kebab-slug>`:
 
-- `<type>` is the Conventional Commit type that best describes the primary accepted
-  outcome. Use the project's configured types when present; otherwise choose from
-  `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`,
-  or `revert`.
-- `<slug>` is a concise lowercase ASCII kebab-case description of the outcome. When a
-  canonical task or issue identifier exists, place it before the slug and preserve its
-  canonical form, for example `fix/PROJ-123-login-timeout`.
+- The optional `<conventional-type>/` is the Conventional Commit type that best describes
+  the primary accepted outcome. Use the project's configured types when present;
+  otherwise choose from `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`,
+  `build`, `ci`, `chore`, or `revert`.
+- The optional `<issue-key>_` preserves the canonical task or issue identifier and uses
+  an underscore to separate it from the slug.
+- The required `<short-kebab-slug>` is a concise lowercase ASCII description of the
+  outcome.
+
+Valid shapes include `login-timeout`, `PROJ-123_login-timeout`, `fix/login-timeout`,
+and `fix/PROJ-123_login-timeout`.
 
 Choose the type from the work's primary outcome rather than an incidental implementation
 step, keep the name stable for the life of the work, and validate generated names with
