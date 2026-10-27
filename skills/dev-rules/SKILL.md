@@ -27,7 +27,7 @@ duplicate is a migration defect, while a project-specific rule is valid only as 
 setting or an explicitly accepted scoped exception. This skill does not grant authority
 for destructive operations, merge, release, or deploy.
 
-## MCP for external project systems
+## External project systems and communication
 
 For remote operations in project systems such as source hosting, issue trackers, and
 knowledge bases, use the configured MCP tools whenever they support the requested
@@ -39,6 +39,16 @@ If MCP is unavailable or does not support the operation, briefly state the limit
 and use an existing authorized API, CLI, or browser workflow when available. Tool choice
 does not expand the task or grant permission for external writes. Local filesystem and
 Git operations continue to use the appropriate local tools.
+
+External project systems are read-only by default. Do not publish, send, submit, create,
+or edit comments, messages, reviews, task/issue text, status updates, or other
+representational communication unless the user gives an unambiguous instruction to
+perform that external write. Naming the destination does not make an otherwise ambiguous
+request explicit: requests such as "answer the question in the comments", "respond to
+the review", "handle the feedback", or "update the task" authorize reading the external
+context and preparing a draft in chat, not publishing it. When authority is absent or
+ambiguous, keep all communication in chat for the user to send; do not turn a draft into
+an external action or ask for routine permission to do so.
 
 ## Lifecycle and automatic application
 
@@ -339,14 +349,19 @@ deploy.
 
 ## 8. Git, commits, and PR
 
-Explicit confirmation of the execution brief and transition of the selected work
-to `in-progress` grant task-scoped authority to create/use a branch and, when needed,
-an isolated worktree, make coherent commits, push, and create/update a PR without
-separate questions for each action. Equivalent authority may come from a direct request
-or narrower project policy; project policy may restrict this default. Loading the skill,
-a `planned` status without start confirmation, or grooming-only work does not grant
-this authority. Destructive reset/delete/force, merge, release, and deploy always
-require separate authority.
+Implementation authority permits scoped working-tree changes and, when needed, creation
+of a local branch or isolated worktree. It does not authorize commits, pushes, or
+creating/updating a PR. Perform each of those delivery actions only under an unambiguous
+user instruction that names the action or a directly encompassing delivery result.
+Requests to implement, fix, review, finish, or answer feedback; confirmation of an
+execution brief; and transition to `in-progress` are not delivery authority.
+
+An explicit request to create or open a PR authorizes the coherent commits and push
+needed for that PR unless the user limits the request. A request to commit authorizes
+only local commits; a request to push authorizes the named push but not creating or
+updating a PR. Without the applicable authority, leave completed changes uncommitted or
+unpublished and report their state in chat. Destructive reset/delete/force, merge,
+release, and deploy always require separate authority.
 
 Write PR descriptions as a concise explanation to a colleague familiar with the project
 but not necessarily the task discussion. Explain the specific problem or need, the
@@ -363,19 +378,18 @@ maintainers.
 - Commit a coherent, reviewable, revertible unit, not after every message or internal
   step. Do not mechanically split an atomic cross-layer vertical slice when intermediate
   commits would be inconsistent; follow the project's actual commitlint rules.
-- By default, complete planned commits and closure locally; immediately before a ready
-  PR, fetch and integrate the current base, resolve conflicts, run risk-based ready
-  checks, and publish the completed branch. An early remote PR after `in-progress` is
-  permitted but not required; if opened before scope is complete, it is always draft.
+- When explicitly authorized to publish a ready PR, first complete planned commits and
+  closure locally, then fetch and integrate the current base, resolve conflicts, run
+  risk-based ready checks, and publish the completed branch. If the user explicitly asks
+  for an early PR before scope is complete, it is always draft.
 - Plan the first publication so one final PR CI run should be sufficient. Additional
   pushes and CI runs are allowed for a discovered defect, CI failure/flake, review
   change, conflict, or material base update; do not hide a necessary fix to preserve a
   formal run count.
-- When task-scoped authority is used for early publication, collaborative review, or a
+- When explicit authority is used for early publication, collaborative review, or a
   remote-only check, create a draft. While the user is sending consecutive batches of
   the same work or known scope remains open, keep the PR draft. Do not switch between
-  draft/ready after every batch. No separate confirmation is required to open this PR
-  after `in-progress`.
+  draft/ready after every batch.
 - Before marking a draft ready and before merge, fetch and integrate the current base,
   resolve conflicts, and run risk-based ready checks.
 - Update PR metadata only for a material change in scope, blocker, or readiness. A
