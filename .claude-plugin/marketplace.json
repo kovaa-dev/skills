@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "kovaa-agent-skills",
-      "description": "Independent skills for cost audits, task orchestration, document research, documentation governance, and reliable software delivery.",
+      "description": "Independent skills for cost audits, document research, documentation governance, and reliable software delivery.",
       "version": "1.0.0",
       "source": "./",
       "author": {
