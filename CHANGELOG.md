@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 No unreleased changes.
 
+## [1.0.1](https://github.com/kovaa-dev/skills/compare/v1.0.0...v1.0.1) (2026-10-28)
+
+
+### Bug Fixes
+
+* **cost-audit:** read zstd session logs ([aed487f](https://github.com/kovaa-dev/skills/commit/aed487f6b6719a00f479a1d4ac3ae7b4c7f41a91))
+* **dev-rules:** bound MCP discovery ([55c8faa](https://github.com/kovaa-dev/skills/commit/55c8faaeac931cb8f779c5ba430d7213fea081f0))
+* **dev-rules:** require explicit delivery authority ([#27](https://github.com/kovaa-dev/skills/issues/27)) ([1bdae11](https://github.com/kovaa-dev/skills/commit/1bdae118ae89ee67867335a0129a627fb8a00c9c))
+
+
+### Documentation
+
+* **dev-rules:** decouple documentation policy ([11c9300](https://github.com/kovaa-dev/skills/commit/11c9300a7268202d06a88fbe12359f7d2c09eb6b))
+* **dev-rules:** refine branch name format ([eb4db69](https://github.com/kovaa-dev/skills/commit/eb4db69579bcd0063e5402fbacb083f8ea104589))
+* **dev-rules:** standardize branch names ([cde8325](https://github.com/kovaa-dev/skills/commit/cde8325ba591a2de78676138a612e60691c8f872))
+
 ## [1.0.0](https://github.com/kovaa-dev/skills/compare/v0.5.0...v1.0.0) (2026-10-23)
 
 
