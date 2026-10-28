@@ -180,8 +180,29 @@ def upper_bound_for(value: str | None) -> datetime:
     return parsed
 
 
+def is_session_log(path: Path) -> bool:
+    name = path.name.casefold()
+    return name.endswith(".jsonl") or name.endswith(".jsonl.zst")
+
+
+def open_jsonl_text(path: Path) -> Any:
+    if not path.name.casefold().endswith(".jsonl.zst"):
+        return path.open("r", encoding="utf-8", errors="replace")
+    try:
+        from compression import zstd
+    except ImportError:
+        try:
+            from backports import zstd
+        except ImportError as error:
+            raise ValueError(
+                "reading .jsonl.zst requires Python 3.14+ or "
+                "'python -m pip install backports.zstd==1.8.0'"
+            ) from error
+    return zstd.open(path, "rt", encoding="utf-8", errors="replace")
+
+
 def iter_jsonl(path: Path) -> Iterator[dict[str, Any]]:
-    with path.open("r", encoding="utf-8", errors="replace") as handle:
+    with open_jsonl_text(path) as handle:
         for line in handle:
             if not line.strip():
                 continue
@@ -783,13 +804,14 @@ def discover_sessions(inputs: list[str], include_archived: bool) -> list[Path]:
             roots.append(home / ".codex" / "archived_sessions")
     paths: set[Path] = set()
     for root in roots:
-        if root.is_file() and root.suffix.lower() == ".jsonl":
+        if root.is_file() and is_session_log(root):
             paths.add(root)
         elif root.is_dir():
-            for path in root.rglob("*.jsonl"):
-                if not include_archived and "archived_sessions" in path.parts:
-                    continue
-                paths.add(path)
+            for pattern in ("*.jsonl", "*.jsonl.zst"):
+                for path in root.rglob(pattern):
+                    if not include_archived and "archived_sessions" in path.parts:
+                        continue
+                    paths.add(path)
     return sorted(paths)
 
 
@@ -1581,8 +1603,12 @@ def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(description=__doc__)
     subparsers = root.add_subparsers(dest="command", required=True)
 
-    sessions = subparsers.add_parser("sessions", help="Aggregate supported local JSONL sessions")
-    sessions.add_argument("--input", action="append", default=[], help="JSONL file or directory")
+    sessions = subparsers.add_parser(
+        "sessions", help="Aggregate supported local JSONL or JSONL.ZST sessions"
+    )
+    sessions.add_argument(
+        "--input", action="append", default=[], help="JSONL/JSONL.ZST file or directory"
+    )
     sessions.add_argument("--provider", choices=("auto", "claude", "codex"), default="auto")
     sessions.add_argument("--since", default="7d", help="all, Nd, Nh, or ISO timestamp")
     sessions.add_argument("--until", help="Inclusive ISO timestamp; defaults to command start")
@@ -1604,7 +1630,7 @@ def parser() -> argparse.ArgumentParser:
     inspect = subparsers.add_parser(
         "inspect", help="Inspect one selected session without emitting messages or tool payloads"
     )
-    inspect.add_argument("session", help="Selected JSONL session file")
+    inspect.add_argument("session", help="Selected JSONL or JSONL.ZST session file")
     inspect.add_argument("--provider", choices=("auto", "claude", "codex"), default="auto")
     inspect.add_argument("--since", default="all", help="all, Nd, Nh, or ISO timestamp")
     inspect.add_argument("--until", help="Inclusive ISO timestamp; defaults to command start")
