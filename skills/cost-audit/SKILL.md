@@ -26,16 +26,18 @@ Read [audit method](references/audit-method.md) before analyzing sessions. Read 
 
 Default to the current project, non-archived sessions, and the last seven days. An explicit input set defines its own scope unless a project root is also supplied; use all projects only when requested. Do not connect a service or broaden access merely because more logs may exist.
 
-Use a provider/runtime summary or structured session API when it offers equivalent fields. Otherwise use the bundled standard-library analyzer:
+Use a provider/runtime summary or structured session API when it offers equivalent fields. Otherwise use the bundled analyzer:
 
 ```text
 python scripts/cost_audit.py sessions --since 7d --pretty
 python scripts/cost_audit.py sessions --project-root PROJECT_ROOT --since 7d --pretty
-python scripts/cost_audit.py inspect SESSION_JSONL --since 7d --until SNAPSHOT_UNTIL --max-buckets 20 --pretty
+python scripts/cost_audit.py inspect SESSION_JSONL_OR_ZST --since 7d --until SNAPSHOT_UNTIL --max-buckets 20 --pretty
 python scripts/cost_audit.py docs --root PROJECT_ROOT --cwd WORKING_DIRECTORY --pretty
 ```
 
-The launcher is illustrative; use a compatible local Python. Run `sessions` first and retain its exact `scope.until` as `SNAPSHOT_UNTIL`. Pass that value to every `inspect` and repeated `sessions` command in the same audit; relative `--since` values are anchored to it. Do not compare runs with different upper bounds.
+The launcher is illustrative; use a compatible local Python. Direct files and directories discover both `.jsonl` and `.jsonl.zst`. Compressed input uses `compression.zstd` on Python 3.14+ or the compatible `backports.zstd` package on Python 3.10–3.13. If neither is available, report the script's installation command and obtain user authorization before installing it; do not persist a plaintext copy merely to audit it.
+
+Run `sessions` first and retain its exact `scope.until` as `SNAPSHOT_UNTIL`. Pass that value to every `inspect` and repeated `sessions` command in the same audit; relative `--since` values are anchored to it. Do not compare runs with different upper bounds.
 
 `sessions` filters usage by the bounded event-time window, keeps provider totals separate, and reports token and missing-usage proxy coverage separately. It selects costly sessions plus material anomaly representatives without a fixed minimum. Use `--include-locators` only to open selected sessions locally, then run `inspect`; never copy locators into the report. `inspect` emits bounded turn-level metrics and hashed repeat signatures, never message or payload content. Treat `null` as unavailable, not zero, and respect visibility/coverage fields. Distinguish `assistant_messages` from `model_usage_steps`; `model_calls` uses provider usage steps when available and falls back to assistant messages only when usage events are absent.
 

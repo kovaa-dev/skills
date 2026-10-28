@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -20,6 +21,26 @@ SPEC.loader.exec_module(COST_AUDIT)
 
 def write_jsonl(path: Path, events: list[dict]) -> None:
     path.write_text("".join(json.dumps(event) + "\n" for event in events), encoding="utf-8")
+
+
+def write_zstd_jsonl(path: Path, events: list[dict]) -> None:
+    try:
+        from compression import zstd
+    except ImportError:
+        from backports import zstd
+    payload = "".join(json.dumps(event) + "\n" for event in events).encode()
+    path.write_bytes(zstd.compress(payload))
+
+
+def has_zstd_backend() -> bool:
+    try:
+        from compression import zstd  # noqa: F401
+    except ImportError:
+        try:
+            from backports import zstd  # noqa: F401
+        except ImportError:
+            return False
+    return True
 
 
 class CostAuditTests(unittest.TestCase):
@@ -188,6 +209,67 @@ class CostAuditTests(unittest.TestCase):
             self.assertEqual(metrics.cache_read_tokens, 200)
             self.assertEqual(metrics.peak_input_tokens, 150)
             self.assertEqual(metrics.user_turns, 1)
+
+    def test_zstd_session_is_discovered_and_parsed_without_content_output(self) -> None:
+        if not has_zstd_backend():
+            self.skipTest("zstd backend is not installed")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "codex-session.jsonl.zst"
+            write_zstd_jsonl(
+                path,
+                [
+                    {
+                        "type": "response_item",
+                        "timestamp": "2026-10-20T10:00:00Z",
+                        "payload": {
+                            "type": "message",
+                            "id": "u1",
+                            "role": "user",
+                            "content": "private-content",
+                        },
+                    },
+                    {
+                        "type": "event_msg",
+                        "timestamp": "2026-10-20T10:01:00Z",
+                        "payload": {
+                            "info": {
+                                "total_token_usage": {
+                                    "input_tokens": 100,
+                                    "cached_input_tokens": 80,
+                                    "output_tokens": 20,
+                                    "total_tokens": 120,
+                                },
+                                "last_token_usage": {
+                                    "input_tokens": 100,
+                                    "cached_input_tokens": 80,
+                                    "output_tokens": 20,
+                                    "total_tokens": 120,
+                                },
+                            }
+                        },
+                    },
+                ],
+            )
+
+            self.assertEqual(COST_AUDIT.discover_sessions([str(root)], False), [path])
+            metrics = COST_AUDIT.parse_session(path, "codex", include_locator=False)
+
+            self.assertEqual(metrics.reported_total_tokens, 120)
+            self.assertEqual(metrics.cache_read_tokens, 80)
+            self.assertNotIn("private-content", json.dumps(metrics.public(False)))
+
+    def test_zstd_session_reports_the_optional_dependency_when_unavailable(self) -> None:
+        original_import = __import__
+
+        def without_zstd(name: str, *args: object, **kwargs: object) -> object:
+            if name in {"compression", "backports"}:
+                raise ImportError(name)
+            return original_import(name, *args, **kwargs)
+
+        with mock.patch("builtins.__import__", side_effect=without_zstd):
+            with self.assertRaisesRegex(ValueError, "backports.zstd==1.8.0"):
+                COST_AUDIT.open_jsonl_text(Path("session.jsonl.zst"))
 
     def test_codex_removes_inherited_baseline_and_counts_usage_steps(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
