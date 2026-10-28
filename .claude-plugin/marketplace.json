@@ -9,7 +9,7 @@
     {
       "name": "kovaa-agent-skills",
       "description": "Independent skills for cost audits, document research, documentation governance, and reliable software delivery.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "source": "./",
       "author": {
         "name": "kovaa",
