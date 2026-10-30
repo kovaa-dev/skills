@@ -2,7 +2,7 @@
 
 `dev-rules` is an agent skill that defines a consistent workflow for completing software engineering tasks safely and efficiently.
 
-It focuses on how work is executed: scope control, worktree and branch safety, user-visible-first implementation, complexity limits, validation, CI boundaries, subagents, Git, pull requests, and handoffs.
+It focuses on how work is executed: scope control, worktree and branch safety, user-visible-first implementation, complexity limits, code review, validation, CI boundaries, subagents, Git, pull requests, and handoffs.
 
 ## When to use it
 
@@ -12,6 +12,7 @@ Use `dev-rules` for:
 - selecting the correct repository, worktree, and branch;
 - keeping implementation within an accepted scope;
 - choosing proportionate tests and manual validation;
+- reviewing completed changes or an explicitly selected codebase;
 - coordinating independent agents and integration work;
 - managing commits and pull-request readiness;
 - auditing, adopting, migrating, or updating project-work rules.
@@ -21,6 +22,7 @@ Use `dev-rules` for:
 - **Scope authority:** distinguishes accepted product behavior from reversible implementation detail and stops changes that would silently expand the contract.
 - **User-visible-first execution:** when choosing the next increment, prioritizes the smallest end-to-end user-visible path and an early manual usability gate before auxiliary harnesses or speculative infrastructure.
 - **Risk-proportionate validation:** selects the cheapest reliable test level for each risk instead of requiring every task to use the same TDD, E2E, or full-suite ceremony.
+- **Completion review:** uses risk models, scenario tracing, and failure hypotheses to check the finished result, with explicit coverage, evidence limits, and actionable findings.
 - **Complexity stops:** requires a current consumer and accepted purpose for new abstractions, persistent state, services, runners, corpora, and execution paths.
 - **Conservative orchestration:** keeps subagents off by default and requires independent value, disjoint write scopes, and coordinator-owned integration.
 - **Explicit delivery authority:** separates branch, commit, push, ready, merge, release, and deploy permissions rather than treating them as one implicit grant.
@@ -41,12 +43,19 @@ Use dev-rules to implement this change within the existing product contract. Pre
 Audit the active project-work instructions and automation. Show conflicts and semantic duplicates, but do not modify anything.
 
 Prepare the completed scope for a ready PR: integrate the current base, run risk-based checks, report remaining blockers, and do not merge.
+
+Review the finished change against its base for correctness, security, regressions, performance, and maintainability. Report evidence and blockers without editing code.
+
+Audit this subsystem's codebase. Identify the reviewed baseline, inspected and uncovered areas, findings, and verification gaps; do not claim readiness from sampled paths.
 ```
 
 ## Contents
 
 - `SKILL.md` — the complete engineering execution workflow and routing rules.
 - `references/adoption.md` — adoption, audit, migration, update, and compatibility procedures.
+- `references/review.md` — change review, codebase audit, findings, and completion criteria.
+- `references/review-profiles.md` — focused checks for data, concurrency, APIs, interfaces, dependencies, and performance; read only relevant sections.
+- `references/research-artifacts.md` — proportionate measurements, reproducibility, retention, and cleanup.
 
 `SKILL.md` and its references are authoritative. This README only explains what the skill contains and why it is used.
 

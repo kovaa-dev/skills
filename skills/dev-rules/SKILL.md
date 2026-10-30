@@ -3,11 +3,11 @@ name: dev-rules
 description: >-
   A unified standard for executing engineering tasks in projects: scope boundaries,
   worktree/branch safety, product-visible-first implementation, minimal complexity,
-  tests and E2E without unnecessary harnesses, checks, subagents, Git, draft/ready PRs,
-  and handoff. Use before changing code, configuration, CI, Git history, or delivery
-  state, when accessing external project systems, and when applying init, audit, migrate,
-  or update actions to project-work rules, or
-  conducting engineering investigations and benchmarks.
+  tests and E2E without unnecessary harnesses, code review, checks, subagents, Git,
+  draft/ready PRs, and handoff. Use before changing code, configuration, CI, Git history,
+  or delivery state, when reviewing completed changes or auditing a codebase, accessing
+  external project systems, applying init, audit, migrate, or update actions to
+  project-work rules, or conducting engineering investigations and benchmarks.
 ---
 
 # dev-rules
@@ -80,6 +80,10 @@ by itself. After explicit selection and verification, a project-local copy or pi
 project instruction automatically loads the skill for routine code/config/CI/Git/delivery
 tasks; the user does not need to invoke it manually. No separate governance mode or
 profile is stored.
+
+For reviews of completed changes and codebase audits, use the
+[review method](references/review.md). These are distinct from the rules/automation
+`audit` action above and do not require adopting or migrating project policy.
 
 ## 1. Start and correct worktree
 
@@ -338,8 +342,8 @@ bring it forward for confirmation.
 
 ### Research artifacts
 
-Before planning or running a measurement, investigation, benchmark, capacity probe,
-or experimental comparison, read the
+Before planning or running a measurement, benchmark, capacity probe, experimental
+comparison, or investigation that creates study data/resources, read the
 [research artifact rules](references/research-artifacts.md). They govern measurement
 necessity and sufficiency, disk usage, reproducible inputs, and cleanup before completion.
 
@@ -348,7 +352,8 @@ necessity and sufficiency, disk usage, reproducible inputs, and cleanup before c
 Use three levels:
 
 1. **Agent checks** — diagnostics and minimum targeted tests/lint/typecheck for the
-   changed behavior/owner; include dependent layers only for a contract change.
+   changed behavior/owner; include dependent layers when an affected contract or
+   concrete failure mechanism requires them.
 2. **Pre-commit** — fast deterministic checks selected by staged paths; no services,
    database/browser E2E, production builds, benchmarks, or full-verify fallback.
 3. **PR CI** — draft runs inexpensive static/unit/docs checks; ready runs broad
@@ -363,6 +368,16 @@ Do not call a pre-commit check selected by staged paths but reading the entire w
 tree/package "staged-content isolation": unrelated unstaged failures must not block the
 commit. The hooks/CI composition may be changed only in a separate, explicitly assigned
 governance task; routine work must not silently bypass it.
+
+### Review before completion
+
+After implementation and before `done` or a ready PR, review the finished change using
+the [review method](references/review.md), including for configuration and documentation
+changes. Identify the baseline, inspect affected behavior and interactions, resolve
+completion blockers, and recheck evidence invalidated by fixes or integration. Passing
+tests alone do not close the review. Scale depth to actual risk; a codebase audit needs
+an explicitly agreed scope. Existing testing, manual acceptance, documentation, and
+delivery rules still apply; no separate tracker or mandatory independent agent is added.
 
 ## 7. Subagents and orchestration
 
@@ -483,12 +498,16 @@ scope.
 
 ## 10. Completion
 
-A task is complete when the requested result exists, targeted checks have passed, the
-user has confirmed the manual gate for user-facing behavior, scope has not been silently
-expanded, and actual blockers have been named. Keep manual acceptance pending until the
-user replies. If the work implements or changes a
-documented contract, perform the applicable project closure reconciliation before
-`done` and a ready PR; if no separate procedure is defined, compare the result directly
+Completion is evaluated against the agreed deliverable. For implementation, the requested
+result must exist, targeted checks and the applicable
+[review](references/review.md#result-and-completion) must pass, any required manual gate
+must be confirmed by the user, scope must remain within its authority, and no unresolved
+completion blockers may remain. For review-only and audit results, use the same
+reference's result criteria; reporting a defect does not itself require fixing it or
+recursively reviewing the report. Keep required manual acceptance pending until the user
+replies. If the work implements or changes a documented contract, perform the applicable
+project closure reconciliation before `done` and a ready PR; if no separate procedure
+is defined, compare the result directly
 with the canonical requirements/specifications and accepted decisions. Any unresolved
 discrepancy is a blocker.
 Do not copy that documentation governance here. Do not require the entire product phase
