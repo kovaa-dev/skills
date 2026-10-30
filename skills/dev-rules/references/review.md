@@ -79,9 +79,10 @@ treating the implementation as its own specification.
 Reconcile code, tests, configuration, and affected documentation where they disagree.
 
 Use existing diagnostics and targeted checks to test consequential uncertainty. Separate
-static inspection, executed automated checks, user-reported manual acceptance, and
-unverified assumptions. Record what was actually run and its result; green CI, coverage
-percentages, and an absence of findings do not independently prove correctness.
+static inspection, agent visual inspection, executed automated checks, user-reported
+manual acceptance, and unverified assumptions. Record what was actually run and its
+result; green CI, coverage percentages, and an absence of findings do not independently
+prove correctness.
 
 For a material uncertainty, state a testable failure hypothesis and its triggering
 conditions, then trace the mechanism and look for evidence that confirms or disproves it.

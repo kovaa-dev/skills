@@ -6,9 +6,10 @@ working data. Follow the project's documentation settings; this reference does n
 create a tracker, evidence registry, archive service, or authority for external storage.
 
 Apply run-directory, disk-budget, archive, and cleanup procedures when the investigation
-actually creates study data or resources. Ordinary source inspection and existing tests
-do not become a study merely because they support an investigation; they do not require
-an empty evidence directory, a separate report, or numeric measurements.
+actually creates study data or resources. Ordinary source inspection, existing tests,
+and focused visual verification do not become a study merely because they support an
+investigation; they do not require an empty evidence directory, a separate report,
+or numeric measurements.
 
 ## Necessary and sufficient measurements
 

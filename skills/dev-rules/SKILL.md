@@ -3,9 +3,10 @@ name: dev-rules
 description: >-
   A unified standard for executing engineering tasks in projects: scope boundaries,
   worktree/branch safety, product-visible-first implementation, minimal complexity,
-  tests and E2E without unnecessary harnesses, code review, checks, subagents, Git,
-  draft/ready PRs, and handoff. Use before changing code, configuration, CI, Git history,
-  or delivery state, when reviewing completed changes or auditing a codebase, accessing
+  tests and E2E without unnecessary harnesses, UI/UX skill routing and visual checks,
+  code review, checks, subagents, Git, draft/ready PRs, and handoff. Use before changing
+  code, configuration, CI, Git history, or delivery state, when reviewing completed
+  changes or auditing a codebase, accessing
   external project systems, applying init, audit, migrate, or update actions to
   project-work rules, or conducting engineering investigations and benchmarks.
 ---
@@ -247,11 +248,18 @@ need not be limited to "why."
 
 ## 4. User-owned manual usability gate
 
+For UI/UX implementation or review, follow [UI design and visual verification](references/ui-design.md).
+It defines conditional design-skill selection, reuse of the existing design system, and
+the agent's visual inspection and correction of the actual interface. Use available
+preview/browser/screenshot tools independently within the authorized task; these checks
+are separate from final user acceptance. Report unavailable rendering and unverified
+claims rather than treating source inspection as visual evidence.
+
 A full manual usability gate is mandatory for a new capability, a changed primary
 Action/Surface/Visible result, or a new waiting/result state. For a localized copy,
-visual, or accessibility fix, focused UI inspection is sufficient. The user starts the
-app and performs all manual UI verification. The agent runs appropriate automated
-checks but does not open the app/browser for manual acceptance.
+visual, or accessibility fix, focused UI inspection is sufficient. The user owns final
+manual acceptance; agent visual inspection and automated checks do not supply that
+confirmation. The agent may start and inspect the app before handing it to the user.
 
 After implementation, prepare concise test cases on the existing interface to verify:
 
@@ -263,8 +271,8 @@ After implementation, prepare concise test cases on the existing interface to ve
 
 At the end of the work, put the test cases directly in the reply to the user: actions,
 expected visible results, and material failure states based on actual risk. Keep the
-manual gate pending until the user reports its result; do not present automated checks
-as manual acceptance.
+manual gate pending until the user reports its result; do not present agent visual
+inspection or automated checks as user acceptance.
 
 In the final response for a user-facing task, explain in plain language what is available,
 where it is, what to click, what will be visible, and what material limitation remains.
@@ -335,9 +343,9 @@ prohibited.
 ### Complexity boundaries
 
 Do not compare production and auxiliary code by line count or create a LOC gate. Before
-the first successful manual gate, limit work to the production path and proportionate
-checks for the concrete failure scenarios above; do not add a new bespoke runner, fault
-framework, corpus, benchmark, or evidence system.
+the first successful manual gate, limit work to the production path, proportionate agent
+visual verification, and checks for the concrete failure scenarios above; do not add a
+new bespoke runner, fault framework, corpus, benchmark, or evidence system.
 
 After the gate, every new auxiliary entity must address a concrete current failure
 scenario or a separately accepted measurement claim and not duplicate an existing check.

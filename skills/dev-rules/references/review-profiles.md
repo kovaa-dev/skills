@@ -41,8 +41,9 @@ and executed checks follow the risk, scope, and evidence rules in that method.
 - Inspect keyboard operation, focus, accessible names, semantics, and communication of
   status/errors for affected controls. Use existing automated checks where sufficient.
 - Keep responsive and assistive-technology claims within actual evidence. Manual UI
-  acceptance remains [user-owned](../SKILL.md#4-user-owned-manual-usability-gate);
-  prepare focused cases rather than opening the app for manual acceptance.
+  acceptance remains [user-owned](../SKILL.md#4-user-owned-manual-usability-gate).
+  Apply [design-skill routing and agent visual verification](ui-design.md), then prepare
+  any required user acceptance cases; agent inspection does not close that gate.
 
 ## Dependencies and builds
 
