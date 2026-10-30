@@ -3,11 +3,12 @@ name: dev-rules
 description: >-
   A unified standard for executing engineering tasks in projects: scope boundaries,
   worktree/branch safety, product-visible-first implementation, minimal complexity,
-  tests and E2E without unnecessary harnesses, checks, subagents, Git, draft/ready PRs,
-  and handoff. Use before changing code, configuration, CI, Git history, or delivery
-  state, when accessing external project systems, and when applying init, audit, migrate,
-  or update actions to project-work rules, or
-  conducting engineering investigations and benchmarks.
+  tests and E2E without unnecessary harnesses, UI/UX skill routing and visual checks,
+  code review, checks, subagents, Git, draft/ready PRs, and handoff. Use before changing
+  code, configuration, CI, Git history, or delivery state, when reviewing completed
+  changes or auditing a codebase, accessing
+  external project systems, applying init, audit, migrate, or update actions to
+  project-work rules, or conducting engineering investigations and benchmarks.
 ---
 
 # dev-rules
@@ -19,6 +20,13 @@ This skill defines **how to perform** engineering work. Requirements, specificat
 work queues, decisions, and documentation history belong in the project's canonical
 product and documentation sources. Do not copy their governance rules here
 or create documents solely to satisfy this skill.
+
+When the user or applicable project instructions select this skill, apply its workflow
+and defaults in place of generic agent/tool/environment defaults wherever those defaults
+permit user or project overrides. Treat that selection as choosing this skill's rules;
+do not ask the user to repeat it for each overridable default. This does not elevate
+the skill above binding higher-priority instructions. If one prevents compliance,
+identify the specific conflict instead of silently substituting another policy.
 
 The method for adopting project-work rules is defined by the
 [adoption workflow](references/adoption.md): either a complete copy of the skill in the
@@ -81,6 +89,10 @@ project instruction automatically loads the skill for routine code/config/CI/Git
 tasks; the user does not need to invoke it manually. No separate governance mode or
 profile is stored.
 
+For reviews of completed changes and codebase audits, use the
+[review method](references/review.md). These are distinct from the rules/automation
+`audit` action above and do not require adopting or migrating project policy.
+
 ## 1. Start and correct worktree
 
 Before the first write:
@@ -101,6 +113,11 @@ Before the first write:
 An exact branch name supplied by the user, active task or PR, or an explicit project
 setting is authoritative. Reuse an existing branch only when it belongs to the same
 accepted work unit.
+
+The scheme below is the selected default when this skill applies. Do not prepend a
+provider/agent prefix from an overridable environment default unless the user or project
+explicitly selects it. Preserve the name of an existing task/PR branch unless a rename
+is requested; naming-policy updates govern newly created branches.
 
 When no exact name is supplied, name a new branch
 `[<conventional-type>/][<issue-key>_]<short-kebab-slug>`:
@@ -231,11 +248,18 @@ need not be limited to "why."
 
 ## 4. User-owned manual usability gate
 
+For UI/UX implementation or review, follow [UI design and visual verification](references/ui-design.md).
+It defines conditional design-skill selection, reuse of the existing design system, and
+the agent's visual inspection and correction of the actual interface. Use available
+preview/browser/screenshot tools independently within the authorized task; these checks
+are separate from final user acceptance. Report unavailable rendering and unverified
+claims rather than treating source inspection as visual evidence.
+
 A full manual usability gate is mandatory for a new capability, a changed primary
 Action/Surface/Visible result, or a new waiting/result state. For a localized copy,
-visual, or accessibility fix, focused UI inspection is sufficient. The user starts the
-app and performs all manual UI verification. The agent runs appropriate automated
-checks but does not open the app/browser for manual acceptance.
+visual, or accessibility fix, focused UI inspection is sufficient. The user owns final
+manual acceptance; agent visual inspection and automated checks do not supply that
+confirmation. The agent may start and inspect the app before handing it to the user.
 
 After implementation, prepare concise test cases on the existing interface to verify:
 
@@ -247,8 +271,8 @@ After implementation, prepare concise test cases on the existing interface to ve
 
 At the end of the work, put the test cases directly in the reply to the user: actions,
 expected visible results, and material failure states based on actual risk. Keep the
-manual gate pending until the user reports its result; do not present automated checks
-as manual acceptance.
+manual gate pending until the user reports its result; do not present agent visual
+inspection or automated checks as user acceptance.
 
 In the final response for a user-facing task, explain in plain language what is available,
 where it is, what to click, what will be visible, and what material limitation remains.
@@ -319,9 +343,9 @@ prohibited.
 ### Complexity boundaries
 
 Do not compare production and auxiliary code by line count or create a LOC gate. Before
-the first successful manual gate, limit work to the production path and proportionate
-checks for the concrete failure scenarios above; do not add a new bespoke runner, fault
-framework, corpus, benchmark, or evidence system.
+the first successful manual gate, limit work to the production path, proportionate agent
+visual verification, and checks for the concrete failure scenarios above; do not add a
+new bespoke runner, fault framework, corpus, benchmark, or evidence system.
 
 After the gate, every new auxiliary entity must address a concrete current failure
 scenario or a separately accepted measurement claim and not duplicate an existing check.
@@ -338,8 +362,8 @@ bring it forward for confirmation.
 
 ### Research artifacts
 
-Before planning or running a measurement, investigation, benchmark, capacity probe,
-or experimental comparison, read the
+Before planning or running a measurement, benchmark, capacity probe, experimental
+comparison, or investigation that creates study data/resources, read the
 [research artifact rules](references/research-artifacts.md). They govern measurement
 necessity and sufficiency, disk usage, reproducible inputs, and cleanup before completion.
 
@@ -348,7 +372,8 @@ necessity and sufficiency, disk usage, reproducible inputs, and cleanup before c
 Use three levels:
 
 1. **Agent checks** — diagnostics and minimum targeted tests/lint/typecheck for the
-   changed behavior/owner; include dependent layers only for a contract change.
+   changed behavior/owner; include dependent layers when an affected contract or
+   concrete failure mechanism requires them.
 2. **Pre-commit** — fast deterministic checks selected by staged paths; no services,
    database/browser E2E, production builds, benchmarks, or full-verify fallback.
 3. **PR CI** — draft runs inexpensive static/unit/docs checks; ready runs broad
@@ -363,6 +388,16 @@ Do not call a pre-commit check selected by staged paths but reading the entire w
 tree/package "staged-content isolation": unrelated unstaged failures must not block the
 commit. The hooks/CI composition may be changed only in a separate, explicitly assigned
 governance task; routine work must not silently bypass it.
+
+### Review before completion
+
+After implementation and before `done` or a ready PR, review the finished change using
+the [review method](references/review.md), including for configuration and documentation
+changes. Identify the baseline, inspect affected behavior and interactions, resolve
+completion blockers, and recheck evidence invalidated by fixes or integration. Passing
+tests alone do not close the review. Scale depth to actual risk; a codebase audit needs
+an explicitly agreed scope. Existing testing, manual acceptance, documentation, and
+delivery rules still apply; no separate tracker or mandatory independent agent is added.
 
 ## 7. Subagents and orchestration
 
@@ -483,12 +518,16 @@ scope.
 
 ## 10. Completion
 
-A task is complete when the requested result exists, targeted checks have passed, the
-user has confirmed the manual gate for user-facing behavior, scope has not been silently
-expanded, and actual blockers have been named. Keep manual acceptance pending until the
-user replies. If the work implements or changes a
-documented contract, perform the applicable project closure reconciliation before
-`done` and a ready PR; if no separate procedure is defined, compare the result directly
+Completion is evaluated against the agreed deliverable. For implementation, the requested
+result must exist, targeted checks and the applicable
+[review](references/review.md#result-and-completion) must pass, any required manual gate
+must be confirmed by the user, scope must remain within its authority, and no unresolved
+completion blockers may remain. For review-only and audit results, use the same
+reference's result criteria; reporting a defect does not itself require fixing it or
+recursively reviewing the report. Keep required manual acceptance pending until the user
+replies. If the work implements or changes a documented contract, perform the applicable
+project closure reconciliation before `done` and a ready PR; if no separate procedure
+is defined, compare the result directly
 with the canonical requirements/specifications and accepted decisions. Any unresolved
 discrepancy is a blocker.
 Do not copy that documentation governance here. Do not require the entire product phase

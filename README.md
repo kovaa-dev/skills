@@ -12,7 +12,7 @@ A collection of independent Agent Skills for cost auditing, document research, p
 | `cost-audit` | Evidence-based audit of agent session and instruction overhead with a minimal remediation plan. | [`skills/cost-audit/`](skills/cost-audit/) |
 | `doc-research` | Evidence-grounded research across large document collections with bounded retrieval and traceable citations. | [`skills/doc-research/`](skills/doc-research/) |
 | `dev-docs` | Product/technical documentation, requirements, lean queues, verified results, and incremental or one-shot legacy migration. | [`skills/dev-docs/`](skills/dev-docs/) |
-| `dev-rules` | Engineering execution covering scope, implementation, validation, Git, pull requests, agents, and handoffs. | [`skills/dev-rules/`](skills/dev-rules/) |
+| `dev-rules` | Engineering execution covering scope, implementation, code review, validation, Git, pull requests, agents, and handoffs. | [`skills/dev-rules/`](skills/dev-rules/) |
 
 The skills are independent and can be installed separately. None requires another: each integrates through the sources, policies, and tools already selected by the target project.
 
