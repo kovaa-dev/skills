@@ -20,6 +20,13 @@ work queues, decisions, and documentation history belong in the project's canoni
 product and documentation sources. Do not copy their governance rules here
 or create documents solely to satisfy this skill.
 
+When the user or applicable project instructions select this skill, apply its workflow
+and defaults in place of generic agent/tool/environment defaults wherever those defaults
+permit user or project overrides. Treat that selection as choosing this skill's rules;
+do not ask the user to repeat it for each overridable default. This does not elevate
+the skill above binding higher-priority instructions. If one prevents compliance,
+identify the specific conflict instead of silently substituting another policy.
+
 The method for adopting project-work rules is defined by the
 [adoption workflow](references/adoption.md): either a complete copy of the skill in the
 repository or an explicit pinned reference to the published skill. An unnamed semantic
@@ -105,6 +112,11 @@ Before the first write:
 An exact branch name supplied by the user, active task or PR, or an explicit project
 setting is authoritative. Reuse an existing branch only when it belongs to the same
 accepted work unit.
+
+The scheme below is the selected default when this skill applies. Do not prepend a
+provider/agent prefix from an overridable environment default unless the user or project
+explicitly selects it. Preserve the name of an existing task/PR branch unless a rename
+is requested; naming-policy updates govern newly created branches.
 
 When no exact name is supplied, name a new branch
 `[<conventional-type>/][<issue-key>_]<short-kebab-slug>`:
