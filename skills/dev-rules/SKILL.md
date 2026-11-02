@@ -35,30 +35,13 @@ duplicate is a migration defect, while a project-specific rule is valid only as 
 setting or an explicitly accepted scoped exception. This skill does not grant authority
 for destructive operations, merge, release, or deploy.
 
-## Programmatic tools before browser control
+## Tool choice, information access, and external communication
 
-For retrieving page/service content, inspecting data/state, and performing operations,
-prefer existing direct programmatic interfaces: repository tools, CLI commands, scripts,
-and service tools/APIs. Use them instead of browser automation or desktop control when
-they expose the required content or operation. For external project systems, follow
-the configured MCP precedence and bounded discovery below.
-
-For these access and operation tasks, determine whether a programmatic route is sufficient
-before opening a browser. Use browser/UI control when the user explicitly chooses it
-or the required content or operation is only available through the UI.
-Browser automation launched from a CLI is still a browser route; it does not replace
-a suitable direct service interface merely by being scripted.
-
-Choose the smallest sufficient route from known capabilities and bounded checks.
-Do not require a ceremonial failed CLI attempt or build a new adapter solely to avoid
-a necessary browser step. Briefly explain a non-obvious
-browser fallback once. Tool choice preserves the existing scope and authority boundaries.
-
-Visual verification retains its [visual method](references/ui-design.md#visual-verification):
-inspect the actual rendered UI visually. Content retrieval, DOM/API data, logs, and test
-assertions do not replace that inspection; the access priority above does not govern it.
-
-## External project systems and communication
+For information retrieval and operations, prefer a suitable available programmatic
+interface over browser automation or Computer Use. This also applies to unfamiliar
+sources, which may be internal: use context and bounded read-only evidence to establish
+network and authorization requirements rather than assuming public access or a need
+for an authenticated browser.
 
 For remote operations against a named project system, prefer its configured MCP tools
 over ad hoc HTTP requests, CLI wrappers, browser automation, or computer-control tools.
@@ -72,16 +55,34 @@ Use bounded discovery rather than repeatedly checking every available integratio
 3. Reuse that discovery result for the remainder of the task. Repeat it only when the
    user says connections changed, the runtime exposes a changed tool inventory, or an
    integration reports that reconnection is required.
-4. When a matching MCP supports the operation, do not load or use browser,
+4. When a matching MCP is available and supports the operation, do not load or use browser,
    computer-control, generic HTTP, CLI, or orchestrator skills unless the user or project
    explicitly selected that interface.
-5. Distinguish an unavailable integration from an unsupported operation and from a failed
-   supported call. A call failure is not evidence that the integration is unsupported.
 
 If no matching MCP is available or it does not support the operation, briefly state the
-limitation once and use an existing authorized native API or CLI, then browser UI when
-needed. Tool choice does not expand the task or grant permission for external writes.
+limitation once and choose an existing authorized programmatic route suited to the source.
 Local filesystem and Git operations continue to use the appropriate local tools.
+
+On failure, distinguish source/authorization, network/environment, and tool-capability
+problems before changing route. A failed supported call does not prove an integration
+unsupported or a source browser-only. Use a supported recovery or permission path when
+it addresses the evidenced cause and is allowed; respect denied authority. Reuse known
+capability failures until conditions change.
+
+Choose the next step from that evidence, not by enumerating every access method.
+Use browser automation or Computer Use for access when explicitly chosen or the needed
+capability is unavailable programmatically. A browser launched through CLI is still a
+browser route. Do not require ceremonial failed attempts or a new adapter solely to
+avoid a necessary UI step; briefly explain a non-obvious fallback once.
+
+For a supplied page/source, verify that the returned content is the intended document,
+then extract the relevant information. Public search is a separate discovery choice,
+not an automatic response to access failure; preserve the source's data boundaries.
+
+Visual verification retains its [visual method](references/ui-design.md#visual-verification):
+inspect the actual rendered UI visually. Content retrieval, DOM/API data, logs, and test
+assertions do not replace that inspection; the access priority above does not govern it.
+Tool choice does not expand task scope or grant permission for external writes.
 
 External project systems are read-only by default. Do not publish, send, submit, create,
 or edit comments, messages, reviews, task/issue text, status updates, or other
