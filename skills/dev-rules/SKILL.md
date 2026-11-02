@@ -248,12 +248,17 @@ need not be limited to "why."
 
 ## 4. User-owned manual usability gate
 
-For UI/UX implementation or review, follow [UI design and visual verification](references/ui-design.md).
-It defines conditional design-skill selection, reuse of the existing design system, and
-the agent's visual inspection and correction of the actual interface. Use available
-preview/browser/screenshot tools independently within the authorized task; these checks
-are separate from final user acceptance. Report unavailable rendering and unverified
-claims rather than treating source inspection as visual evidence.
+For UI/UX work fully determined by existing components, tokens, and accepted patterns,
+use those sources and focused visual/interaction checks. When unresolved design or
+interaction decisions need expertise, or a design skill is explicitly required, follow
+[UI design and visual verification](references/ui-design.md). Reconsider the route if
+new uncertainty appears; a UI file change alone does not require a full design process.
+Both routes preserve applicable accessibility, regression, and acceptance requirements.
+
+Use available preview/browser/screenshot tools independently to inspect the actual
+affected interface within the authorized task; these checks are separate from final
+user acceptance. Report unavailable rendering and unverified claims rather than
+treating source inspection as visual evidence.
 
 A full manual usability gate is mandatory for a new capability, a changed primary
 Action/Surface/Visible result, or a new waiting/result state. For a localized copy,

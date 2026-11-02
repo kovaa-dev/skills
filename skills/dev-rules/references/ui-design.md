@@ -7,6 +7,11 @@ an external skill's visual methodology or require one particular skill to be ins
 
 ## Select a design skill
 
+First apply the [UI work route](../SKILL.md#4-user-owned-manual-usability-gate).
+Routine work fully specified by established patterns uses focused checks directly;
+this selection procedure applies when design expertise is needed or a skill is explicitly
+required. A new file, component, or page does not by itself require a new visual direction.
+
 Use the current skill catalog or the project's established skill entrypoint. Discover
 candidates once for the task and reuse the result unless availability or scope changes.
 Do not enumerate unrelated skills or search the filesystem/network merely to assemble
@@ -66,10 +71,17 @@ justification. A short direction note or specimen suffices; confirm only materia
 ambiguity or a consequential change outside the accepted brief.
 
 Keep the smallest useful token/component foundation for the current deliverable.
-Record durable agreed design decisions in the project's owning sources and implementation;
-reuse those sources instead of introducing a skill-specific file tree by default.
-Apply established decisions to small additions without repeating a whole brand
-exploration, generating palettes, or requesting the same confirmation for each control.
+Reuse one compact direction/brief for a coherent area of work, revisiting only decisions
+the current change makes uncertain. Through this route, companion requirements such as
+"before every component" or "always offer to save" guide the relevant reasoning; they
+do not add mandatory repeated reports, palette generation, or confirmation for each
+control. Task scope, proportionality, and acceptance follow dev-rules.
+
+Record new durable agreed decisions in the project's owning sources and implementation
+within existing write authority. Reuse those sources instead of introducing a
+skill-specific file tree or another save prompt when the update is already authorized.
+Ask only for material unresolved choices or missing authority, and preserve required
+final user acceptance.
 
 ## Visual verification
 
@@ -88,8 +100,9 @@ request permits inspection and findings, not unsolicited edits.
   Check interaction and accessibility behavior with appropriate existing tools; pixels
   alone do not establish keyboard or assistive-technology behavior.
 - Fix concrete visual defects and material deviations from the chosen direction, then
-  re-inspect changed areas. Reuse evidence that remains valid. Stop when the affected
-  result meets its accepted direction and usable states; do not invent rounds of polish.
+  re-inspect changed areas. Reuse [valid prior checks](review.md#resolution-and-recheck)
+  across design, implementation, and completion review. Stop when the affected result
+  meets its accepted direction and usable states; do not invent rounds of polish.
 
 An inline specimen or isolated component preview can help choose a direction, but does
 not prove that the integrated application renders correctly. Source inspection, passing

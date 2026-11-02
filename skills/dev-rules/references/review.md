@@ -124,6 +124,12 @@ requires a new product decision or material scope expansion, name that dependenc
 continue unaffected authorized work. Report unrelated findings through the existing
 project route; they block this result only when their consequences prevent its acceptance.
 
+Start completion review from suitably scoped, still-valid test results and visual
+observations gathered during implementation or by companion skills. One result can
+support several review dimensions; switching skill or workflow stage alone does not
+require running the same check again. This reuse does not replace inspection of the
+finished code and its interactions or supply user acceptance.
+
 After fixes, review the changed paths and interactions again and rerun checks whose
 evidence was invalidated. Integration or later edits require renewed review of affected
 assumptions, not an automatic repeat of the entire audit. Stop when blockers are resolved

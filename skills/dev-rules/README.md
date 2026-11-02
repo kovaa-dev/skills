@@ -23,8 +23,8 @@ Use `dev-rules` for:
 - **Scope authority:** distinguishes accepted product behavior from reversible implementation detail and stops changes that would silently expand the contract.
 - **User-visible-first execution:** when choosing the next increment, prioritizes the smallest end-to-end user-visible path and an early manual usability gate before auxiliary harnesses or speculative infrastructure.
 - **Risk-proportionate validation:** selects the cheapest reliable test level for each risk instead of requiring every task to use the same TDD, E2E, or full-suite ceremony.
-- **Completion review:** uses risk models, scenario tracing, and failure hypotheses to check the finished result, with explicit coverage, evidence limits, and actionable findings.
-- **Design integration:** selects optional UI/UX skills by task, preserves existing components and tokens, and separates agent visual verification from final user acceptance.
+- **Completion review:** uses risk models, scenario tracing, and failure hypotheses to check the finished result, reusing valid test and visual evidence across stages without repeating checks solely for a new checklist.
+- **Design integration:** uses a light route for UI work fully specified by existing patterns, selects optional skills for unresolved design decisions, and separates agent visual verification from final user acceptance.
 - **Complexity stops:** requires a current consumer and accepted purpose for new abstractions, persistent state, services, runners, corpora, and execution paths.
 - **Conservative orchestration:** keeps subagents off by default and requires independent value, disjoint write scopes, and coordinator-owned integration.
 - **Explicit delivery authority:** separates branch, commit, push, ready, merge, release, and deploy permissions rather than treating them as one implicit grant.
