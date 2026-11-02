@@ -37,14 +37,15 @@ for destructive operations, merge, release, or deploy.
 
 ## Programmatic tools before browser control
 
-Prefer existing direct programmatic interfaces: repository tools, CLI commands, scripts,
-diagnostics, tests, and service tools/APIs. Use them instead of browser automation or
-desktop control when they expose the state or operation needed for the task. For
-external project systems, follow the configured MCP precedence and bounded discovery below.
+For retrieving page/service content, inspecting data/state, and performing operations,
+prefer existing direct programmatic interfaces: repository tools, CLI commands, scripts,
+and service tools/APIs. Use them instead of browser automation or desktop control when
+they expose the required content or operation. For external project systems, follow
+the configured MCP precedence and bounded discovery below.
 
-Before opening a browser, determine whether an available programmatic route is sufficient.
-Use browser/UI control when the user explicitly chooses it, the required capability is
-only available through the UI, or verification needs actual rendering or UI behavior.
+For these access and operation tasks, determine whether a programmatic route is sufficient
+before opening a browser. Use browser/UI control when the user explicitly chooses it
+or the required content or operation is only available through the UI.
 Browser automation launched from a CLI is still a browser route; it does not replace
 a suitable direct service interface merely by being scripted.
 
@@ -52,6 +53,10 @@ Choose the smallest sufficient route from known capabilities and bounded checks.
 Do not require a ceremonial failed CLI attempt or build a new adapter solely to avoid
 a necessary browser step. Briefly explain a non-obvious
 browser fallback once. Tool choice preserves the existing scope and authority boundaries.
+
+Visual verification retains its [visual method](references/ui-design.md#visual-verification):
+inspect the actual rendered UI visually. Content retrieval, DOM/API data, logs, and test
+assertions do not replace that inspection; the access priority above does not govern it.
 
 ## External project systems and communication
 
