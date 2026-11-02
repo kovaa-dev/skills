@@ -21,6 +21,7 @@ Use `dev-rules` for:
 ## Why use it
 
 - **Scope authority:** distinguishes accepted product behavior from reversible implementation detail and stops changes that would silently expand the contract.
+- **Programmatic-first work:** prefers available CLI, code, diagnostics, and service interfaces before browser/desktop control, preserving rendered-UI checks and UI-only fallbacks.
 - **User-visible-first execution:** when choosing the next increment, prioritizes the smallest end-to-end user-visible path and an early manual usability gate before auxiliary harnesses or speculative infrastructure.
 - **Risk-proportionate validation:** selects the cheapest reliable test level for each risk instead of requiring every task to use the same TDD, E2E, or full-suite ceremony.
 - **Completion review:** uses risk models, scenario tracing, and failure hypotheses to check the finished result, reusing valid test and visual evidence across stages without repeating checks solely for a new checklist.

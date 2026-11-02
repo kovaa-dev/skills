@@ -85,6 +85,11 @@ final user acceptance.
 
 ## Visual verification
 
+Apply [programmatic-first tool selection](../SKILL.md#programmatic-tools-before-browser-control).
+Use direct diagnostics/tests for questions they can answer; rendered appearance and
+UI-only behavior still need the appropriate preview/browser. When a browser is needed,
+prefer existing repeatable automation for navigation, checks, and capture where suitable.
+
 For UI implementation, the agent independently starts/renders the affected interface,
 inspects it with available tools, and corrects in-scope defects before handoff. This is
 authorized task verification; starting a local preview or taking screenshots does not
