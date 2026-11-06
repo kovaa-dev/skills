@@ -6,7 +6,10 @@ Selected old layer tasks first follow [on-touch conversion](legacy-transition.md
 
 ## Lean canonical queue entries
 
-Illustrative docs/queue.md. These entries share one owner/context where appropriate.
+Insert entries into the existing queue/index; docs/queue.md below is illustrative.
+For [selected legacy work](work-queue.md#existing-queues-during-transition), update its
+existing entry and retain its ID rather than adding a Q-ID copy.
+These entries share one owner/context where appropriate.
 Link the relevant contract, documentation, or result question. A short acceptance/context
 note is sufficient when useful; follow [work-context placement](documentation.md#work-context-and-results)
 for longer material.

@@ -6,7 +6,7 @@ for intake/severity and [on-touch conversion](legacy-transition.md) before conti
 
 ## One work item, one result boundary
 
-Use a short canonical entry with a stable project-wide ID, default Q-001, a result-oriented
+Use a short canonical entry with a stable project-wide ID, default Q-001 for new work, a result-oriented
 title, status, and links to the relevant contract, documentation, or result/question.
 Include owner, priority, work kind, delivery target, or an exact wait only when useful
 for selecting/executing the work. Put shared owner/context at queue level where practical.
@@ -25,6 +25,34 @@ requirement, TD, or subtask hierarchy merely to fit work into a template.
 Register explicitly assigned/deferred work, an independently actionable unresolved
 blocker, or significant enduring risk. A local step or defect resolved within current
 work stays there. Do not turn every conversation, question, or observation into a queue item.
+
+## Existing queues during transition
+
+Reuse the project's existing queue or task index for both legacy and new work. Place
+new result-oriented entries alongside old entries in the relevant area/milestone;
+link their requirements in the owning specifications rather than copying obligations
+into the queue. Do not create another queue or duplicate the backlog merely because
+some entries use the new model. Existing useful partitions may remain; migration state
+alone is not a reason to separate work selection.
+
+Listing/selecting a legacy entry does not require advance migration of the backlog or
+certify its readiness. Its unconverted contract and work remain in the old source until
+the selected scope follows [on-touch conversion](legacy-transition.md). Capture new
+requirements directly in their owners and register work only at the threshold above.
+
+During conversion, update the selected existing work entry in place: retain its ID,
+incoming navigation, history, and delivery grouping, and link the captured requirements
+and expected result. A retained PRD/layer ID identifies work or its source, never an
+extracted requirement. Conversion alone does not require a new Q-ID or a second work
+entry. Split or consolidate entries only for actual result boundaries, preserving source
+mappings and any active remainder. For partial conversion, make converted and residual
+scope and their status owners explicit; do not retire the whole source or maintain two
+current statuses for the same scope. Whole-source coverage still follows the transition
+protocol. Completed/cancelled results retain the history described below.
+
+This transition needs no generator, synchronization script, duplicate status table, or
+permanent migration register. Use existing project checks; adapt real enforcement only
+when it blocks the selected mixed format under [validator compatibility](validator-compatibility.md).
 
 ## State and readiness
 

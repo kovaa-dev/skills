@@ -7,7 +7,8 @@ old task entrypoints explicitly route through [conversion](legacy-transition.md)
 ## Minimal navigation
 
 Reuse a README or documentation index instead of creating an extra redirect file.
-Illustrative links below are placeholders for documents that actually exist:
+Reuse the existing work queue/index for [mixed old and new entries](work-queue.md#existing-queues-during-transition).
+Illustrative links below are placeholders; substitute existing project locations:
 
 ```md
 # Documentation
@@ -22,6 +23,7 @@ Illustrative links below are placeholders for documents that actually exist:
 ```
 
 Add only existing targets. No empty layer/decision registry is needed.
+The example queue path does not require a new file alongside an existing task index.
 Group current contracts, proposals under consideration, and history visibly when those
 routes exist; sections of the same document are enough. Historical links retain their
 baseline, while ordinary execution links resolve to the applicable current owner.

@@ -19,12 +19,12 @@ Illustrative placement, not a mandatory tree:
 - docs/wiki/personal-settings.md: related requirements and shared rationale.
 - docs/reference/settings-api.md: sourced API behavior, when readers need that reference.
 - docs/operations/settings-sync.md: operation/diagnosis/recovery procedure, when useful.
-- docs/queue.md: canonical lean work entries and completed-result links.
+- Existing queue/task index, or docs/queue.md when none exists: lean work and result links.
 - docs/architecture/decisions/: independently useful decisions, if needed.
 - docs/development/documentation-index.md: navigation/settings, if the project needs it.
 
-Requirements use stable R IDs and queue entries stable Q IDs across files. Existing
-meaningful requirement IDs may be retained. No layer prefix registry, root redirect,
+Requirements use stable R IDs; Q IDs are the default for new work across files. Existing
+meaningful requirement and work IDs may be retained. No layer prefix registry, root redirect,
 or file per work item is required. Multiple queues are allowed with one canonical
 entry per item and cross-queue waits.
 
@@ -37,7 +37,8 @@ source and the new normal route in one concise pointer. For example:
 > the selected dev-docs source and its material/owner route. PRD/layer-task
 > tracking is legacy: before continuing selected old work, convert its affected
 > requirements/results and resume at the new canonical records. Do not migrate unrelated
-> backlog implicitly; use an explicit migrate request for a one-shot transition.
+> backlog implicitly. Keep old and new work in the existing queue, updating selected
+> entries in place; use an explicit migrate request for a one-shot transition.
 
 Adoption uses a complete project-local copy or a pinned public source under
 [adoption](adoption.md). Do not copy the whole policy into AGENTS/RULES. Make entrypoint,
@@ -45,6 +46,9 @@ hooks, CI, or Git changes only with the active project-work authority. Existing 
 selection does not need to be requested again for ordinary maintenance.
 
 ## Existing projects
+
+Keep [the existing queue/index](work-queue.md#existing-queues-during-transition) as the
+shared selection route. Adding new work does not require converting unrelated entries.
 
 Classify existing obligations, plans, technical decisions, source facts, verification,
 and navigation by meaning. A file named PRD may contain a valuable contract, historical

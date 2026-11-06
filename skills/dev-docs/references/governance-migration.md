@@ -41,7 +41,9 @@ recreate historical sources from memory.
    technical choices, acceptance sources, and verification. New records are sufficient
    for ordinary execution without old tasks. Historical provenance may link to preserved
    sources but must not be required to understand the current contract.
-4. **Build usable queues and history.** Import remaining work with actual readiness,
+4. **Build usable queues and history.** Reuse the existing queue/index and update its
+   entries in place under [queue continuity](work-queue.md#existing-queues-during-transition).
+   Import remaining work with actual readiness,
    priority, accountable owner when known, exact waits, and result/acceptance locators.
    Preserve completed/cancelled outcomes with their actual dates/results/limits.
    Do not label historical work current production verification, reopen done, or lose

@@ -89,8 +89,10 @@ second live requirement catalog or work queue.
    targeting the current contract. Preserve proven obsolete material as nonbinding history
    with a successor/retirement notice under the [lifecycle](requirements.md#retiring-stale-material);
    conversion must not resurrect it as a current obligation.
-3. **Capture actual work.** Add/reuse remaining independently useful outcomes under
-   [current queue registration/readiness](work-queue.md). Preserve legacy state as history,
+3. **Capture actual work.** Update the selected existing entry under
+   [existing queues during transition](work-queue.md#existing-queues-during-transition),
+   retaining its ID and result boundary; add entries only for independently useful work.
+   Use [current queue registration/readiness](work-queue.md). Preserve legacy state as history,
    not proof of current readiness. Research is work with an answer/artifact, not a fake
    product requirement. Map waits to specific supplying work/results; preserve unresolved
    external prerequisites explicitly. Import completed outcomes into queue history with
@@ -100,8 +102,9 @@ second live requirement catalog or work queue.
    before applying a converted or historical label. Verify only the ranges whose meaning
    is accounted for; an incomplete remainder stays active and explicitly incomplete.
 5. **Switch the verified reading route and continue.** Mark the exact verified sections/ranges and
-   link their new owners, applicable queue entries, and results from the old source and
-   affected navigation. Only those ranges become historical for current execution.
+   link their new owners, the updated existing work entry, and results from the old source
+   and affected navigation. The queue/index remains the shared selection route for old
+   and new work. Only verified ranges become historical for current execution.
    For a partial source, add a prominent notice identifying converted ranges and the
    remaining active legacy sections/work. Keep that remainder readable and operational
    under on-touch conversion; do not archive the whole body or retire its remaining work.
