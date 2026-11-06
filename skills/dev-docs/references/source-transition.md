@@ -62,8 +62,9 @@ reuse an existing durable result or provenance location.
    exceptions, negative constraints, applicability, prerequisites, acceptance, open questions,
    decisions, deferred work, and historical results. A source heading/paragraph/item locator
    is sufficient; no new source ID or per-line numbering is needed. For each unit, record
-   its canonical destination or explicit disposition and reason. Destinations may be R-ID
-   and revision, decision/question anchor, description/procedure, or work/result/history.
+   its canonical destination or explicit disposition and reason. Destinations may be requirement/revision, decision/question/defect anchor,
+   description/procedure, task, or result/history. Knowledge and execution have distinct
+   owners even when sections share a file.
 3. **Preserve distinctions.** Shared destinations are allowed only after checking that all
    contributing conditions and exceptions survive. Similar titles are not proof of a
    duplicate. Replaced/retired meaning needs its accepted reason and successor/boundary;
@@ -114,15 +115,41 @@ second live requirement catalog or work queue.
    targeting the current contract. Preserve proven obsolete material as nonbinding history
    with a successor/retirement notice under the [lifecycle](requirements.md#retiring-stale-material);
    conversion must not resurrect it as a current obligation.
-3. **Capture actual work.** Replace selected aggregate-task links with covered requirement/
-   result links under [existing queues during transition](work-queue.md#existing-queues-during-transition).
-   Retain work IDs for unchanged result boundaries and source IDs/redirects for replaced
-   aggregates; add work entries only for independently useful outcomes.
-   Use [current queue registration/readiness](work-queue.md). Preserve source state as history,
-   not proof of current readiness. Research is work with an answer/artifact, not a fake
-   product requirement. Map waits to specific supplying work/results; preserve unresolved
-   external prerequisites explicitly. Import completed outcomes into queue history with
-   the original result/date/limits when this source is being converted.
+3. **Separate knowledge from tasks.** Move obligations/criteria to requirements,
+   rationale/accepted choices to decisions, symptoms/reproduction to defects,
+   questions/experiments to research, and actual checks/dates/limits to results.
+   Reuse the already extracted owners and coverage mapping; do not extract them again
+   or duplicate a requirement for a recurring bug. Keep only action, grounds/target
+   links, execution status, real task waits, and result links in the task.
+   Preserve the original task ID, status and result boundary when unchanged. Split only
+   independently useful outcomes; consolidate actual duplicates with preserved ID routes.
+   Similar titles are not duplicates. Retain priority/assignee/target when known as
+   execution metadata, and unresolved supplier waits explicitly.
+   Completed tasks remain historical deliveries, not freshly verified requirements.
+   Cancelled tasks stay cancelled with their linked reason. For a partly completed
+   aggregate, preserve completed results and capture independently actionable remaining
+   work; do not hide it under done or falsely mark the whole original outcome completed.
+   When a mixed aggregate is fully replaced by separate tasks, retire its original
+   body as a historical source with its last actual status, completed results, and
+   replacement links; remove its duplicate active selection entry. Do not mark it
+   done/cancelled merely because it was split. For example, a partly completed T-10
+   split into T-11/T-12 remains a historical partial source, while only T-11/T-12 are
+   active tasks. If T-10 still owns an independent remaining outcome, keep it active
+   for that explicit scope and avoid duplicating it in the new tasks.
+   A later regression receives a new repair task against the unchanged requirement.
+   Existing requirement-only queue entries are assessed by meaning: real selected work
+   gets a separate task linked to the same requirement/revision, while pure contract
+   listings become navigation. Do not mechanically create a task per requirement or
+   restore every historical card as new open work. Preserve old anchors and a checked
+   old-to-new route when separating conflated identities. Reuse compatible task IDs;
+   allocate a new task ID only when no compatible execution identity exists or the
+   result is new. If an R-ID or R-ID@n was used for both contract and execution, retain
+   it for the requirement/revision, allocate a distinct task ID, and preserve the exact
+   historical execution state/baseline/result through the conversion mapping and links.
+   This separates identities without resetting delivery history or renumbering contracts.
+   Update the existing queue in place, preserving selection groups and historical
+   outcomes. Until an exact range is verified, its source remains active.
+
 4. **Verify before switching.** Perform the [two-way coverage check](#coverage-and-reconciliation),
    including new inputs received during the work. Resolve missing/unmapped source meaning
    before applying a converted or historical label. Verify only the ranges whose meaning
@@ -133,7 +160,7 @@ second live requirement catalog or work queue.
    [documentation ownership rules](documentation.md#documentation-purpose-and-ownership);
    a shorter page alone is not proof of a successful conversion.
 5. **Switch the verified reading route and continue.** Mark the exact verified sections/ranges and
-   link their new owners, replacement queue rows, and results from the old source
+   link their new owners, task queue entries, and results from the old source
    and affected navigation. The queue/index remains the shared selection route for old
    and new work. Only verified ranges become historical for current execution.
    For a partial source, add a prominent notice identifying converted ranges and the
@@ -146,7 +173,7 @@ second live requirement catalog or work queue.
    changes since the coverage check before continuing or claiming completion.
    Continue the selected converted scope only in its new canonical records; its old
    formulation/status is historical. Do not create competing contract/status owners;
-   the queue intentionally repeats the current owner status under the queue rules.
+   the queue intentionally repeats task execution status under the queue rules.
 
 The coverage mapping is provenance/navigation, not another work state. On repeated entry,
 follow it and reuse the existing records; account only for actual new or changed material.

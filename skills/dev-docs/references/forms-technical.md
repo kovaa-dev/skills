@@ -1,68 +1,58 @@
-# Work entries and result artifacts
+# Tasks and result artifacts
 
 Use [work queues](work-queue.md), [requirements](requirements.md), and
-[governance](documentation.md). Assess selected sources under
-[source assessment](source-transition.md); reuse compatible work/result owners.
+[ownership](documentation.md#work-context-and-results). Examples use illustrative
+paths/statuses; preserve the actual project's IDs and known facts.
 
-## Lean canonical queue entries
-
-Insert linked rows into the existing queue/index; the path below is illustrative.
-Follow [queue row and outcome rules](work-queue.md#one-work-item-one-result-boundary).
-The requirement examples follow the [ID rules](documentation.md#layers-and-id-namespaces)
-and the owners in the [specification example](forms-product.md). Q-001 is an illustrative
-independent investigation; retain the project's existing work-ID convention.
-Old aggregate task links can be replaced by covered requirement/result links under
-[the transition rules](work-queue.md#existing-queues-during-transition).
+## Queue and task
 
 ```md
-# Work queue
-
-## Open work
-
-- [Q-001 Establish a usable preferences representation](wiki/personal-preferences.md#representation-question) – ready
-- [R-SYNC-001 Deliver cross-device preferences](wiki/personal-preferences.md#r-sync-001) – blocked
-
-## Completed work
-
-- [R-LOCAL-001 Preserve preferences locally](wiki/personal-preferences.md#r-local-001) – done
+- [Q-001 Investigate preferences representation](wiki/personal-preferences/work.md#q-001) – ready
+- [Q-002 Implement cross-device preferences](wiki/personal-preferences/work.md#q-002) – blocked
+- [Q-003 Preserve preferences locally](wiki/personal-preferences/work.md#q-003) – done
 ```
 
-The queue status is copied from the linked owner. For example, a requirement section
-may contain `Delivery status: blocked` with the revision/target and missing input; its
-queue row repeats `blocked`. The investigation section owns its own `Work status: ready`.
-Read those source fields before execution and keep all affected rows consistent.
-These snippets illustrate different delivery states; do not infer them from a draft
-requirement or unknown verification in another example.
+The linked task is the execution-status authority. A compact task section is enough:
 
-In the linked question section, record the expected experiment/conclusion. In the linked
-delivery context, identify the accepted representation result it waits for and the agreed
-target. Completed result sections own actual dates, verification, and limits. These details
-do not become additional queue fields or inline cards.
+```md
+## Q-002
 
-Set ready only when actual scope, acceptance, inputs, authority, and owner are sufficient.
-Use project tokens such as planned where they already represent readiness. Do not fill
-dates, acceptance, current verification, or owner from the illustrative text.
+Implement cross-device preferences.
+Status: blocked.
+Implements:
+- [R-SYNC-001 revision 1](requirements.md#r-sync-001).
+- [R-LOCAL-001 revision 1](requirements.md#r-local-001).
+Preserves:
+- [Existing account isolation](../account-access/requirements.md#account-isolation).
+Depends on:
+- [Q-001 representation result](#q-001).
+Result: <link when available>.
+```
 
-Local steps can remain an executor plan. Use another work entry only for a result with
-independent planning/acceptance or a real prerequisite supplied to other work.
-The same entry may implement several requirements and produce code, documents, or data.
+The task links criteria/constraints, never copies them. Research questions, defect
+reproduction, rationale and implementation decisions remain in their topic owners.
+Assignee/priority/target are optional execution metadata, not grounds for another file.
+The links select a coherent result without copying contract text. Use a precise section
+when a requirement is only partly selected. Record coverage of all selected obligations
+and affected preserved constraints in the result before closing the task. Local steps
+stay executor plans.
+Historical tasks keep their original baselines, status and result locators.
 
 ## Result or investigation section
 
-Use an existing relevant result/documentation section or a separate artifact when its
-content is independently useful; a repair or execution brief needs no new file by default:
+Reuse an existing relevant section or useful artifact:
 
 ```md
 ## Representation result
 
-Question and acceptance: <link to the owning question>.
-Inputs/baseline: <reproducible source/version and actual constraints>.
+Question and answer criteria: <link to owning question>.
+Inputs/baseline: <reproducible source/version and applicable constraints>.
 Method: <enough to repeat the significant check>.
 Result: <observed behavior/measurements and artifact locators>.
-Conclusion: <supported answer, limits, and unresolved issues>.
+Conclusion: <supported answer, limits and unresolved issues with remediation task links>.
 Requirements checked: <IDs/revisions, including preserved contracts>.
 Delivery: <actual target/version or not delivered, as applicable>.
 ```
 
-A report may establish infeasibility and still complete the investigation. It does not
-make the product requirement implemented. Long logs and retries do not belong in the queue.
+An accepted negative answer can finish an investigation without implementing the product.
+Task completion links the result; neither the task nor queue duplicates its evidence.

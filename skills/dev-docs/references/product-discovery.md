@@ -35,7 +35,7 @@ Grooming has two outputs:
    Agreed obligations become accepted; uncertain desired outcomes remain draft and
    coherent alternatives awaiting a decision remain proposed.
 2. A prepared queue: independently useful deliverables, priorities, exact prerequisite
-   suppliers, owner/authority, target, and concise acceptance or links to its existing owner.
+   suppliers, owner/authority, target, and links to acceptance at its canonical owner; tasks do not copy criteria.
 
 Shared rationale belongs in one named block. Requirements in different specifications
 can refer to the same reason or decision without depending on one another. Check the

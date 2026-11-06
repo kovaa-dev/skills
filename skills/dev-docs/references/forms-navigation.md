@@ -34,14 +34,13 @@ Search results still require the [state/applicability check](requirements.md#cur
 ## Multiple queues and views
 
 Primary selection entries can be partitioned by capability, team, or work kind. Each
-delivery key has one status owner: its requirement/revision block or independent
-work-context section. Different revision deliveries share the requirement ID but have
-distinct full keys, statuses, and historical results.
+task ID has one execution-status owner. Tasks targeting different requirement revisions
+keep their own identities, states, and historical results; revisions are not task IDs.
 All queue views explicitly repeat the owner status in linked ID/name/status rows,
 including completed/cancelled history. Manual copies are supported: read the owner
 before work, correct discrepancies in its favor, and update affected rows with each
 status change under [queue rules](work-queue.md#state-and-readiness).
-Plain navigation links need no status. Context and verification stay at the linked owner.
+Plain navigation links need no status. Tasks link context and verification at their purpose-specific owners.
 
 Dependency links cross queues. A blocked entry does not freeze the group.
 Stages/sprints are optional selection/grouping, not requirement IDs or implementation

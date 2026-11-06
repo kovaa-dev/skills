@@ -37,8 +37,7 @@ Revision: 1. Basis: [Continue work across devices](#why-001-continue-work-across
 Acceptance: <observable scenario and method, or an explicit verification gap;
 use existing tests when sufficient>.
 Verification: unknown; no current result established.
-Delivery status: backlog (revision 1; if this delivery is registered in a queue).
-<The queue repeats this field; the requirement is the status authority.>
+Execution: <link to a separate task when delivery work is selected>.
 
 ## Apply remote changes on active devices
 
@@ -81,7 +80,7 @@ Work to realize this contract belongs in the [queue](forms-technical.md).
 
 Apply [current-revision updates](requirements.md#updating-the-current-revision) in the
 owning block. An agreed upload-limit change from 20 MiB to 50 MiB keeps R-MEDIA-007
-and registers R-MEDIA-007@2 in the same change as its queue row:
+and records revision R-MEDIA-007@2 together with a separate task targeting it:
 
 ```md
 ## R-MEDIA-007 Upload limit
@@ -92,21 +91,22 @@ Unchanged conditions: <canonical contract or relevant section>.
 
 ### Revision 2
 
-Delivery ID: R-MEDIA-007@2
-Delivery status: planned
+Revision: R-MEDIA-007@2
+Task: [Q-008 Raise upload limit](work.md#q-008).
 Base: revision 1. Change: maximum upload size 20 → 50 MiB.
 Acceptance source: <actual decision/source>.
-Verification: boundary at 50 MiB, rejection above it, and <affected preserved checks>.
+Acceptance/checks: boundary at 50 MiB, rejection above it, and <affected preserved checks>.
+Verification: not yet established for revision 2.
 ```
 
 ```md
-- [R-MEDIA-007 Upload limit up to 20 MiB](wiki/uploads.md#revision-1-result) – done
-- [R-MEDIA-007@2 Raise upload limit to 50 MiB](wiki/uploads.md#revision-2) – planned
+- [Q-007 Deliver upload limit up to 20 MiB](wiki/uploads/work.md#q-007) – done
+- [Q-008 Raise upload limit to 50 MiB](wiki/uploads/work.md#q-008) – planned
 ```
 
 The paths/statuses are illustrative; use actual project tokens and facts. The earlier
 delivery is not reopened. After delivery, the current contract says 50 MiB; revision 2
-becomes done with its result. Compact completed details into a linked history/result
+has verification evidence, and Q-008 becomes done with its linked result. Compact completed details into a linked history/result
 section, preserving both queue targets. Do not leave competing unscoped current limits.
 
 Keep the old 20 MiB wording and its verification in labeled revision history, with any

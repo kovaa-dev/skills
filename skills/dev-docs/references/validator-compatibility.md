@@ -16,8 +16,8 @@ or relationships between an index and its owners. Scope those checks to
 remaining source sources while adapting affected samples and checks for:
 
 - specification requirement IDs/anchors, revision/applicability, and real links;
-- revision delivery keys such as R-MEDIA-001@2, two-way revision/queue coverage,
-  and preserved completed delivery targets;
+- semantic revision keys such as R-MEDIA-001@2, separate task identities, two-way
+  target/task coverage, and preserved completed task baselines;
 - one primary selection entry and status owner, matching queue status copies,
   cross-queue references, and result/history links;
 - prerequisite versus reference/supersedes/rationale relationships and self/cycle checks;

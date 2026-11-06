@@ -28,8 +28,8 @@ scope that needs reconciliation. Preserve its meaning and history, link converte
 Unconverted sections of a shared source remain explicitly active until their own conversion.
 Repeated entry reuses the same IDs and mapping. No init or complete backlog migration is required.
 Existing and newly captured work share the existing queue/index as ID/name/link/status rows. Selected
-source aggregates are replaced by covered requirement/result links with preserved provenance.
-Requirements live in their owners. No parallel transition queue or generator is required.
+tasks retain their execution identity while extracted knowledge lives at canonical owners.
+Existing requirement-only delivery rows are reconciled into separate tasks where actual work exists. No parallel transition queue or generator is required.
 [Coverage reconciliation](references/source-transition.md#coverage-and-reconciliation) makes
 existing meaning, destinations, new inputs, and remaining gaps explicit. Newly received
 requirements/questions use ongoing capture directly in their owning documents.
@@ -42,7 +42,8 @@ Requirements describe obligations; queues describe work. A bug can create new re
 against the same unchanged requirement. Research can produce an accepted negative
 conclusion without implementing a product requirement. Multiple queue views preserve
 one primary selection entry, one linked status owner, and cross-queue waits.
-The requirement owns its delivery status; queue rows explicitly repeat it. Before work,
+Tasks own execution status; queue rows explicitly repeat it. Requirements own contracts
+and semantic revisions, while tasks link them and their results without copying context. Before work,
 read the owner and correct differing queue copies. Status changes update both source
 and affected rows; no generator is required.
 

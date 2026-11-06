@@ -13,5 +13,6 @@ observation versus hypothesis, impact/severity, responsible owner, applicable co
 remediation Q entry when independently actionable, and closure verification.
 Preserve closed observations.
 Finding states such as OPEN/PARTIAL/CLOSED describe the observation's disposition,
-not a copied work status. A significant unresolved finding needs visible remediation
-or an explicit accepted deferral with a review condition.
+not a copied work status. A significant unresolved defect needs a linked remediation task, including explicitly
+deferred work. An accepted risk/deferral decision belongs at its decision owner and
+is linked from the task; it does not silently erase the remaining outcome.
