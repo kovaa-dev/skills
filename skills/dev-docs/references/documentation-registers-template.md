@@ -25,7 +25,9 @@ or duplicate an existing owner to match a form.
 
 ## Completed-form checks
 
-- Requirement and work IDs are unique/stable; references resolve.
+- Requirement and work IDs are unique/stable; references resolve. Revision delivery keys
+  are unique per requirement; every work-bearing revision has its matching queue row
+  and every such row resolves to its revision status/baseline owner.
 - Applicability, acceptance, and current versus historical state are unambiguous.
 - Queue/index context stays concise; explanation/summaries link their canonical sources
   without creating competing normative contracts or work states.

@@ -80,9 +80,34 @@ Work to realize this contract belongs in the [queue](forms-technical.md).
 ## An agreed change to an existing requirement
 
 Apply [current-revision updates](requirements.md#updating-the-current-revision) in the
-owning block. For example, an agreed upload-limit change from 20 MiB to 50 MiB updates
-R-MEDIA-007 to its next revision, retaining other accepted conditions. It does not add another
-current requirement saying 50 MiB beside an unchanged current R-MEDIA-007 saying 20 MiB.
+owning block. An agreed upload-limit change from 20 MiB to 50 MiB keeps R-MEDIA-007
+and registers R-MEDIA-007@2 in the same change as its queue row:
+
+```md
+## R-MEDIA-007 Upload limit
+
+Applicable/delivered: revision 1, maximum 20 MiB; <delivery result>.
+Accepted target: revision 2, maximum 50 MiB; active on <agreed rollout condition>.
+Unchanged conditions: <canonical contract or relevant section>.
+
+### Revision 2
+
+Delivery ID: R-MEDIA-007@2
+Delivery status: planned
+Base: revision 1. Change: maximum upload size 20 → 50 MiB.
+Acceptance source: <actual decision/source>.
+Verification: boundary at 50 MiB, rejection above it, and <affected preserved checks>.
+```
+
+```md
+- [R-MEDIA-007 Upload limit up to 20 MiB](wiki/uploads.md#revision-1-result) – done
+- [R-MEDIA-007@2 Raise upload limit to 50 MiB](wiki/uploads.md#revision-2) – planned
+```
+
+The paths/statuses are illustrative; use actual project tokens and facts. The earlier
+delivery is not reopened. After delivery, the current contract says 50 MiB; revision 2
+becomes done with its result. Compact completed details into a linked history/result
+section, preserving both queue targets. Do not leave competing unscoped current limits.
 
 Keep the old 20 MiB wording and its verification in labeled revision history, with any
 remaining supported-version applicability. A test proving the old limit does not by

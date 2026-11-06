@@ -34,7 +34,9 @@ Search results still require the [state/applicability check](requirements.md#cur
 ## Multiple queues and views
 
 Primary selection entries can be partitioned by capability, team, or work kind. Each
-work ID has one status owner: its requirement or independent work-context section.
+delivery key has one status owner: its requirement/revision block or independent
+work-context section. Different revision deliveries share the requirement ID but have
+distinct full keys, statuses, and historical results.
 All queue views explicitly repeat the owner status in linked ID/name/status rows,
 including completed/cancelled history. Manual copies are supported: read the owner
 before work, correct discrepancies in its favor, and update affected rows with each
