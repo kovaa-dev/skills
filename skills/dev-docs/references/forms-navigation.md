@@ -2,7 +2,9 @@
 
 Use [requirements](requirements.md), [queues](work-queue.md), and
 [governance](documentation.md). New navigation points to useful documentation and canonical work;
-old task entrypoints explicitly route through [conversion](source-transition.md).
+Assess existing entrypoints under [source assessment](source-transition.md). Reuse
+compatible owners; route only scope with incompatible meaning or ownership through
+conversion. Age, filename, or record type alone does not trigger it.
 
 ## Minimal navigation
 
