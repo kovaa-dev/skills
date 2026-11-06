@@ -27,6 +27,13 @@ Old aggregate task links can be replaced by covered requirement/result links und
 - [R-LOCAL-001 Preserve preferences locally](wiki/personal-preferences.md#r-local-001) – done
 ```
 
+The queue status is copied from the linked owner. For example, a requirement section
+may contain `Delivery status: blocked` with the revision/target and missing input; its
+queue row repeats `blocked`. The investigation section owns its own `Work status: ready`.
+Read those source fields before execution and keep all affected rows consistent.
+These snippets illustrate different delivery states; do not infer them from a draft
+requirement or unknown verification in another example.
+
 In the linked question section, record the expected experiment/conclusion. In the linked
 delivery context, identify the accepted representation result it waits for and the agreed
 target. Completed result sections own actual dates, verification, and limits. These details

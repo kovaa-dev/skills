@@ -41,7 +41,10 @@ routes and actual validators. Renaming files alone does not accomplish it.
 Requirements describe obligations; queues describe work. A bug can create new repair work
 against the same unchanged requirement. Research can produce an accepted negative
 conclusion without implementing a product requirement. Multiple queue views preserve
-one canonical work entry and cross-queue waits.
+one primary selection entry, one linked status owner, and cross-queue waits.
+The requirement owns its delivery status; queue rows explicitly repeat it. Before work,
+read the owner and correct differing queue copies. Status changes update both source
+and affected rows; no generator is required.
 
 ## Example prompts
 

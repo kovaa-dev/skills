@@ -33,11 +33,13 @@ Search results still require the [state/applicability check](requirements.md#cur
 
 ## Multiple queues and views
 
-Canonical entries can be partitioned by capability, team, or work kind. Each work ID has
-one home; other views are links or actual generated projections. Do not manually
-duplicate statuses/dependencies across several queue tables.
-All queue views use linked ID/name/status rows, including completed/cancelled history;
-context and verification stay at the linked result owner.
+Primary selection entries can be partitioned by capability, team, or work kind. Each
+work ID has one status owner: its requirement or independent work-context section.
+All queue views explicitly repeat the owner status in linked ID/name/status rows,
+including completed/cancelled history. Manual copies are supported: read the owner
+before work, correct discrepancies in its favor, and update affected rows with each
+status change under [queue rules](work-queue.md#state-and-readiness).
+Plain navigation links need no status. Context and verification stay at the linked owner.
 
 Dependency links cross queues. A blocked entry does not freeze the group.
 Stages/sprints are optional selection/grouping, not requirement IDs or implementation

@@ -22,6 +22,9 @@ material; no particular task or document scheme is assumed to be obsolete.
 Keep the existing queue/index as the shared selection route for old and new work;
 use [existing queues during transition](references/work-queue.md#existing-queues-during-transition).
 Queues are linked ID/name/status rows; context and results stay at their linked owners.
+The requirement owns its delivery status and the queue explicitly repeats it. For
+independent work, its linked context owns the status. Before work, read the owner;
+reconcile queue copies in its favor and update affected rows when the source changes.
 Register useful outcomes under the [queue rules](references/work-queue.md), not the
 supporting record maintenance performed during the current work.
 Use [requirement IDs and existing layer definitions](references/documentation.md#layers-and-id-namespaces):

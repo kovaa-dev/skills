@@ -46,7 +46,9 @@ accuracy together with affected sources.
 ## Work context and results
 
 Keep durable product/system knowledge in its owning document, and the selected work's
-state in its canonical queue entry. Keep short-lived plans, investigation trails, and
+status at its linked owner: the requirement for direct requirement delivery, or the
+work-context section for independent work. Queue rows explicitly repeat the owner
+status under [reconciliation rules](work-queue.md#state-and-readiness). Keep short-lived plans, investigation trails, and
 reproduction detail in the executor's working context or an existing relevant note/section.
 Persist only what is needed for continuation, handoff, traceability, or a useful result,
 within the existing write authority. The queue row contains only ID, name/link, and
@@ -235,7 +237,8 @@ mechanically by line count or create a micro-file for each sentence.
 Use the [purpose/ownership table](#documentation-purpose-and-ownership) to choose placement.
 A requirement is addressable inside a specification; related content can share a document.
 Guides and runbooks may explain ordered procedures, including migration and rollback.
-Scheduling, assignees, progress, and completion of particular executions remain queue state.
+Execution details remain at the linked work owner; the queue repeats delivery status
+for selection. They do not become normative requirement wording.
 
 Use descriptive filenames and readable headings. Only independently addressable records
 need IDs; not every paragraph. Label links by purpose. Do not add universally mandatory

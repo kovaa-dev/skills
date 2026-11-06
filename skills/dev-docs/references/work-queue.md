@@ -21,8 +21,11 @@ the linked owning document/section. Reuse that owner; a row does not require its
 Do not turn queue entries into inline work cards or append a second context/status table.
 
 A requirement ID may directly identify its delivery; no wrapper work item is needed.
-The row status describes that delivery, not whether the requirement is accepted, active,
-or verified against the current revision. Those states remain in the specification.
+The requirement owns its delivery status; the queue explicitly repeats that status for
+scanning. This is a required projection, not a second authority. Definition/acceptance
+and implementation/verification remain distinct fields in the requirement.
+For independent repair/research work, the linked work-context section owns its status;
+its row repeats that value without changing the requirement's delivery status.
 A separate repair against an unchanged requirement or an independent investigation uses
 its own work ID under the project's [ID namespace](documentation.md#layers-and-id-namespaces)
 and links its owning context; Q-001 is a fallback only when no convention exists. Do not
@@ -65,7 +68,7 @@ conversion, name the exact converted/residual scope and their status owners at t
 source; whole-source coverage still follows the transition protocol. Completed/cancelled
 results retain the history described below.
 
-This transition needs no generator, synchronization script, duplicate status table, or
+This transition needs no generator, synchronization script, separate status register, or
 permanent migration register. Use existing project checks; adapt real enforcement only
 when it blocks the selected mixed format under [validator compatibility](validator-compatibility.md).
 
@@ -101,9 +104,18 @@ Ready proposal-evaluation work is not authority to deliver an unaccepted replace
 If the target changed or was retired, reconcile the unfinished entry before continuing;
 keep historical completion against its original baseline.
 
-Do not duplicate canonical status in a card plus an index. If a project uses generated
-views, they project the canonical entry. A manual secondary view contains links, not an
-independently maintained copy of status, dependencies, or acceptance.
+Before starting/resuming work, read the linked owner and its applicable delivery
+baseline; do not rely on the queue copy. If the statuses differ, the owner takes
+precedence: repair the queue projection before proceeding. A missing owner status is
+an explicit gap to resolve from actual evidence, not a reason to promote the copied
+queue value silently.
+
+For a status change, update the owner first and all affected maintained queue rows in
+the same change. Before closure, verify that their values agree. A discovered runtime
+discrepancy still requires reconciling the owner against evidence under normal rules.
+Generated projections are optional; manual copying is supported and no synchronization
+script is required. Ordinary Markdown links navigate to a source; they do not include
+a live field value. Do not claim automatic synchronization without actual tooling.
 
 ## Dependencies and multiple queues
 
@@ -115,9 +127,11 @@ Keep the reason/result explicit; a done supplier is insufficient if its required
 was not actually delivered or is invalid for the target baseline.
 
 Multiple queues/files are allowed by capability, team, work kind, or delivery group.
-Each work item has one canonical entry. Other appearances are links or actual generated
-views. Use project-wide unique IDs and cross-queue links. Moving an item preserves its
-ID and inbound navigation; avoid duplicates.
+Each work item has one primary selection entry and one linked status owner. Other
+queue views may repeat ID/name/link/status under the same reconciliation rule; plain
+navigation links need no copied status. Repeated views do not represent separate work
+or competing status owners. Use project-wide unique IDs and cross-queue links. Moving
+an item preserves its ID and inbound navigation.
 
 Queues do not block queues. Individual work waits on individual results across any
 grouping; skip blocked items when choosing other ready work. Selection follows accepted

@@ -46,7 +46,11 @@ Distinguish:
   use the [lifecycle meanings](#current-contract-and-nonbinding-material) below;
 - implementation/verification state: unknown, not implemented, partial, verified, or
   violated, with a locator/version where established;
-- work readiness: belongs to the queue, not the requirement's definition state.
+- delivery/work status: when delivery is queued directly under this requirement ID,
+  the requirement owns this status and the queue repeats it. Identify its delivery
+  revision/target in the owning section. Readiness meanings follow queue rules; this
+  field does not change definition or verification state. Separate repair/research
+  work owns its own status rather than overwriting requirement delivery status.
 
 A requirement can be accepted while implementation, feasibility, or its verification method
 is unresolved. Record missing verification methods as gaps; work readiness and completion
