@@ -19,10 +19,12 @@ it does not authorize new legacy cards or continued task-based execution.
 | Open questions, findings, exceptions | Owning specification/decision/artifact, with queue work only when independently actionable. |
 
 Existing legacy IDs identify their original source records, not every extracted rule.
-Their prefixes may continue for new records under the project's
-[layer namespace](documentation.md#layers-and-id-namespaces); a PRD prefix alone does not
-make a requirement an obsolete product-task card. Preserve source history and incoming resolution. Neither a layer prefix
-nor membership in a product task proves an implementation dependency.
+Allocate extracted requirements under the project's declared
+[ID namespaces](documentation.md#layers-and-id-namespaces), distinguishing layer
+prefixes from document/task-type prefixes. Do not reuse a source prefix for a new kind
+of record unless the project's convention permits it. Preserve source history and
+incoming resolution. Neither a layer prefix nor membership in a product task proves
+an implementation dependency.
 
 Old lifecycle tokens may include backlog, planned, in-progress, need-info, blocked, done,
 and cancelled. Preserve the original facts. An old planned status without sufficient
