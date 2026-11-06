@@ -20,12 +20,19 @@ waits, owner, priority, delivery target, acceptance, dates, and verification bel
 the linked owning document/section. Reuse that owner; a row does not require its own file.
 Do not turn queue entries into inline work cards or append a second context/status table.
 
-A requirement ID may directly identify its delivery; no wrapper work item is needed.
+A requirement ID may directly identify its initial delivery; no wrapper work item is
+needed. A later work-bearing revision uses `<requirement-id>@<n>` under
+[revision delivery](requirements.md#revision-delivery-and-history). Its block in the
+requirement owns the status; register that block and its queue row in the same change.
+The earlier completed delivery stays closed. Queue identity is the full delivery key,
+so `R-MEDIA-001` and `R-MEDIA-001@2` are different deliveries of one requirement.
 The requirement owns its delivery status; the queue explicitly repeats that status for
 scanning. This is a required projection, not a second authority. Definition/acceptance
 and implementation/verification remain distinct fields in the requirement.
 For independent repair/research work, the linked work-context section owns its status;
 its row repeats that value without changing the requirement's delivery status.
+A historical row always reads its own delivery/revision result, not the current
+requirement's newest delivery status; do not overwrite history during reconciliation.
 A separate repair against an unchanged requirement or an independent investigation uses
 its own work ID under the project's [ID namespace](documentation.md#layers-and-id-namespaces)
 and links its owning context; Q-001 is a fallback only when no convention exists. Do not
@@ -150,7 +157,9 @@ using the same ID/name/link/status format. Their linked result owns the completi
 date/version, evidence, cancellation reason, and limitations where known. Historical done entries,
 acceptance, and verification are not rewritten for a later regression or new scope.
 A new repair can reference the same unchanged requirement and earlier delivery; it does
-not need a duplicate requirement. Preserve uncertainty when importing historical records.
+not need a duplicate requirement. A changed obligation that needs further work instead uses a revision delivery
+row, preserving the original completed row and its baseline. Preserve uncertainty when
+importing historical records.
 
 The completed row links the actual artifact/result or its owning verification section.
 The verification owner records requirements/baseline checked, method, observed result,

@@ -25,6 +25,10 @@ Queues are linked ID/name/status rows; context and results stay at their linked 
 The requirement owns its delivery status and the queue explicitly repeats it. For
 independent work, its linked context owns the status. Before work, read the owner;
 reconcile queue copies in its favor and update affected rows when the source changes.
+[Work-bearing revisions](references/requirements.md#revision-delivery-and-history) use
+`<requirement-id>@<n>` with their own status and mandatory queue row captured together.
+They do not reopen prior deliveries; completed details remain linked outside the normal
+current-contract reading route.
 Register useful outcomes under the [queue rules](references/work-queue.md), not the
 supporting record maintenance performed during the current work.
 Use [requirement IDs and existing layer definitions](references/documentation.md#layers-and-id-namespaces):

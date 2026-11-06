@@ -217,7 +217,9 @@ A source card's type prefix does not determine the extracted requirement's ownin
 Honor an explicit project override and preserve existing stable IDs unless normalization
 is requested. R-001 is the requirement fallback when no layers are established;
 Q-001 is the independent-work fallback when no work-ID convention exists.
-Random suffixes are not implied.
+Random suffixes are not implied. Work-bearing requirement revisions use the same
+requirement ID plus `@<n>` under [revision delivery](requirements.md#revision-delivery-and-history);
+this suffix identifies a delivery revision, not a new layer or requirement namespace.
 
 Give a cross-layer obligation one canonical owner and let other layers reference it;
 do not duplicate it per consumer. A prefix does not establish dependency, priority,
