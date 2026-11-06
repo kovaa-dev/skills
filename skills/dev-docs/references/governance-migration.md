@@ -31,9 +31,12 @@ recreate historical sources from memory.
    [code recovery](requirements.md#recovering-requirements-from-code) for relevant undocumented
    behavior; keep implementation provenance distinct from the source baseline and acceptance.
 2. **Map meaning to destinations.** Each obligation has one canonical specification/ID;
-   each independently useful remaining outcome has one queue entry. Reuse already
+   each independently useful selected outcome has a separate task and queue entry. Reuse already
    converted records and stable IDs. Several old cards may share a requirement; a card
-   may contribute several obligations and results. Do not mechanically turn old task
+   may contribute several obligations and results. Separate knowledge from execution
+   under [task conversion](source-transition.md#convert-before-continuing); preserve
+   compatible task IDs, status, result boundaries, and history. Reuse prior extraction
+   mappings and owners instead of migrating the same knowledge again. Do not mechanically turn old task
    IDs/checklist lines into requirements or rename all history. Descriptions and
    procedures retain their own owners under [documentation purpose](documentation.md#documentation-purpose-and-ownership);
    do not convert factual/reference material into invented obligations.
@@ -46,6 +49,9 @@ recreate historical sources from memory.
    entries in place under [queue continuity](work-queue.md#existing-queues-during-transition).
    Import remaining work with actual readiness,
    priority, accountable owner when known, exact waits, and result/acceptance locators.
+   Keep task bodies minimal; context is owned by requirements, decisions, defects,
+   research, and results. Every actual remaining execution outcome stays selectable,
+   including the unfinished part of a mixed historical card.
    Preserve completed/cancelled outcomes with their actual dates/results/limits.
    Do not label historical work current production verification, reopen done, or lose
    unfinished work inside an archive. Queues may be partitioned with global IDs and
@@ -118,7 +124,8 @@ After corrections stabilize, perform a full control pass across all directions a
 against the final candidate and any inputs changed since the baseline. If that pass
 finds another migration error, correct it, recheck the impact, and repeat the full pass.
 Stop successfully only when the final full pass finds no new migration errors, all
-in-scope meaning is accounted for, material discrepancies are explicitly owned, and
+in-scope meaning is accounted for, material defects/discrepancies are fixed and verified within current work or linked
+to independently selectable remediation tasks, and
 the new reading/work routes are usable. Product bugs and captured open questions may
 remain; their implementation or resolution is not a prerequisite for migration closure.
 
@@ -136,8 +143,7 @@ scripts, another queue, or migration history inside requirements solely for this
 
 When the request also adopts/updates this skill, preserve unique project settings and
 scoped exceptions, and use [adoption](adoption.md). Keep one active rule source per
-responsibility. Product contracts stay in specifications, status at linked requirement/work
-owners with explicit queue projections, and
+responsibility. Product contracts stay in specifications, execution status in tasks with explicit queue projections, and
 accepted technical choices in their decision owners; none are copied into the skill.
 
 Update agent instructions, hooks, CI, Git, and delivery automation only under the active

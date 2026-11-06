@@ -22,13 +22,15 @@ material; no particular task or document scheme is assumed to be obsolete.
 Keep the existing queue/index as the shared selection route for old and new work;
 use [existing queues during transition](references/work-queue.md#existing-queues-during-transition).
 Queues are linked ID/name/status rows; context and results stay at their linked owners.
-The requirement owns its delivery status and the queue explicitly repeats it. For
-independent work, its linked context owns the status. Before work, read the owner;
-reconcile queue copies in its favor and update affected rows when the source changes.
-[Work-bearing revisions](references/requirements.md#revision-delivery-and-history) use
-`<requirement-id>@<n>` with their own status and mandatory queue row captured together.
-They do not reopen prior deliveries; completed details remain linked outside the normal
-current-contract reading route.
+Tasks own execution; requirements own contracts. A task contains its ID/action,
+links to exact requirements/revisions or other grounds, execution status, actual task
+waits, and result links. Keep context in canonical requirements, decisions, defects,
+research, or results, not in the task. Queue rows repeat task status, never requirement
+acceptance or verification state. Read the task and its linked grounds before execution.
+[Requirement revisions](references/requirements.md#revision-delivery-and-history) identify
+contract versions; work needed to deliver them is captured in separate tasks in the same
+change. Preserve completed tasks and their checked baselines.
+
 Register useful outcomes under the [queue rules](references/work-queue.md), not the
 supporting record maintenance performed during the current work.
 Use [requirement IDs and existing layer definitions](references/documentation.md#layers-and-id-namespaces):

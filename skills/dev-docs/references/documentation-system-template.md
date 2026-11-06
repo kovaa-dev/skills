@@ -26,7 +26,8 @@ Illustrative placement, not a mandatory tree:
 Use [ID namespace rules](documentation.md#layers-and-id-namespaces): new layer-based
 requirements use `R-<LAYER>-NNN`; existing work/source IDs keep their conventions.
 Without established layers, use the documented fallback rather than inventing a registry;
-requirement IDs can directly identify delivery rows under [queue rules](work-queue.md#one-work-item-one-result-boundary).
+task IDs identify execution rows and link requirement revisions under
+[queue rules](work-queue.md#one-work-item-one-result-boundary).
 Reuse existing layer definitions; no empty registry, root redirect, or file per work item
 is required. Multiple queues are allowed with one canonical
 entry per item and cross-queue waits.

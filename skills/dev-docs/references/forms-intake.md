@@ -6,14 +6,14 @@ Use [maintenance](maintenance.md), [requirements](requirements.md), and
 
 ## Bug
 
-A queue row links the owning failure scenario:
+A queue row links the remediation task, which links the owning failure scenario:
 
 ```md
-- [Q-004 Restore preference propagation after reconnect](wiki/personal-preferences.md#reconnect-failure) – backlog
+- [Q-004 Restore preference propagation after reconnect](wiki/personal-preferences/work.md#q-004) – backlog
 ```
 
-The linked context owns severity, priority/deferral reason, review trigger, reproduction,
-the violated requirement, and the next observable result.
+The task owns action/status and links the defect. The defect owns impact, reproduction,
+expected behavior and its basis, uncertainty, and criteria for verifying the fix.
 
 Place environment, reproduction, hypotheses, and verification under
 [work-context ownership](documentation.md#work-context-and-results). Link an existing
@@ -22,10 +22,10 @@ requirement when violated; documentation/source-only corrections need no invente
 ## Research or technical finding
 
 ```md
-- [Q-005 Explain idle preference traffic](wiki/personal-preferences.md#idle-traffic) – backlog
+- [Q-005 Explain idle preference traffic](wiki/personal-preferences/work.md#q-005) – backlog
 ```
 
-The question section preserves observation versus hypothesis, known impact, method/criteria,
+The task links the question section, which preserves observation versus hypothesis, known impact, method/criteria,
 and material unknowns. No TD/ADR or fictional product requirement is needed merely to start
 research. A separately completed investigation leaves significant unresolved fixes visible.
 

@@ -1,61 +1,68 @@
 # Work queues and delivered results
 
-The queue requests work and links its owning contract, documentation, or question;
+The queue selects tasks; tasks link their owning contracts, documentation, or questions;
 [requirements](requirements.md) retain their normative text. Use [maintenance](maintenance.md)
 for intake/severity and [on-touch conversion](source-transition.md) when existing contract/work ownership needs reconciliation.
 
 ## One work item, one result boundary
 
-A queue is a list of linked rows, grouped by useful headings. Each row has this form:
+A task is an execution record, separate from the contract it implements. It owns only:
+ID and action, links to precise grounds/targets, execution status, actual dependencies
+on other tasks/results, and result links. Optional assignee/priority/target are execution
+metadata when the project uses them. A task does not own or copy product context,
+rationale, criteria, bug reproduction, hypotheses, or decisions. These belong to linked
+requirements, defects, questions, decisions, research, or results under
+[documentation ownership](documentation.md#work-context-and-results).
+
+A queue selects tasks using linked ID/name/status rows:
 
 ```md
-- [Q-001 Establish a usable preferences representation](wiki/personal-preferences.md#representation-question) – ready
-- [R-SYNC-001 Cross-device preferences](wiki/personal-preferences.md#r-sync-001) – planned
+- [Q-001 Investigate preferences representation](wiki/personal-preferences/work.md#q-001) – ready
+- [Q-002 Implement cross-device preferences](wiki/personal-preferences/work.md#q-002) – blocked
 ```
 
-Keep only the ID, name/link, and delivery status in the row. Use the project's compatible
-status tokens, separator punctuation, and inline-code styling if established.
-Keep unaffected rows unchanged during a scoped conversion. Requirements, questions, context,
-waits, owner, priority, delivery target, acceptance, dates, and verification belong at
-the linked owning document/section. Reuse that owner; a row does not require its own file.
-Do not turn queue entries into inline work cards or append a second context/status table.
+The linked task is the status authority; the row repeats its execution status. Reuse
+project task IDs and compatible status tokens. A task can be a compact section in an
+existing file; it does not require a file or wrapper artifact of its own. Reuse an
+existing task record and link it from the queue instead of creating a duplicate tracker. Topic navigation can
+link these files without pretending that a whole topic has one delivery state.
 
-A requirement ID may directly identify its initial delivery; no wrapper work item is
-needed. A later work-bearing revision uses `<requirement-id>@<n>` under
-[revision delivery](requirements.md#revision-delivery-and-history). Its block in the
-requirement owns the status; register that block and its queue row in the same change.
-The earlier completed delivery stays closed. Queue identity is the full delivery key,
-so `R-MEDIA-001` and `R-MEDIA-001@2` are different deliveries of one requirement.
-The requirement owns its delivery status; the queue explicitly repeats that status for
-scanning. This is a required projection, not a second authority. Definition/acceptance
-and implementation/verification remain distinct fields in the requirement.
-For independent repair/research work, the linked work-context section owns its status;
-its row repeats that value without changing the requirement's delivery status.
-Research can live [inside the specification](documentation.md#research-alongside-requirements)
-with its own ID, anchor, and status; a separate work row does not require a separate file.
-A historical row always reads its own delivery/revision result, not the current
-requirement's newest delivery status; do not overwrite history during reconciliation.
-A separate repair against an unchanged requirement or an independent investigation uses
-its own work ID under the project's [ID namespace](documentation.md#layers-and-id-namespaces)
-and links its owning context; Q-001 is a fallback only when no convention exists. Do not
-create both requirement and work rows for the same delivery merely to satisfy a schema. Several
-requirements delivered together can share execution context without wrapper subtasks.
+Requirement IDs and revision keys identify contracts, not tasks. Link the exact target
+revision/baseline from the task; a new bug against an unchanged contract does not create
+a new requirement. A changed contract has its own revision and a task to deliver the
+change. Research tasks link a question and its answer criteria instead of inventing a
+product requirement. Code, documents, datasets, research, and external results are valid
+outputs. One task may satisfy several coupled requirements; one requirement may need
+several tasks. Split tasks only at independently useful, verifiable result boundaries.
 
-Register a separately useful requested/deferred outcome for the product, system, or its
-users, or an independently actionable unresolved blocker/significant enduring risk.
-Being an explicit instruction or an executed step alone is insufficient: ask what useful
-outcome requires selection or follow-up beyond bookkeeping of the current work.
-Required documentation capture, queue edits, migration notices, and closure recording
-are supporting steps of that work; their performance does not itself create another
-queued deliverable. Independently useful documentation, research, datasets, configurations,
-and external results remain valid outputs under the same outcome test. Do not invent
-product requirements, tasks, or artifact files merely to record having maintained records.
+For a task spanning several requirements, keep only links and distinguish their roles:
+**implements** (selected obligations/deltas), **preserves** (material existing constraints),
+and **depends on** (supplying tasks/results). Do not treat a related contract as a task
+prerequisite or imply that every preserved requirement is being delivered again.
+Target exact revisions or addressable sections when only part of a requirement is selected;
+keep the scope and criteria at that owner, not as a paraphrase in the task. Link only what
+is needed to define or materially constrain the coherent result, not the whole area catalog.
+
+Close the task only when its entire selected implementation scope and affected preservation
+checks are satisfied, with coverage recorded at the linked result. Partial success stays
+explicit and remaining work stays selectable. A narrower completion requires an explicitly
+agreed scope change and a linked disposition/task for the remainder; do not silently drop
+requirement links to make a task done.
+
+Register separately useful requested/deferred outcomes, independently actionable
+blockers, and significant enduring defects/risks. Fixing a local defect within current
+work requires capture and verification there, not automatically another task. Necessary
+document maintenance and queue updates are supporting steps, not queued outcomes in
+their own right. Do not manufacture a task for every criterion or every requirement.
+
+Keep the queue lean; execution briefs are temporary executor context and do not replace
+canonical knowledge. Closing or archiving a task must not hide needed product knowledge.
 
 ## Existing queues during transition
 
 Reuse the project's existing queue or task index for existing and newly captured work. Place
 new result-oriented entries alongside old entries in the relevant area/milestone;
-link their requirements in the owning specifications rather than copying obligations
+link tasks to requirements in their owning specifications rather than copying obligations
 into the queue. Do not create another queue or duplicate the backlog merely because
 some entries use the new model. Existing useful partitions may remain; migration state
 alone is not a reason to separate work selection.
@@ -65,21 +72,18 @@ certify its readiness. Its unconverted contract and work remain in the old sourc
 the selected scope follows [on-touch conversion](source-transition.md). Capture new
 requirements directly in their owners and register work only at the threshold above.
 
-During conversion, replace the selected existing selection links with the covered
-requirements/results, keeping one row per selected result and preserving delivery grouping,
-history, incoming resolution, and any active remainder. Retain an existing work ID when
-it still identifies the same result. If an aggregate task is replaced by extracted R-ID
-rows or consolidated outcomes, keep its old ID accessible as a source/redirect with the
-verified mapping; do not retain it as a second active delivery of the same scope.
-A source work ID does not become a requirement ID by renaming. Conversion alone does not
-require new Q-items. Split/consolidate only along actual result boundaries. For partial
-conversion, name the exact converted/residual scope and their status owners at the linked
-source; whole-source coverage still follows the transition protocol. Completed/cancelled
-results retain the history described below.
+During conversion, separate source knowledge from execution under
+[task conversion](source-transition.md#convert-before-continuing). Preserve a task's ID,
+status, and result boundary when unchanged; move its context to canonical owners and
+replace it with links. Do not replace tasks with requirement rows. Split only independently
+useful remaining outcomes and consolidate only actual duplicates, preserving historical
+IDs, results, and redirects. Previously extracted requirements/results are reused, not
+extracted again. A requirement-only selection entry becomes a task only when it represents
+actual execution; pure contract listings become navigation.
 
-This transition needs no generator, synchronization script, separate status register, or
-permanent migration register. Use existing project checks; adapt real enforcement only
-when it blocks the selected mixed format under [validator compatibility](validator-compatibility.md).
+Existing and converted work share the same queue/index. Conversion needs no parallel
+tracker, generator, or permanent migration-mode flag. Unconverted selected sources remain
+explicitly active until their meaning and work are accounted for.
 
 ## State and readiness
 
@@ -93,7 +97,7 @@ Use project-compatible tokens; these meanings are the default:
 | need-info | A material question/contract conflict prevents the affected work from continuing; name the needed answer. |
 | blocked | A required artifact, implemented capability, environment, or other observable prerequisite is unavailable; link the supplier/condition. |
 | done | The agreed result reached its target and applicable acceptance was completed; link the result. |
-| cancelled | Work was dropped with a reason and, if applicable, a replacement link. |
+| cancelled | Work was dropped with a linked reason and, if applicable, a replacement task. |
 
 An existing project may call ready work "planned"; keep its token when semantics match.
 Grooming prepares requirements and work separately. Unknown implementation detail alone
@@ -128,8 +132,8 @@ a live field value. Do not claim automatic synchronization without actual toolin
 
 ## Dependencies and multiple queues
 
-Implementation prerequisites belong to requirements. For each missing input, the linked
-work context records the specific supplying work/condition, for example "Q-002 waits for
+Implementation prerequisites belong to requirements. For each missing input, the dependent
+task links the specific supplying work/condition, for example "Q-002 waits for
 Q-001's accepted representation experiment". The queue row shows the waiting status.
 Do not pretend that Markdown computes this mapping.
 Keep the reason/result explicit; a done supplier is insufficient if its required result
@@ -159,11 +163,12 @@ using the same ID/name/link/status format. Their linked result owns the completi
 date/version, evidence, cancellation reason, and limitations where known. Historical done entries,
 acceptance, and verification are not rewritten for a later regression or new scope.
 A new repair can reference the same unchanged requirement and earlier delivery; it does
-not need a duplicate requirement. A changed obligation that needs further work instead uses a revision delivery
-row, preserving the original completed row and its baseline. Preserve uncertainty when
+not need a duplicate requirement. A changed obligation that needs further work gets a requirement revision and a new
+or updated unfinished task targeting it, preserving completed tasks and their baselines. Preserve uncertainty when
 importing historical records.
 
-The completed row links the actual artifact/result or its owning verification section.
+The completed row still links its task; the task links the actual artifact/result or
+its owning verification section.
 The verification owner records requirements/baseline checked, method, observed result,
 and material limitations. Product/manual acceptance follows the existing execution
 policy; no inferred automation or relaxed gate is introduced by this skill.

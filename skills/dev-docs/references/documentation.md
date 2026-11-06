@@ -19,7 +19,8 @@ mandatory directory tree:
 | System description/reference | How does the current product/system work? Architecture, API, data-model, configuration, and code descriptions own sourced implementation facts. |
 | Guide/runbook | How does a reader use, operate, diagnose, migrate, or recover it? Own preconditions, ordered steps, expected results, limits, and recovery where relevant. |
 | Rationale/decision | Why this goal or choice? The owning block or TD/ADR records reasoning and decision acceptance. |
-| Work context | What does this execution need? An executor plan or existing work note/section holds useful reproduction, hypotheses, and implementation detail. |
+| Task | What action is selected, against which grounds, with what execution status and result? A lean task links canonical knowledge. |
+| Defect | What fails, under which conditions, with what expected behavior and impact? A topic-owned defect section preserves reproduction and separates observation from hypothesis. |
 | Result/verification | What was produced or checked? The appropriate result record/artifact owns observations, baseline, method, and limits. |
 | Overview/navigation | Where is the answer and how do the parts fit? Own the reader's overview and links to detailed owners. |
 | Queue | Which independently useful work is requested and in what state? [Queue rules](work-queue.md) own registration, readiness, waits, and history. |
@@ -68,46 +69,43 @@ index is needed when the existing documents provide clear navigation. Reuse comp
 existing locations; this convention does not initiate an unrelated repository migration.
 
 The requirements document owns the current contract. Research owns its question,
-conclusion, and work status; experiments supply evidence and do not get an independent
-status or queue entry unless they are independently useful queued outcomes. Link these
-owners directly, including from the queue. Accepted conclusions update the requirements
-or decision owner, while supporting detail remains at its evidence source. Keep migration
-accounting outside the product folder in the existing provenance/work result.
+criteria and conclusions; experiments supply evidence. Separate tasks own execution
+status and link those owners. Accepted conclusions update the requirement or decision;
+supporting detail stays at its evidence source. Keep migration accounting in the existing
+provenance/result location, outside current product contracts.
 
 ## Work context and results
 
-Keep durable product/system knowledge in its owning document, and the selected work's
-status at its linked owner: the requirement for direct requirement delivery, or the
-work-context section for independent work. Queue rows explicitly repeat the owner
-status under [reconciliation rules](work-queue.md#state-and-readiness). Keep short-lived plans, investigation trails, and
-reproduction detail in the executor's working context or an existing relevant note/section.
-Persist only what is needed for continuation, handoff, traceability, or a useful result,
-within the existing write authority. The queue row contains only ID, name/link, and
-delivery status; even short context/acceptance notes belong at the linked owner. Reuse
-an existing section instead of requiring a file per row.
+Tasks own execution, not knowledge. Keep expected behavior/criteria in requirements;
+accepted rationale/choices in decision owners; bug symptoms, environment, reproduction,
+impact and hypotheses in a defect section; questions and answer criteria in research;
+observed checks, dates/versions and limits in results. These may be labeled sections in
+one topic document or separate useful files. No mandatory defects/research/results tree,
+new R-ID, or file per finding is required. Do not put incident history into normative
+requirements merely to remove it from a task.
 
-Do not force each repair to create an artifact file or append its incident history to
-the specification. Create a separate document when its content has a useful reading purpose, including
-supporting evidence within a [requirement folder](#requirement-folders).
-Verification can live in an existing result, release, or relevant documentation section,
-with the exact contract/source baseline and honest limits. Preserve useful findings in
-the appropriate description, procedure, requirement, or decision.
+A minimal task links its grounds and result and owns action/status/real task waits under
+[queue rules](work-queue.md). It must remain understandable by following those links,
+not by recovering archived chat or a superseded task body. Durable new knowledge discovered
+during execution goes to its appropriate owner; temporary plans, logs and retries remain
+executor context. Closing a task must not hide a contract, open question, or remaining fix.
+
+The queue repeats task status. Defect/research reports link tasks without independently
+tracking execution status. Verification belongs in an existing result/release/relevant
+section with the exact checked baseline and honest limits, not copied into the task.
 
 ## Research alongside requirements
 
 For research serving a specification, use a clearly labeled section in that file or a
 linked research document in its [requirement folder](#requirement-folders), according to
 the content and reading purpose.
-A separate work identity does not require a separate file. Reuse an existing stable
-work ID and anchor; do not assign an R-ID to an investigation. The queue links directly to the owning
-research section and repeats its status, independently of requirement delivery.
-
-Keep the active section concise: type (research), ID and status, question, linked
-requirements, completion criteria, current conclusion with uncertainties, and remaining
-checks. Link evidence with dates/versions and material limitations. Hypotheses remain
-nonbinding; completing research neither accepts a technical choice nor delivers the
-requirements. A supported negative answer can complete the investigation when it meets
-its agreed completion criteria; implementation need not succeed for research to finish.
+A separate task identity does not require a separate file. Reuse stable task IDs and
+anchors; never assign an R-ID to an investigation merely because it needs execution.
+The task owns status and links the research section; that section owns the question,
+linked requirements, criteria for an answer, current conclusion/uncertainties, and evidence.
+Hypotheses remain nonbinding. Completing research neither accepts a technical choice nor
+implements the requirement. A supported negative answer can complete the task when it
+meets its linked answer criteria.
 
 Keep a short useful evidence history inline. A detailed experiment journal may live in a linked file
 in the same requirement folder, preserving evidence and superseded conclusions while
@@ -222,7 +220,7 @@ and examples/procedures as feasible; disclose unverified steps and source gaps.
   [baseline coverage](source-transition.md#coverage-and-reconciliation).
 - Keep superseded meaning/reasons/acceptance accessible; Git history alone is not the
   explanation for why the current contract replaced an accepted one.
-- The queue links to the actual result and its verification; it does not copy the specification.
+- The queue links tasks; completed tasks link actual results and verification without copying them.
 - Missing decisions use need-info; a missing required result uses blocked with an exact
   wait. Do not claim completion or production delivery from a file/commit/tag alone.
 - Routine details do not generate new documents merely for this reconciliation.
@@ -272,9 +270,9 @@ A source card's type prefix does not determine the extracted requirement's ownin
 Honor an explicit project override and preserve existing stable IDs unless normalization
 is requested. R-001 is the requirement fallback when no layers are established;
 Q-001 is the independent-work fallback when no work-ID convention exists.
-Random suffixes are not implied. Work-bearing requirement revisions use the same
-requirement ID plus `@<n>` under [revision delivery](requirements.md#revision-delivery-and-history);
-this suffix identifies a delivery revision, not a new layer or requirement namespace.
+Random suffixes are not implied. Semantic requirement revisions use the same ID plus
+`@<n>` under [revision delivery](requirements.md#revision-delivery-and-history). This
+identifies a contract version, not a task; tasks use the separate project work namespace.
 
 Give a cross-layer obligation one canonical owner and let other layers reference it;
 do not duplicate it per consumer. A prefix does not establish dependency, priority,
@@ -294,8 +292,8 @@ mechanically by line count or create a micro-file for each sentence.
 Use the [purpose/ownership table](#documentation-purpose-and-ownership) to choose placement.
 A requirement is addressable inside a specification; related content can share a document.
 Guides and runbooks may explain ordered procedures, including migration and rollback.
-Execution details remain at the linked work owner; the queue repeats delivery status
-for selection. They do not become normative requirement wording.
+Tasks link execution grounds and results; the queue repeats task status for selection.
+Context stays in its purpose-specific owner, not in the task or normative requirement wording.
 
 Use descriptive filenames and readable headings. Only independently addressable records
 need IDs; not every paragraph. Label links by purpose. Do not add universally mandatory
