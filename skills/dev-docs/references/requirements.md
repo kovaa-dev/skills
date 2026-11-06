@@ -6,6 +6,9 @@ registered work follows [queues](work-queue.md). Existing material follows
 [source assessment](source-transition.md): reuse compatible contracts in place and
 reconcile only scope that needs different ownership or separation of meanings.
 
+For related research, experiments, decisions, and verification artifacts, use
+[requirement folders](documentation.md#requirement-folders) when several documents are useful.
+
 ## Names and ownership
 
 A **specification** is a Markdown document describing one coherent capability, domain

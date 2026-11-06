@@ -52,6 +52,28 @@ Before adding a file or moving a section to shorten a page, remove duplication a
 existing owners. Length alone does not justify splitting a document; preserve details
 whose removal would change meaning, hide a constraint, or prevent verification.
 
+## Requirement folders
+
+When a coherent requirement set needs several supporting documents, keep its requirements,
+research, experiments, decisions, and verification artifacts together in a named folder
+under the project's wiki/specification location. Membership follows the requirement set
+that the material helps clarify, accept, or verify, not just similar topic names.
+Different contracts remain separate; shared obligations or evidence have one canonical
+owner referenced by the other sets rather than copied into each folder.
+
+For example, `wiki/shared-undo/` may contain `requirements.md`, `research.md`, and
+`experiments.md`. These are illustrative names, not a mandatory file inventory. Create
+only files with useful content; a small set can remain one document. No additional
+index is needed when the existing documents provide clear navigation. Reuse compatible
+existing locations; this convention does not initiate an unrelated repository migration.
+
+The requirements document owns the current contract. Research owns its question,
+conclusion, and work status; experiments supply evidence and do not get an independent
+status or queue entry unless they are independently useful queued outcomes. Link these
+owners directly, including from the queue. Accepted conclusions update the requirements
+or decision owner, while supporting detail remains at its evidence source. Keep migration
+accounting outside the product folder in the existing provenance/work result.
+
 ## Work context and results
 
 Keep durable product/system knowledge in its owning document, and the selected work's
@@ -65,18 +87,20 @@ delivery status; even short context/acceptance notes belong at the linked owner.
 an existing section instead of requiring a file per row.
 
 Do not force each repair to create an artifact file or append its incident history to
-the specification. Create a separate document only for independently useful content.
+the specification. Create a separate document when its content has a useful reading purpose, including
+supporting evidence within a [requirement folder](#requirement-folders).
 Verification can live in an existing result, release, or relevant documentation section,
 with the exact contract/source baseline and honest limits. Preserve useful findings in
 the appropriate description, procedure, requirement, or decision.
 
 ## Research alongside requirements
 
-For research serving a specification, prefer a clearly labeled section in that file
-when it keeps the current question and conclusions close to the affected requirements.
+For research serving a specification, use a clearly labeled section in that file or a
+linked research document in its [requirement folder](#requirement-folders), according to
+the content and reading purpose.
 A separate work identity does not require a separate file. Reuse an existing stable
-work ID and anchor; do not assign an R-ID to an investigation. The queue links to this
-section and repeats its own research status, independently of requirement delivery.
+work ID and anchor; do not assign an R-ID to an investigation. The queue links directly to the owning
+research section and repeats its status, independently of requirement delivery.
 
 Keep the active section concise: type (research), ID and status, question, linked
 requirements, completion criteria, current conclusion with uncertainties, and remaining
@@ -85,9 +109,9 @@ nonbinding; completing research neither accepts a technical choice nor delivers 
 requirements. A supported negative answer can complete the investigation when it meets
 its agreed completion criteria; implementation need not succeed for research to finish.
 
-Keep a short useful evidence history inline. Move a bulky experiment journal to linked
-history, preserving evidence and superseded conclusions while keeping current findings
-in the active section. Use a separate research document when it has an independent
+Keep a short useful evidence history inline. A detailed experiment journal may live in a linked file
+in the same requirement folder, preserving evidence and superseded conclusions while
+keeping current findings in the active research section. Use a separate research document when it has an independent
 reading purpose or would overwhelm the specification; location alone is not a reason
 to move or duplicate compatible existing records. For source-heavy external research,
 use the [bounded handoff](research-handoff.md).
