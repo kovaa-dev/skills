@@ -84,7 +84,10 @@ second live requirement catalog or work queue.
 2. **Capture the contract.** Move applicable obligations into the owning specification,
    with stable requirement IDs, applicability/revision, acceptance method, rationale,
    and honest definition/verification state. Reuse matching obligations rather than
-   creating one requirement per checkbox. Preserve technical decisions in their owner.
+   creating one requirement per checkbox. Allocate new requirement IDs under the
+   [type/layer namespace rules](documentation.md#layers-and-id-namespaces); retain the
+   legacy source ID in the coverage mapping, not as the new obligation's identity.
+   Preserve technical decisions in their owner.
    Record hypotheses as draft/questions and coherent unaccepted alternatives as proposed,
    targeting the current contract. Preserve proven obsolete material as nonbinding history
    with a successor/retirement notice under the [lifecycle](requirements.md#retiring-stale-material);
