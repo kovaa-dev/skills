@@ -18,8 +18,10 @@ it does not authorize new legacy cards or continued task-based execution.
 | Task index/roadmap | Reuse as the shared queue for legacy and new work under [existing queues during transition](work-queue.md#existing-queues-during-transition); replace covered aggregate links with requirement/result rows and preserve source redirects; keep context at the linked owners. |
 | Open questions, findings, exceptions | Owning specification/decision/artifact, with queue work only when independently actionable. |
 
-Legacy IDs such as PRD-NNN, WEB-NNN, and AUTH-NNN identify source records, not new
-requirement IDs. Preserve their history and incoming resolution. Neither a layer prefix
+Existing legacy IDs identify their original source records, not every extracted rule.
+Their prefixes may continue for new records under the project's
+[layer namespace](documentation.md#layers-and-id-namespaces); a PRD prefix alone does not
+make a requirement an obsolete product-task card. Preserve source history and incoming resolution. Neither a layer prefix
 nor membership in a product task proves an implementation dependency.
 
 Old lifecycle tokens may include backlog, planned, in-progress, need-info, blocked, done,

@@ -25,10 +25,15 @@ useful contracts, not one file per sentence or one giant file per technical laye
 
 ## Identity, state, and revision
 
-Use stable, readable IDs, default R-001, R-002, with project-wide uniqueness across
-specifications. Numbers do not encode priority, phase, section order, or file position.
+Use stable, readable IDs with project-wide uniqueness across specifications. Follow
+the project's [layer/prefix namespace](documentation.md#layers-and-id-namespaces), including
+its shared number allocation with work where applicable. R-001/R-002 are fallbacks only
+when no project convention exists; R-ID examples elsewhere do not mandate that prefix.
+Numbers do not encode priority, phase, section order, or file position.
 Never renumber on reorder/rename or reuse a retired ID. Preserve existing stable
 requirement IDs when converting; do not copy a legacy task ID onto every extracted rule.
+An explicitly requested ID normalization follows the linked continuity rule; a layer
+prefix can name a new requirement without reviving the old PRD/task authoring workflow.
 
 A requirement needs its ID, readable behavior/obligation, applicability, verification
 method or an explicit method gap, and known state. Shared context/metadata can live at

@@ -8,6 +8,8 @@ Selected old layer tasks first follow [on-touch conversion](legacy-transition.md
 
 Insert linked rows into the existing queue/index; the path below is illustrative.
 Follow [queue row and outcome rules](work-queue.md#one-work-item-one-result-boundary).
+Substitute the project's [layer/prefix IDs](documentation.md#layers-and-id-namespaces)
+for these fallback R/Q examples when that convention already exists.
 Old aggregate task links can be replaced by covered requirement/result links under
 [the transition rules](work-queue.md#existing-queues-during-transition).
 
