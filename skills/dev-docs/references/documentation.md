@@ -1,8 +1,8 @@
 # Documentation governance
 
 The work model uses [requirements/specifications](requirements.md), [work queues](work-queue.md),
-decisions, and results alongside product/system descriptions and instructions. The old PRD/layer-task workflow is legacy:
-[convert selected material before continuing](legacy-transition.md).
+decisions, and results alongside product/system descriptions and instructions.
+[Assess existing material and reconcile only what needs conversion](source-transition.md).
 [Bootstrap](documentation-system-template.md) and [forms](documentation-registers-template.md)
 apply these rules without becoming competing policy sources.
 
@@ -34,8 +34,9 @@ For reconstructing missing contracts, use [code recovery and provenance](require
 Update or create descriptions and instructions when a changed system or reader's actual
 question makes them useful. Requirements and delivery records do not replace those
 explanations. A documentation-only correction uses the existing owner without inventing
-R-IDs or another Q entry inside already tracked work. Independently assigned/deferred
-outcomes follow the queue's registration rule.
+R-IDs or another Q entry inside already tracked work. Registration requires the
+[queue outcome test](work-queue.md#one-work-item-one-result-boundary); an instruction
+to maintain records is not itself a separately useful tracked result.
 
 Canonical ownership prevents competing normative sources or work states. Overviews,
 guides, and references may summarize and explain for their audience, linking to the
@@ -45,11 +46,14 @@ accuracy together with affected sources.
 ## Work context and results
 
 Keep durable product/system knowledge in its owning document, and the selected work's
-state in its canonical queue entry. Keep short-lived plans, investigation trails, and
+status at its linked owner: the requirement for direct requirement delivery, or the
+work-context section for independent work. Queue rows explicitly repeat the owner
+status under [reconciliation rules](work-queue.md#state-and-readiness). Keep short-lived plans, investigation trails, and
 reproduction detail in the executor's working context or an existing relevant note/section.
 Persist only what is needed for continuation, handoff, traceability, or a useful result,
-within the existing write authority. A short context/acceptance note can fit inline in
-the queue when sufficient; longer material is linked rather than copied into every view.
+within the existing write authority. The queue row contains only ID, name/link, and
+delivery status; even short context/acceptance notes belong at the linked owner. Reuse
+an existing section instead of requiring a file per row.
 
 Do not force each repair to create an artifact file or append its incident history to
 the specification. Create a separate document only for independently useful content.
@@ -120,13 +124,13 @@ do not select a convenient source or weaken another obligation for implementatio
 Requirement identity, semantic revisions, applicability, and preserved meaning follow
 [the requirement lifecycle](requirements.md#identity-state-and-revision). Work completion
 and later regressions follow [queue history](work-queue.md#completion-history-and-current-truth).
-Legacy facts follow [the transition rules](legacy-transition.md#history-and-unresolved-material).
+Source facts follow [the transition rules](source-transition.md#history-and-unresolved-material).
 
 ## Project documentation consistency check
 
 For audit, migrate, update, and affected contract changes, compare related project docs
 with one another before comparing their format to the skill. Include every relevant type,
-regardless of directory: specifications, decisions, queues, legacy PRDs/tasks, research,
+regardless of directory: specifications, decisions, queues, work records, research,
 verification, operational/product/marketing docs, README, instructions, and templates.
 A full check covers the agreed full scope; ordinary work checks the affected contracts
 and consumers without reading the whole repository.
@@ -160,7 +164,7 @@ and examples/procedures as feasible; disclose unverified steps and source gaps.
   instructions in the same workstream when their content changes or is needed.
 - Reconcile [new/changed requirements and material questions](requirements.md#questions-during-work)
   received during the work, including capture before handoff; migration also checks
-  [baseline coverage](legacy-transition.md#coverage-and-reconciliation).
+  [baseline coverage](source-transition.md#coverage-and-reconciliation).
 - Keep superseded meaning/reasons/acceptance accessible; Git history alone is not the
   explanation for why the current contract replaced an accepted one.
 - The queue links to the actual result and its verification; it does not copy the specification.
@@ -176,7 +180,7 @@ corrective work against the same requirement or its explicitly accepted revision
 Routine work does not require init or adopting this skill as project governance.
 Use the [maintenance contract](adoption.md#routine-maintenance-without-adoption).
 Compatible paths, language, IDs, and explicit project constraints remain intact; selected
-legacy content still follows bounded on-touch conversion where authorized.
+source content follows assessment and bounded conversion only where needed and authorized.
 A binding no-migration/old-format instruction is a real conflict to disclose, not permission
 to create a hidden parallel tracker.
 
@@ -189,9 +193,42 @@ source. Keep only necessary settings in an existing project document:
 - accepted scope/ownership boundaries and scoped exceptions;
 - a reproducible immutable public source when that adoption method was chosen.
 
-A technical layer is optional context, not a mandatory task namespace or separate team.
 Example paths do not imply a vendor, service, SLO, budget, jurisdiction, or platform.
 Preserve unknowns as questions; coordinate schema changes with actual parsers.
+
+## Layers and ID namespaces
+
+A **layer** is an established area of responsibility defined by the project's
+architecture, contracts, and owning documentation. Read the existing registry and
+historical naming rules before assigning a layer or choosing its prefix. A layer may
+span components; it does not require a separate runtime module, team, or queue.
+A record-type prefix is not automatically a layer. Determine its meaning from the
+project; do not infer a responsibility area from a document or work-item type.
+Do not add a product layer or reinterpret a prefix merely to accommodate extracted
+requirements. Record missing meanings only when grounded in project sources or an
+explicitly accepted decision; do not invent a layer tree for a project that has none.
+
+For layer-based requirements use `R-<LAYER>-NNN`, for example `R-LOCAL-001`:
+`R` identifies a requirement and `<LAYER>` identifies the established contract owner.
+Allocate the next unused number separately within each `R-<LAYER>` namespace, checking
+current and historical requirements; work-item numbers do not consume requirement
+numbers. Existing task, investigation, and result IDs keep their own conventions.
+A source card's type prefix does not determine the extracted requirement's owning layer.
+Honor an explicit project override and preserve existing stable IDs unless normalization
+is requested. R-001 is the requirement fallback when no layers are established;
+Q-001 is the independent-work fallback when no work-ID convention exists.
+Random suffixes are not implied. Work-bearing requirement revisions use the same
+requirement ID plus `@<n>` under [revision delivery](requirements.md#revision-delivery-and-history);
+this suffix identifies a delivery revision, not a new layer or requirement namespace.
+
+Give a cross-layer obligation one canonical owner and let other layers reference it;
+do not duplicate it per consumer. A prefix does not establish dependency, priority,
+acceptance, or execution order. Keep the ID when moving/reordering a record or changing
+its owner. The layer segment records the allocation namespace; after an ownership
+change, state the current responsible layer in the owning requirement instead of
+inferring it solely from the ID. Explicitly authorized ID normalization preserves a source-to-successor mapping
+and incoming resolution, such as old anchors, and updates affected links; it does not
+reassign a retired ID to a different obligation. Ordinary conversion preserves stable IDs.
 
 ## Granularity of any document
 
@@ -202,7 +239,8 @@ mechanically by line count or create a micro-file for each sentence.
 Use the [purpose/ownership table](#documentation-purpose-and-ownership) to choose placement.
 A requirement is addressable inside a specification; related content can share a document.
 Guides and runbooks may explain ordered procedures, including migration and rollback.
-Scheduling, assignees, progress, and completion of particular executions remain queue state.
+Execution details remain at the linked work owner; the queue repeats delivery status
+for selection. They do not become normative requirement wording.
 
 Use descriptive filenames and readable headings. Only independently addressable records
 need IDs; not every paragraph. Label links by purpose. Do not add universally mandatory
@@ -213,7 +251,7 @@ micro-documents.
 
 1. Read applicable instructions/settings; identify the reader's question, material type,
    and existing owner under [documentation purpose](#documentation-purpose-and-ownership).
-2. Use the [conversion trigger](legacy-transition.md#trigger-and-authority) for selected legacy
+2. Use the [conversion trigger](source-transition.md#trigger-and-authority) for selected existing
    material and [ongoing capture](requirements.md#questions-during-work) for new input.
    A factual description needs no invented requirement.
 3. Read relevant sources and context for that material. When requirements/decisions apply,

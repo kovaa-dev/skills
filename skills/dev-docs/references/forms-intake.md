@@ -1,21 +1,19 @@
 # Incoming work and questions
 
 Use [maintenance](maintenance.md), [requirements](requirements.md), and
-[queues](work-queue.md). These forms replace old bug/layer/PRD card examples.
-Convert selected existing cards through [on-touch transition](legacy-transition.md).
+[queues](work-queue.md). Reconcile existing material when needed through
+[source assessment](source-transition.md), independent of its format.
 
 ## Bug
 
-A minimal canonical queue entry can be:
+A queue row links the owning failure scenario:
 
 ```md
-###### Q-004
-
-**Restore preference propagation after reconnect** · backlog · bug · severity: <known or unknown>.
-Contract/reproduction: <link to the existing requirement and owning failure scenario>.
-Next result: reproduce and restore the agreed behavior.
-Scheduling: <priority/deferral reason and review trigger when deferred>.
+- [Q-004 Restore preference propagation after reconnect](wiki/personal-preferences.md#reconnect-failure) – backlog
 ```
+
+The linked context owns severity, priority/deferral reason, review trigger, reproduction,
+the violated requirement, and the next observable result.
 
 Place environment, reproduction, hypotheses, and verification under
 [work-context ownership](documentation.md#work-context-and-results). Link an existing
@@ -24,11 +22,7 @@ requirement when violated; documentation/source-only corrections need no invente
 ## Research or technical finding
 
 ```md
-###### Q-005
-
-**Determine why idle preferences generate excess traffic** · backlog · research.
-Question: <link to the owning investigation section>.
-Result: reproducible conclusion and any separately needed remediation.
+- [Q-005 Explain idle preference traffic](wiki/personal-preferences.md#idle-traffic) – backlog
 ```
 
 The question section preserves observation versus hypothesis, known impact, method/criteria,

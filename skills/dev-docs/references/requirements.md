@@ -2,9 +2,9 @@
 
 This reference owns the model for new and converted requirements/specifications.
 Other documentation follows [purpose and ownership](documentation.md#documentation-purpose-and-ownership);
-registered work follows [queues](work-queue.md), and selected legacy scope follows
-[on-touch transition](legacy-transition.md). Legacy task schemas are not an alternative
-for new work.
+registered work follows [queues](work-queue.md). Existing material follows
+[source assessment](source-transition.md): reuse compatible contracts in place and
+reconcile only scope that needs different ownership or separation of meanings.
 
 ## Names and ownership
 
@@ -25,10 +25,15 @@ useful contracts, not one file per sentence or one giant file per technical laye
 
 ## Identity, state, and revision
 
-Use stable, readable IDs, default R-001, R-002, with project-wide uniqueness across
-specifications. Numbers do not encode priority, phase, section order, or file position.
+Use stable, readable IDs with project-wide uniqueness across specifications. Follow
+the [ID namespace rules](documentation.md#layers-and-id-namespaces): `R-<LAYER>-NNN`
+for layer-based requirements, with separate numbering from existing work. Honor explicit
+project overrides; R-001/R-002 are fallback examples for projects without layers.
+Numbers do not encode priority, phase, section order, or file position.
 Never renumber on reorder/rename or reuse a retired ID. Preserve existing stable
-requirement IDs when converting; do not copy a legacy task ID onto every extracted rule.
+requirement IDs when converting; do not copy a source work ID onto every extracted rule.
+An explicitly requested ID normalization follows the linked continuity rule. The `R`
+type prefix distinguishes a new requirement from a work record in the same layer.
 
 A requirement needs its ID, readable behavior/obligation, applicability, verification
 method or an explicit method gap, and known state. Shared context/metadata can live at
@@ -41,7 +46,11 @@ Distinguish:
   use the [lifecycle meanings](#current-contract-and-nonbinding-material) below;
 - implementation/verification state: unknown, not implemented, partial, verified, or
   violated, with a locator/version where established;
-- work readiness: belongs to the queue, not the requirement's definition state.
+- delivery/work status: when delivery is queued directly under this requirement ID,
+  the requirement owns this status and the queue repeats it. Identify its delivery
+  revision/target in the owning section. Readiness meanings follow queue rules; this
+  field does not change definition or verification state. Separate repair/research
+  work owns its own status rather than overwriting requirement delivery status.
 
 A requirement can be accepted while implementation, feasibility, or its verification method
 is unresolved. Record missing verification methods as gaps; work readiness and completion
@@ -63,7 +72,10 @@ Apply an agreed change under [decision authority](documentation.md#decision-appr
 An unaccepted alternative follows [proposals](#proposed-replacements); do not silently
 accept it or ask again for a change already unambiguously authorized.
 
-1. Update the owning requirement's current wording and semantic revision, preserving
+1. Record the agreed target wording and semantic revision, distinguishing the currently
+   applicable/delivered baseline from a pending target until its activation condition
+   holds. Use [revision delivery](#revision-delivery-and-history) when further work is
+   needed; a recorded target is not evidence that it is delivered. Preserve
    unaffected conditions and exceptions. Record previous/new meaning, reason, date,
    acceptance source, applicability, and affected checks. Do not leave the old rule as
    another current obligation or append an incompatible amendment without reconciling it.
@@ -84,8 +96,55 @@ identify the exact revision/baseline they checked. Reassess implementation/verif
 claims after a semantic change: an old green result or completed delivery does not
 automatically verify the new revision. State uncovered behavior as an evidence or
 implementation gap; reuse existing evidence only with an explicit coverage/applicability
-assessment, retaining the original result's revision and limits. A requirements change may need work; it does
-not mechanically create a new queue entry or reopen a historical completed entry.
+assessment, retaining the original result's revision and limits. A change with no further
+delivery work needs no new queue row. If work is needed, register or update its revision
+delivery under the rules below; never reopen a historical completed delivery.
+
+### Revision delivery and history
+
+The stable requirement ID identifies the obligation; `<requirement-id>@<n>` identifies
+one numbered revision delivery, for example `R-MEDIA-001@2`. It is not a second
+requirement or a mandatory separate task file. Allocate increasing revision numbers
+within that requirement; do not reuse completed/cancelled numbers. An existing bare-ID
+queue row may keep identifying its original delivery, with its exact baseline at the
+linked owner; do not reopen or silently retarget a completed row.
+
+When a recorded change needs implementation, verification, or another delivery action,
+create/update a compact revision block inside the owning requirement and its queue row
+in the same documentation change. This registration is mandatory for that work-bearing
+revision even if its implementation is unclear: use backlog, need-info, or blocked as
+appropriate. Missing acceptance stays explicit; registration does not accept a proposal
+or authorize implementation. An exploratory alternative with no selected delivery is
+still a proposal; independently requested evaluation follows the normal work rules.
+Editorial corrections with no semantic/delivery effect need no revision delivery row.
+
+The revision block owns its delivery status and records the base revision, changed
+behavior/conditions, preserved-contract reference, acceptance source or gap, activation
+condition/target, and affected verification. Keep only what is needed to understand and
+execute the delta; link unchanged contract rather than copying it. The queue repeats
+this block's status and links its stable anchor. Further clarification of the same
+unfinished delivery updates the block and affected checks, not a new revision per message.
+If pending revisions overlap, reconcile their targets or record explicit prerequisites;
+do not silently overwrite a pending change or infer order solely from revision numbers.
+
+Before finishing documentation work, reconcile both directions: every recorded
+work-bearing revision has a queue row, and every revision row resolves to its owner
+with the same status and baseline. Incomplete registration is unfinished capture;
+queue registration is a supporting step, not another queued task.
+
+Complete only the revision's agreed delta and affected regression/acceptance checks;
+unchanged obligations retain their prior evidence where still applicable. On delivery,
+apply the accepted activation boundary and present one coherent current contract.
+Preserve the earlier delivery as done and the new revision's actual result separately.
+On cancellation, preserve the row, reason, and disposition of the proposed target.
+
+Keep the normal reading route compact: current applicable contract, a reference to the
+latest delivery, and pending revision deltas. Move completed/cancelled revision details
+to an existing history/result section or archive when they clutter normal reading.
+Keep the revision ID, status, base/target, outcome, and evidence resolvable from its
+historical queue row; preserve an anchor redirect when moving it. Git can preserve
+wording history but does not replace a resolvable delivery result. Do not load historical
+revision details for ordinary work unless a specific question or supported baseline needs them.
 
 ## Recovering requirements from code
 
@@ -126,7 +185,7 @@ to the affected capability; routine work does not require a repository-wide extr
    Code absence does not retire an accepted obligation or recover unimplemented intent.
 
 Keep recovered behavior readable without opening source code. Code-derived candidates
-need no legacy conversion map merely because they were undocumented. Existing legacy
+need no source conversion map merely because they were undocumented. Existing source
 documents still require their own coverage; code recovery does not substitute for reading
 or preserving their requirements, questions, and history. Register separate work only
 under the normal queue threshold.
@@ -267,14 +326,14 @@ code ownership alone do not establish logical dependency or semantic equivalence
 
 ## Prerequisites and impact
 
-Store an actual implementation prerequisite at the dependent requirement: "R-002 needs
-the verified capability defined by R-001", including the necessary portion/result when
+Store an actual implementation prerequisite at the dependent requirement: "R-SYNC-001 needs
+the verified capability defined by R-LOCAL-001", including the necessary portion/result when
 only part is needed. Keep prerequisite, constrains/applies-to, shared rationale, and
 supersedes links distinguishable. An ordinary reference is not a blocker.
 
-The [queue](work-queue.md#dependencies-and-multiple-queues) records which work currently
-supplies a missing prerequisite. Requirements describe a durable dependency; queue waits
-describe the current execution plan. An already available prerequisite needs no new work.
+The [linked work context](work-queue.md#dependencies-and-multiple-queues) records which
+work currently supplies a missing prerequisite; the queue row shows its waiting status.
+Requirements describe a durable dependency; the linked wait describes the execution plan. An already available prerequisite needs no new work.
 When both requirements are delivered by one item, order them within that work instead
 of creating a self-blocking queue dependency.
 
@@ -324,7 +383,7 @@ proof of universal consistency.
 
 During authorized write work, capture material new/changed requirements and open questions
 as they arise, before dependent implementation and no later than closure or handoff.
-This includes input received while converting legacy sources, discoveries in implementation,
+This includes input received while converting source records, discoveries in implementation,
 and answers that change scope. Read-only discussion records the proposed capture in the
 response; do not claim it persisted in project documentation.
 
@@ -348,7 +407,7 @@ response; do not claim it persisted in project documentation.
    last captured baseline: each has its updated/new canonical destination or a visible
    unresolved question with source and next needed answer. Do not leave agreed obligations,
    scoped exceptions, or material pending requirements only in chat, a local plan, or a
-   completed queue note.
+   completed work result without updating its canonical owner.
 
 The executor chooses routine reversible details under [decision governance](documentation.md#decision-approval).
 Use a separate investigation only for an independently useful result. After its conclusion,

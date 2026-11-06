@@ -1,13 +1,16 @@
 # Specification and requirement form
 
 Use [requirements](requirements.md) and [governance](documentation.md).
-This replaces the legacy product-task/PRD form. Convert selected old work under
-[on-touch transition](legacy-transition.md); do not create a new PRD to use this example.
+Assess selected sources under [source assessment](source-transition.md); reuse compatible
+specifications instead of recreating them from this form.
 
 ## A specification with addressable requirements
 
 Illustrative docs/wiki/personal-preferences.md; adapt placement/language and omit unused
 fields. Shared metadata applies until a requirement needs a narrower scope.
+The examples use `R-<LAYER>-NNN` under the [ID rules](documentation.md#layers-and-id-namespaces),
+assuming LOCAL owns local persistence, SYNC propagation, and MEDIA upload limits.
+Use the actual project's layer meanings; these examples do not create layers.
 
 ```md
 # Personal preferences
@@ -25,7 +28,7 @@ Acceptance source: pending.
 
 ## Preserve a saved preference across reload
 
-###### R-001
+###### R-LOCAL-001
 
 Revision: 1. Basis: [Continue work across devices](#why-001-continue-work-across-devices).
 
@@ -34,10 +37,12 @@ Revision: 1. Basis: [Continue work across devices](#why-001-continue-work-across
 Acceptance: <observable scenario and method, or an explicit verification gap;
 use existing tests when sufficient>.
 Verification: unknown; no current result established.
+Delivery status: backlog (revision 1; if this delivery is registered in a queue).
+<The queue repeats this field; the requirement is the status authority.>
 
 ## Apply remote changes on active devices
 
-###### R-002
+###### R-SYNC-001
 
 Revision: 1. Basis: [Continue work across devices](#why-001-continue-work-across-devices).
 Prerequisites: <actual required capability/result, or none>.
@@ -75,9 +80,34 @@ Work to realize this contract belongs in the [queue](forms-technical.md).
 ## An agreed change to an existing requirement
 
 Apply [current-revision updates](requirements.md#updating-the-current-revision) in the
-owning block. For example, an agreed upload-limit change from 20 MiB to 50 MiB updates
-R-007 to its next revision, retaining other accepted conditions. It does not add another
-current requirement saying 50 MiB beside an unchanged current R-007 saying 20 MiB.
+owning block. An agreed upload-limit change from 20 MiB to 50 MiB keeps R-MEDIA-007
+and registers R-MEDIA-007@2 in the same change as its queue row:
+
+```md
+## R-MEDIA-007 Upload limit
+
+Applicable/delivered: revision 1, maximum 20 MiB; <delivery result>.
+Accepted target: revision 2, maximum 50 MiB; active on <agreed rollout condition>.
+Unchanged conditions: <canonical contract or relevant section>.
+
+### Revision 2
+
+Delivery ID: R-MEDIA-007@2
+Delivery status: planned
+Base: revision 1. Change: maximum upload size 20 → 50 MiB.
+Acceptance source: <actual decision/source>.
+Verification: boundary at 50 MiB, rejection above it, and <affected preserved checks>.
+```
+
+```md
+- [R-MEDIA-007 Upload limit up to 20 MiB](wiki/uploads.md#revision-1-result) – done
+- [R-MEDIA-007@2 Raise upload limit to 50 MiB](wiki/uploads.md#revision-2) – planned
+```
+
+The paths/statuses are illustrative; use actual project tokens and facts. The earlier
+delivery is not reopened. After delivery, the current contract says 50 MiB; revision 2
+becomes done with its result. Compact completed details into a linked history/result
+section, preserving both queue targets. Do not leave competing unscoped current limits.
 
 Keep the old 20 MiB wording and its verification in labeled revision history, with any
 remaining supported-version applicability. A test proving the old limit does not by
@@ -91,7 +121,7 @@ an undocumented contract. This example is a coherent candidate with no establish
 acceptance; it does not inherit accepted metadata from the containing specification:
 
 ```md
-###### R-003
+###### R-LOCAL-002
 
 Revision: 1. Definition: proposed.
 Origin: recovered from code.
@@ -112,14 +142,14 @@ implementation sources under the same R-ID. Record discrepancies rather than rep
 
 ## A proposed revision and a historical redirect
 
-When proposing a revision to an existing accepted R-002, retain its accepted formulation.
+When proposing a revision to an existing accepted R-SYNC-001, retain its accepted formulation.
 A separate candidate block can live in the same specification; it overrides any inherited
 accepted metadata. Illustrative only; use actual IDs/revisions and known facts:
 
 ```md
-## Proposed change to R-002
+## Proposed change to R-SYNC-001
 
-Definition: proposed. Target: R-002 revision 3, <link to current accepted formulation>.
+Definition: proposed. Target: R-SYNC-001 revision 3, <link to current accepted formulation>.
 Proposes to replace: <exact behavior/scope; no effective supersession yet>.
 Rationale: <problem and expected benefit, with sources or labeled hypothesis>.
 
@@ -137,7 +167,7 @@ For an established replacement, preserve an old anchor with a short notice rathe
 leaving historical wording looking current:
 
 ```md
-###### R-017
+###### R-SYNC-017
 
 Definition: superseded in <scope/version>; historical, nonbinding for <current target>.
 Successor: <link to current requirement/revision>.

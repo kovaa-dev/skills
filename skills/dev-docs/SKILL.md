@@ -5,10 +5,9 @@ description: >-
   decisions, and verification without duplicating contracts. Use for product grooming,
   references and guides, recovering requirements from code, bugs, research, change-impact
   and consistency checks.
-  Before continuing selected legacy task/PRD work or carrying forward obligations from
-  older noncanonical documents, convert the affected scope to requirements and queue entries.
-  Capture new input directly in its owning documents. Use migrate for an explicitly
-  requested one-shot transition; legacy task tracking is deprecated.
+  Reconcile selected existing sources into owning requirements and work records when
+  their semantics do not yet fit this model. Preserve compatible documents and capture
+  new input directly in its owners. Use migrate for an explicitly requested one-shot transition.
 ---
 
 # dev-docs
@@ -18,9 +17,23 @@ description: >-
 The current work model is requirements-driven: specifications own obligations, queues
 request work, and results record delivery/verification. Descriptions, API references,
 guides, and runbooks maintain product/system knowledge through their own useful reading
-routes. PRD/product-task and layer-task tracking is officially **legacy**: it remains
-operational for unconverted scope, with historical sources still accessible afterward.
-Do not create new legacy cards or extend that workflow as the default.
+routes. Determine each project's source formats and authoritative owners from actual
+material; no particular task or document scheme is assumed to be obsolete.
+Keep the existing queue/index as the shared selection route for old and new work;
+use [existing queues during transition](references/work-queue.md#existing-queues-during-transition).
+Queues are linked ID/name/status rows; context and results stay at their linked owners.
+The requirement owns its delivery status and the queue explicitly repeats it. For
+independent work, its linked context owns the status. Before work, read the owner;
+reconcile queue copies in its favor and update affected rows when the source changes.
+[Work-bearing revisions](references/requirements.md#revision-delivery-and-history) use
+`<requirement-id>@<n>` with their own status and mandatory queue row captured together.
+They do not reopen prior deliveries; completed details remain linked outside the normal
+current-contract reading route.
+Register useful outcomes under the [queue rules](references/work-queue.md), not the
+supporting record maintenance performed during the current work.
+Use [requirement IDs and existing layer definitions](references/documentation.md#layers-and-id-namespaces):
+new layer-based requirements use `R-<LAYER>-NNN`, numbered separately from existing work.
+Preserve existing stable IDs unless normalization is requested; explicit project overrides apply.
 
 1. Read applicable project instructions and the selected canonical skill source. Respect
    explicit project/user constraints, existing paths, language, and accepted contracts.
@@ -29,8 +42,8 @@ Do not create new legacy cards or extend that workflow as the default.
    Reuse its owning document; requirements and queue entries are created only when their
    meanings and registration rules apply.
 3. Identify the selected work and affected contracts. Before changing or executing selected
-   legacy work or carrying forward obligations from older noncanonical documents,
-   follow [on-touch conversion](references/legacy-transition.md). Do this within the
+   existing material whose contract/work ownership does not fit this model,
+   follow [on-touch conversion](references/source-transition.md). Do this within the
    authorized work; no init, full-backlog migration, or new permission ceremony is needed.
    Read-only requests produce a proposal only. An explicit prohibition on migration or
    a conflicting binding project instruction must be surfaced, not silently bypassed.
@@ -45,12 +58,11 @@ Do not create new legacy cards or extend that workflow as the default.
    agreed changes revise the [current requirement](references/requirements.md#updating-the-current-revision).
    Recover undocumented behavior/constraints through
    [code recovery](references/requirements.md#recovering-requirements-from-code), with explicit provenance.
-   Verify [coverage](references/legacy-transition.md#coverage-and-reconciliation) before
-   claiming any selected legacy range transferred without loss.
+   Verify [coverage](references/source-transition.md#coverage-and-reconciliation) before
+   claiming any selected existing range transferred without loss.
 
 This entrypoint, forms, bootstrap, and migration references all use the new model.
-[Legacy recognition](references/task-tracker.md) is a compatibility route into conversion,
-not a second supported authoring workflow. Source-skill changes do not automatically
+Source-skill changes do not automatically
 rewrite an installed pinned copy or every consuming project.
 
 ## Read only what the work needs
@@ -62,9 +74,8 @@ rewrite an installed pinned copy or every consuming project.
   [requirements](references/requirements.md).
 - Work selection, readiness, cross-queue waits, research and non-code results,
   completion/history, and delivery targets: [work queues](references/work-queue.md).
-- Selected legacy work or obligations held only in older noncanonical documents:
-  [on-touch conversion](references/legacy-transition.md). Read old-format details in
-  [legacy recognition](references/task-tracker.md) only as needed.
+- Existing material that needs semantic reconciliation:
+  [source assessment and on-touch conversion](references/source-transition.md).
 - New requirements, clarifications, and material questions:
   [ongoing capture](references/requirements.md#questions-during-work).
 - Finding and recording undocumented requirements from implementation:
@@ -90,7 +101,7 @@ where they affect the result. Compact reading must still preserve cross-cutting 
 ## Ordinary work and actions
 
 Ordinary maintenance updates the material that answers the selected question. Capture
-applicable obligations or convert selected legacy scope when needed; use the queue's
+applicable obligations or convert selected existing scope when needed; use the queue's
 registration threshold for independently tracked work. A local documentation edit within
 existing work does not need another R/Q record. Preserve compatible conventions without
 requiring adoption or a whole-repository reorganization.
@@ -101,21 +112,21 @@ requiring adoption or a whole-repository reorganization.
   accepted product requirement to draft. Respect discussion/read-only mode.
 - **init** — when explicitly requested, adopt the needed documentation entrypoints through
   a complete project-local skill copy or a pinned public source.
-  Create only needed documents; no layer registry, empty template tree, or legacy tracker.
+  Create only needed documents; reuse existing layer definitions instead of creating an
+  empty registry/template tree or parallel tracker.
 - **audit** — read-only consistency and impact review of the selected scope. Classify
-  descriptions, guides/procedures, specifications, decisions, queues, results, and legacy sources by
+  descriptions, guides/procedures, specifications, decisions, queues, results, and source records by
   meaning, regardless of directory. Show conflicting formulations, applicability,
   consequences, and proposed resolutions. Do not certify factual claims or product
   behavior without the necessary source-grounded research/verification.
 - **migrate** — explicitly convert the entire agreed scope in one controlled operation
   using [the migration workflow](references/governance-migration.md). Preserve semantics,
   acceptance sources, history, and recoverability; reconcile all in-scope links and work.
-  This replaces the former task-schema/rename migration. A request named "migrate hard"
-  routes to this same workflow, with destructive cleanup only when explicitly authorized.
+  Destructive cleanup requires explicit authorization.
 - **update** — compare the selected skill revision, update affected governance consumers
   and forms, and retire conflicting old routing under [adoption](references/adoption.md).
-  Installing/updating rules does not imply a full backlog conversion: remaining legacy
-  records follow the on-touch path unless a one-shot migration was requested.
+  Installing/updating rules does not imply a full backlog conversion: remaining source
+  records follow source assessment and the on-touch path when needed.
 
 ## Completion and boundaries
 

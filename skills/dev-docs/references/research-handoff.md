@@ -1,6 +1,6 @@
 # Bounded research handoff
 
-Use the [requirements](requirements.md) and [work-queue](work-queue.md) model; selected legacy research tasks first follow [conversion](legacy-transition.md).
+Use the [requirements](requirements.md) and [work-queue](work-queue.md) model; assess existing research sources through [source assessment](source-transition.md), reusing compatible records.
 
 Use this contract when a documentation question or product decision requires source-heavy
 research that is outside documentation maintenance itself. The executor may be a person,

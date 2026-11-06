@@ -1,41 +1,43 @@
 # Work entries and result artifacts
 
 Use [work queues](work-queue.md), [requirements](requirements.md), and
-[governance](documentation.md). This replaces the legacy technical-task form.
-Selected old layer tasks first follow [on-touch conversion](legacy-transition.md).
+[governance](documentation.md). Assess selected sources under
+[source assessment](source-transition.md); reuse compatible work/result owners.
 
 ## Lean canonical queue entries
 
-Illustrative docs/queue.md. These entries share one owner/context where appropriate.
-Link the relevant contract, documentation, or result question. A short acceptance/context
-note is sufficient when useful; follow [work-context placement](documentation.md#work-context-and-results)
-for longer material.
+Insert linked rows into the existing queue/index; the path below is illustrative.
+Follow [queue row and outcome rules](work-queue.md#one-work-item-one-result-boundary).
+The requirement examples follow the [ID rules](documentation.md#layers-and-id-namespaces)
+and the owners in the [specification example](forms-product.md). Q-001 is an illustrative
+independent investigation; retain the project's existing work-ID convention.
+Old aggregate task links can be replaced by covered requirement/result links under
+[the transition rules](work-queue.md#existing-queues-during-transition).
 
 ```md
 # Work queue
 
-Owner: <known accountable owner>. Updated: <actual date when useful>.
-
 ## Open work
 
-###### Q-001
-
-**[Establish a usable preferences representation](wiki/personal-preferences.md#representation-question)** · ready · research.
-Result: an accepted experiment/conclusion sufficient to choose the representation.
-
-###### Q-002
-
-**[Deliver cross-device preferences](wiki/personal-preferences.md#r-002)** · blocked.
-Waits for: [Q-001](#q-001), the accepted representation result.
-Target: <agreed application/environment or other destination>.
+- [Q-001 Establish a usable preferences representation](wiki/personal-preferences.md#representation-question) – ready
+- [R-SYNC-001 Deliver cross-device preferences](wiki/personal-preferences.md#r-sync-001) – blocked
 
 ## Completed work
 
-###### Q-003
-
-**<Prior independently useful result>** · done · <known completion date>.
-Result: <exact result/verification locator and historical limits>.
+- [R-LOCAL-001 Preserve preferences locally](wiki/personal-preferences.md#r-local-001) – done
 ```
+
+The queue status is copied from the linked owner. For example, a requirement section
+may contain `Delivery status: blocked` with the revision/target and missing input; its
+queue row repeats `blocked`. The investigation section owns its own `Work status: ready`.
+Read those source fields before execution and keep all affected rows consistent.
+These snippets illustrate different delivery states; do not infer them from a draft
+requirement or unknown verification in another example.
+
+In the linked question section, record the expected experiment/conclusion. In the linked
+delivery context, identify the accepted representation result it waits for and the agreed
+target. Completed result sections own actual dates, verification, and limits. These details
+do not become additional queue fields or inline cards.
 
 Set ready only when actual scope, acceptance, inputs, authority, and owner are sufficient.
 Use project tokens such as planned where they already represent readiness. Do not fill

@@ -2,12 +2,15 @@
 
 Use [requirements](requirements.md), [queues](work-queue.md), and
 [governance](documentation.md). New navigation points to useful documentation and canonical work;
-old task entrypoints explicitly route through [conversion](legacy-transition.md).
+Assess existing entrypoints under [source assessment](source-transition.md). Reuse
+compatible owners; route only scope with incompatible meaning or ownership through
+conversion. Age, filename, or record type alone does not trigger it.
 
 ## Minimal navigation
 
 Reuse a README or documentation index instead of creating an extra redirect file.
-Illustrative links below are placeholders for documents that actually exist:
+Reuse the existing work queue/index for [mixed old and new entries](work-queue.md#existing-queues-during-transition).
+Illustrative links below are placeholders; substitute existing project locations:
 
 ```md
 # Documentation
@@ -17,11 +20,12 @@ Illustrative links below are placeholders for documents that actually exist:
 - [Settings operation and recovery](../operations/settings-sync.md).
 - [Work and completed results](../queue.md).
 - [Accepted architecture choices](../architecture/decisions/index.md).
-- Legacy tasks: historical/unconverted sources only; selected work is captured into
-  requirements and queue entries before continuation.
+- Source coverage and history: link existing mappings or source notices when a transition
+  has actually occurred; preserve explicitly active unconverted scope.
 ```
 
 Add only existing targets. No empty layer/decision registry is needed.
+The example queue path does not require a new file alongside an existing task index.
 Group current contracts, proposals under consideration, and history visibly when those
 routes exist; sections of the same document are enough. Historical links retain their
 baseline, while ordinary execution links resolve to the applicable current owner.
@@ -29,10 +33,15 @@ Search results still require the [state/applicability check](requirements.md#cur
 
 ## Multiple queues and views
 
-Canonical entries can be partitioned by capability, team, or work kind. Each work ID has
-one home; other views are links or actual generated projections. Do not manually
-duplicate statuses/dependencies across several queue tables.
-Completed/cancelled work stays visible in history, with its result locator.
+Primary selection entries can be partitioned by capability, team, or work kind. Each
+delivery key has one status owner: its requirement/revision block or independent
+work-context section. Different revision deliveries share the requirement ID but have
+distinct full keys, statuses, and historical results.
+All queue views explicitly repeat the owner status in linked ID/name/status rows,
+including completed/cancelled history. Manual copies are supported: read the owner
+before work, correct discrepancies in its favor, and update affected rows with each
+status change under [queue rules](work-queue.md#state-and-readiness).
+Plain navigation links need no status. Context and verification stay at the linked owner.
 
 Dependency links cross queues. A blocked entry does not freeze the group.
 Stages/sprints are optional selection/grouping, not requirement IDs or implementation
@@ -44,7 +53,7 @@ Record only choices the project actually uses in an existing settings section:
 
 - specification/wiki, queue, decision, result, and history locations;
 - selected skill copy or immutable public pointer, when governance adoption was requested;
-- requirement/work ID conventions and prose/metadata language;
+- requirement/work ID conventions, existing layer/prefix meanings, and prose/metadata language;
 - compatible state tokens and whether any views are actually generated;
 - accepted delivery groups, ownership/area boundaries, and scoped exceptions;
 - actual documentation/parser checks and code-map locator when useful.
