@@ -15,7 +15,7 @@ it does not authorize new legacy cards or continued task-based execution.
 | Investigation | Queue work plus its question, method, and result artifact. |
 | TD/ADR | Existing decision remains canonical when applicable; capture separately addressable obligations without duplicating the choice. |
 | Done/cancelled cards and closure | Historical queue results with original sources, dates, and verification limits. |
-| Task index/roadmap | New queue entrypoint plus explicit links to remaining legacy work; replace active status copies with canonical entries/links. |
+| Task index/roadmap | Reuse as the shared queue for legacy and new work under [existing queues during transition](work-queue.md#existing-queues-during-transition); update selected entries in place and replace competing status copies with links to their owners. |
 | Open questions, findings, exceptions | Owning specification/decision/artifact, with queue work only when independently actionable. |
 
 Legacy IDs such as PRD-NNN, WEB-NNN, and AUTH-NNN identify source records, not new

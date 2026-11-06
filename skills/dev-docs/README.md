@@ -27,6 +27,8 @@ implicitly.
 and history, link converted sections to their new owners, then continue from those records.
 Unconverted sections of a shared source remain explicitly active until their own conversion.
 Repeated entry reuses the same IDs and mapping. No init or complete backlog migration is required.
+Old and new work share the existing queue/index; selected entries are updated in place.
+Requirements live in their owners. No parallel transition queue or generator is required.
 [Coverage reconciliation](references/legacy-transition.md#coverage-and-reconciliation) makes
 existing meaning, destinations, new inputs, and remaining gaps explicit. Newly received
 requirements/questions use ongoing capture directly in their owning documents.
