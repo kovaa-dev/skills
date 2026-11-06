@@ -10,7 +10,7 @@ A queue is a list of linked rows, grouped by useful headings. Each row has this 
 
 ```md
 - [Q-001 Establish a usable preferences representation](wiki/personal-preferences.md#representation-question) – ready
-- [R-002 Cross-device preferences](wiki/personal-preferences.md#r-002) – planned
+- [R-SYNC-001 Cross-device preferences](wiki/personal-preferences.md#r-sync-001) – planned
 ```
 
 Keep only the ID, name/link, and delivery status in the row. Use the project's compatible

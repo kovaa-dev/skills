@@ -213,13 +213,16 @@ current and historical requirements; legacy task numbers do not consume requirem
 numbers. Existing task, investigation, and result IDs keep their own conventions.
 A source card's type prefix does not determine the extracted requirement's owning layer.
 Honor an explicit project override and preserve existing stable IDs unless normalization
-is requested. R-001/Q-001 remain fallback examples for projects without layers;
-random suffixes are not implied.
+is requested. R-001 is the requirement fallback when no layers are established;
+Q-001 is the independent-work fallback when no work-ID convention exists.
+Random suffixes are not implied.
 
 Give a cross-layer obligation one canonical owner and let other layers reference it;
 do not duplicate it per consumer. A prefix does not establish dependency, priority,
 acceptance, or execution order. Keep the ID when moving/reordering a record or changing
-its owner. Explicitly authorized ID normalization preserves a source-to-successor mapping
+its owner. The layer segment records the allocation namespace; after an ownership
+change, state the current responsible layer in the owning requirement instead of
+inferring it solely from the ID. Explicitly authorized ID normalization preserves a source-to-successor mapping
 and incoming resolution, such as old anchors, and updates affected links; it does not
 reassign a retired ID to a different obligation. Ordinary conversion preserves stable IDs.
 

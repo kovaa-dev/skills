@@ -32,8 +32,8 @@ project overrides; R-001/R-002 are fallback examples for projects without layers
 Numbers do not encode priority, phase, section order, or file position.
 Never renumber on reorder/rename or reuse a retired ID. Preserve existing stable
 requirement IDs when converting; do not copy a legacy task ID onto every extracted rule.
-An explicitly requested ID normalization follows the linked continuity rule; a layer
-prefix can name a new requirement without reviving the old PRD/task authoring workflow.
+An explicitly requested ID normalization follows the linked continuity rule. The `R`
+type prefix distinguishes a new requirement from a legacy task in the same layer.
 
 A requirement needs its ID, readable behavior/obligation, applicability, verification
 method or an explicit method gap, and known state. Shared context/metadata can live at
@@ -272,8 +272,8 @@ code ownership alone do not establish logical dependency or semantic equivalence
 
 ## Prerequisites and impact
 
-Store an actual implementation prerequisite at the dependent requirement: "R-002 needs
-the verified capability defined by R-001", including the necessary portion/result when
+Store an actual implementation prerequisite at the dependent requirement: "R-SYNC-001 needs
+the verified capability defined by R-LOCAL-001", including the necessary portion/result when
 only part is needed. Keep prerequisite, constrains/applies-to, shared rationale, and
 supersedes links distinguishable. An ordinary reference is not a blocker.
 

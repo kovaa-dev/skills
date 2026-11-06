@@ -23,8 +23,9 @@ Illustrative placement, not a mandatory tree:
 - docs/architecture/decisions/: independently useful decisions, if needed.
 - docs/development/documentation-index.md: navigation/settings, if the project needs it.
 
-Use the project's existing [layer/prefix ID scheme](documentation.md#layers-and-id-namespaces)
-for requirements and work. R-001/Q-001 are fallbacks for projects without a convention;
+Use [ID namespace rules](documentation.md#layers-and-id-namespaces): new layer-based
+requirements use `R-<LAYER>-NNN`; existing work/source IDs keep their conventions.
+Without established layers, use the documented fallback rather than inventing a registry;
 requirement IDs can directly identify delivery rows under [queue rules](work-queue.md#one-work-item-one-result-boundary).
 Reuse existing layer definitions; no empty registry, root redirect, or file per work item
 is required. Multiple queues are allowed with one canonical
