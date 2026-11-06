@@ -39,6 +39,12 @@ A requirement needs its ID, readable behavior/obligation, applicability, verific
 method or an explicit method gap, and known state. Shared context/metadata can live at
 specification level.
 Use only fields needed for this contract; no per-line IDs or universal empty header.
+Keep acceptance criteria (expected observable behavior and how to check it) distinct
+from verification evidence (what was actually checked, against which version, with what
+result and limitations). Use separate concise labels or linked evidence, not a mandatory
+new document or field set. A test name or past passing run is not the criterion itself;
+a criterion is not proof of delivery. Share common verification context instead of
+repeating test inventories and historical runs under every requirement.
 
 Distinguish:
 

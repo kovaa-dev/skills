@@ -30,7 +30,8 @@ Accept a result when it contains:
 - material conflicts and unresolved gaps;
 - searched scope, coverage limits, and verification limitations.
 
-The result is research support, not an accepted requirement or decision. Link the bounded result
-from its owning question; do not copy the corpus, search log, receipts, or internal research state
-into specifications, queues, or decisions. Record any resulting choice through the normal acceptance
+The result is research support, not an accepted requirement or decision. Keep its concise
+current conclusions in the [owning research section](documentation.md#research-alongside-requirements),
+which may be inside a specification, and link the supporting evidence. Do not copy the
+corpus, search log, receipts, or internal executor state into specifications, queues, or decisions. Record any resulting choice through the normal acceptance
 source of its canonical owner.
