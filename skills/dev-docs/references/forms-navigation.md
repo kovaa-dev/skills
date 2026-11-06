@@ -2,7 +2,7 @@
 
 Use [requirements](requirements.md), [queues](work-queue.md), and
 [governance](documentation.md). New navigation points to useful documentation and canonical work;
-old task entrypoints explicitly route through [conversion](legacy-transition.md).
+old task entrypoints explicitly route through [conversion](source-transition.md).
 
 ## Minimal navigation
 
@@ -18,8 +18,8 @@ Illustrative links below are placeholders; substitute existing project locations
 - [Settings operation and recovery](../operations/settings-sync.md).
 - [Work and completed results](../queue.md).
 - [Accepted architecture choices](../architecture/decisions/index.md).
-- Legacy tasks: historical/unconverted sources only; selected work is captured into
-  requirements and queue entries before continuation.
+- Source coverage and history: link existing mappings or source notices when a transition
+  has actually occurred; preserve explicitly active unconverted scope.
 ```
 
 Add only existing targets. No empty layer/decision registry is needed.

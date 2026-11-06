@@ -1,8 +1,8 @@
 # Incoming work and questions
 
 Use [maintenance](maintenance.md), [requirements](requirements.md), and
-[queues](work-queue.md). These forms replace old bug/layer/PRD card examples.
-Convert selected existing cards through [on-touch transition](legacy-transition.md).
+[queues](work-queue.md). Reconcile existing material when needed through
+[source assessment](source-transition.md), independent of its format.
 
 ## Bug
 

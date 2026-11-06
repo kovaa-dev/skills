@@ -1,8 +1,8 @@
 # Work entries and result artifacts
 
 Use [work queues](work-queue.md), [requirements](requirements.md), and
-[governance](documentation.md). This replaces the legacy technical-task form.
-Selected old layer tasks first follow [on-touch conversion](legacy-transition.md).
+[governance](documentation.md). Assess selected sources under
+[source assessment](source-transition.md); reuse compatible work/result owners.
 
 ## Lean canonical queue entries
 

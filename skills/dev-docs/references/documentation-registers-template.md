@@ -2,7 +2,7 @@
 
 The current model is [requirements](requirements.md) and [work queues](work-queue.md)
 under [documentation governance](documentation.md). Use only the example needed now.
-Old task/card authoring is legacy: [convert before continuing](legacy-transition.md).
+[Assess existing sources](source-transition.md) and reuse compatible documents in place.
 
 - [Specifications and individual requirements](forms-product.md).
 - [Lean work entries and result artifacts](forms-technical.md).
@@ -21,7 +21,7 @@ Check for an existing canonical owner. Choose one independently useful contract/
 result; an existing owning section can suffice. Queue rows remain ID/name/link/status.
 Preserve descriptive filenames,
 stable IDs, project language, and real links. Do not generate placeholder files as backlog
-or reintroduce PRD/layer cards from an old form.
+or duplicate an existing owner to match a form.
 
 ## Completed-form checks
 
@@ -33,8 +33,8 @@ or reintroduce PRD/layer cards from an old form.
   cross queue files correctly and do not create self/cyclic blocking.
 - Completed/cancelled results remain visible with honest verification limits.
 - New choices have acceptance; implementation reconciles the preserved contracts.
-- Converted legacy sources point to self-contained new owners; repeat conversion reuses them.
-- [Coverage](legacy-transition.md#coverage-and-reconciliation) accounts for existing meaning
+- Converted source records point to self-contained new owners; repeat conversion reuses them.
+- [Coverage](source-transition.md#coverage-and-reconciliation) accounts for existing meaning
   and new inputs; full migration covers the agreed ranges and scoped work claims only its scope.
 - Actual available checks passed; lint does not substitute for semantic/source comparison.
 

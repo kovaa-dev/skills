@@ -2,7 +2,7 @@
 
 The queue requests work and links its owning contract, documentation, or question;
 [requirements](requirements.md) retain their normative text. Use [maintenance](maintenance.md)
-for intake/severity and [on-touch conversion](legacy-transition.md) before continuing old task-based work.
+for intake/severity and [on-touch conversion](source-transition.md) when existing contract/work ownership needs reconciliation.
 
 ## One work item, one result boundary
 
@@ -41,25 +41,25 @@ product requirements, tasks, or artifact files merely to record having maintaine
 
 ## Existing queues during transition
 
-Reuse the project's existing queue or task index for both legacy and new work. Place
+Reuse the project's existing queue or task index for existing and newly captured work. Place
 new result-oriented entries alongside old entries in the relevant area/milestone;
 link their requirements in the owning specifications rather than copying obligations
 into the queue. Do not create another queue or duplicate the backlog merely because
 some entries use the new model. Existing useful partitions may remain; migration state
 alone is not a reason to separate work selection.
 
-Listing/selecting a legacy entry does not require advance migration of the backlog or
+Listing/selecting an existing entry does not require advance migration of the backlog or
 certify its readiness. Its unconverted contract and work remain in the old source until
-the selected scope follows [on-touch conversion](legacy-transition.md). Capture new
+the selected scope follows [on-touch conversion](source-transition.md). Capture new
 requirements directly in their owners and register work only at the threshold above.
 
-During conversion, replace the selected legacy selection links with the covered
+During conversion, replace the selected existing selection links with the covered
 requirements/results, keeping one row per selected result and preserving delivery grouping,
 history, incoming resolution, and any active remainder. Retain an existing work ID when
 it still identifies the same result. If an aggregate task is replaced by extracted R-ID
 rows or consolidated outcomes, keep its old ID accessible as a source/redirect with the
 verified mapping; do not retain it as a second active delivery of the same scope.
-A PRD/layer ID does not become a requirement ID by renaming. Conversion alone does not
+A source work ID does not become a requirement ID by renaming. Conversion alone does not
 require new Q-items. Split/consolidate only along actual result boundaries. For partial
 conversion, name the exact converted/residual scope and their status owners at the linked
 source; whole-source coverage still follows the transition protocol. Completed/cancelled

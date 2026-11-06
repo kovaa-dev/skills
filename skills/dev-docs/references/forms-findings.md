@@ -1,8 +1,8 @@
 # Optional findings register
 
 Use [maintenance](maintenance.md), [requirements](requirements.md), and
-[queues](work-queue.md). Legacy finding/task sources route through
-[on-touch conversion](legacy-transition.md).
+[queues](work-queue.md). Existing sources are assessed through
+[on-touch conversion](source-transition.md).
 
 Use a separate findings register only when the project actually needs an independent
 observation/audit record. Otherwise keep the observation with its owning contract/result

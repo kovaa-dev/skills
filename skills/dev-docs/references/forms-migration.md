@@ -1,11 +1,11 @@
 # Requirement and queue migration coverage
 
 Use [one-shot migration](governance-migration.md) for a full selected scope and
-[on-touch conversion](legacy-transition.md) for ordinary legacy conversion. The former task-schema
-migration is legacy; the destination is always specifications, queues, and results.
+[source assessment](source-transition.md) for incremental reconciliation. Both preserve
+compatible records and capture obligations, work, decisions, and results in their owners.
 
-Use the shared [coverage protocol](legacy-transition.md#coverage-and-reconciliation).
-A small conversion keeps the same accounting inline in the old-source notice or work result;
+Use the shared [coverage protocol](source-transition.md#coverage-and-reconciliation).
+A small conversion keeps the same accounting inline in the source notice or work result;
 a detailed temporary table is for full/large migration or required traceability.
 Rows identify meaningful units/conditions, not merely filenames; group only when each
 contributing meaning and destination remains checkable.
@@ -31,8 +31,8 @@ contributing meaning and destination remains checkable.
 Source-to-destination mapping must account for questions, exceptions, dependencies,
 and completed/cancelled outcomes, not merely renamed files. Repeated entry reuses existing
 destinations. A partial-source notice identifies converted ranges and residual active
-legacy sections under [on-touch conversion](legacy-transition.md#convert-before-continuing).
-Completion follows the [coverage criterion](legacy-transition.md#coverage-and-reconciliation):
+source sections under [on-touch conversion](source-transition.md#convert-before-continuing).
+Completion follows the [coverage criterion](source-transition.md#coverage-and-reconciliation):
 unread or unmapped source meaning remains incomplete; captured open questions may stay
 unresolved. Do not preserve a permanent second tracker. Cleanup/deletion follows explicit
 authority and verified recovery.
