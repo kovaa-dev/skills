@@ -18,7 +18,8 @@ Select [documentation purpose and ownership](documentation.md#documentation-purp
 for descriptions, references, guides/procedures, obligations, work context, and results.
 Those materials need no universal R/Q record or a separate form for every document type.
 Check for an existing canonical owner. Choose one independently useful contract/question/
-result; an inline section or queue entry can suffice. Preserve descriptive filenames,
+result; an existing owning section can suffice. Queue rows remain ID/name/link/status.
+Preserve descriptive filenames,
 stable IDs, project language, and real links. Do not generate placeholder files as backlog
 or reintroduce PRD/layer cards from an old form.
 

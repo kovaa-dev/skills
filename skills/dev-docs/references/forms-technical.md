@@ -6,39 +6,28 @@ Selected old layer tasks first follow [on-touch conversion](legacy-transition.md
 
 ## Lean canonical queue entries
 
-Insert entries into the existing queue/index; docs/queue.md below is illustrative.
-For [selected legacy work](work-queue.md#existing-queues-during-transition), update its
-existing entry and retain its ID rather than adding a Q-ID copy.
-These entries share one owner/context where appropriate.
-Link the relevant contract, documentation, or result question. A short acceptance/context
-note is sufficient when useful; follow [work-context placement](documentation.md#work-context-and-results)
-for longer material.
+Insert linked rows into the existing queue/index; the path below is illustrative.
+Follow [queue row and outcome rules](work-queue.md#one-work-item-one-result-boundary).
+Old aggregate task links can be replaced by covered requirement/result links under
+[the transition rules](work-queue.md#existing-queues-during-transition).
 
 ```md
 # Work queue
 
-Owner: <known accountable owner>. Updated: <actual date when useful>.
-
 ## Open work
 
-###### Q-001
-
-**[Establish a usable preferences representation](wiki/personal-preferences.md#representation-question)** · ready · research.
-Result: an accepted experiment/conclusion sufficient to choose the representation.
-
-###### Q-002
-
-**[Deliver cross-device preferences](wiki/personal-preferences.md#r-002)** · blocked.
-Waits for: [Q-001](#q-001), the accepted representation result.
-Target: <agreed application/environment or other destination>.
+- [Q-001 Establish a usable preferences representation](wiki/personal-preferences.md#representation-question) – ready
+- [R-002 Deliver cross-device preferences](wiki/personal-preferences.md#r-002) – blocked
 
 ## Completed work
 
-###### Q-003
-
-**<Prior independently useful result>** · done · <known completion date>.
-Result: <exact result/verification locator and historical limits>.
+- [R-001 Preserve preferences locally](wiki/personal-preferences.md#local-delivery) – done
 ```
+
+In the linked question section, record the expected experiment/conclusion. In the linked
+delivery context, identify the accepted representation result it waits for and the agreed
+target. Completed result sections own actual dates, verification, and limits. These details
+do not become additional queue fields or inline cards.
 
 Set ready only when actual scope, acceptance, inputs, authority, and owner are sufficient.
 Use project tokens such as planned where they already represent readiness. Do not fill

@@ -24,7 +24,8 @@ Illustrative placement, not a mandatory tree:
 - docs/development/documentation-index.md: navigation/settings, if the project needs it.
 
 Requirements use stable R IDs; Q IDs are the default for new work across files. Existing
-meaningful requirement and work IDs may be retained. No layer prefix registry, root redirect,
+meaningful requirement and work IDs may be retained; R-IDs can directly identify delivery
+rows under [queue rules](work-queue.md#one-work-item-one-result-boundary). No layer prefix registry, root redirect,
 or file per work item is required. Multiple queues are allowed with one canonical
 entry per item and cross-queue waits.
 

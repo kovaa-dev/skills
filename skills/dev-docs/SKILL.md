@@ -23,6 +23,9 @@ operational for unconverted scope, with historical sources still accessible afte
 Do not create new legacy cards or extend that workflow as the default.
 Keep the existing queue/index as the shared selection route for old and new work;
 use [existing queues during transition](references/work-queue.md#existing-queues-during-transition).
+Queues are linked ID/name/status rows; context and results stay at their linked owners.
+Register useful outcomes under the [queue rules](references/work-queue.md), not the
+supporting record maintenance performed during the current work.
 
 1. Read applicable project instructions and the selected canonical skill source. Respect
    explicit project/user constraints, existing paths, language, and accepted contracts.

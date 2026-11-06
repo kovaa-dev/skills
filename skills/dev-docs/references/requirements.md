@@ -272,9 +272,9 @@ the verified capability defined by R-001", including the necessary portion/resul
 only part is needed. Keep prerequisite, constrains/applies-to, shared rationale, and
 supersedes links distinguishable. An ordinary reference is not a blocker.
 
-The [queue](work-queue.md#dependencies-and-multiple-queues) records which work currently
-supplies a missing prerequisite. Requirements describe a durable dependency; queue waits
-describe the current execution plan. An already available prerequisite needs no new work.
+The [linked work context](work-queue.md#dependencies-and-multiple-queues) records which
+work currently supplies a missing prerequisite; the queue row shows its waiting status.
+Requirements describe a durable dependency; the linked wait describes the execution plan. An already available prerequisite needs no new work.
 When both requirements are delivered by one item, order them within that work instead
 of creating a self-blocking queue dependency.
 
@@ -348,7 +348,7 @@ response; do not claim it persisted in project documentation.
    last captured baseline: each has its updated/new canonical destination or a visible
    unresolved question with source and next needed answer. Do not leave agreed obligations,
    scoped exceptions, or material pending requirements only in chat, a local plan, or a
-   completed queue note.
+   completed work result without updating its canonical owner.
 
 The executor chooses routine reversible details under [decision governance](documentation.md#decision-approval).
 Use a separate investigation only for an independently useful result. After its conclusion,

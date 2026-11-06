@@ -10,13 +10,14 @@ A regression against an unchanged obligation is repair work linked to the same
 requirement. Changing desired behavior revises/adds a requirement under normal
 acceptance. A technical implementation choice need not become a new product requirement.
 
-Register explicitly requested/deferred work, unresolved or recurring defects, independently
-actionable blockers, and significant enduring risks. A local defect fully fixed within
+Apply the [queue outcome test](work-queue.md#one-work-item-one-result-boundary) to
+requested/deferred outcomes, unresolved or recurring defects, independently actionable
+blockers, and significant enduring risks. A local defect fully fixed within
 current work does not require another item. Report other observations without automatically
 creating a backlog. Check for duplicates and preserve useful sources when merging.
 
-Use the [canonical work entry](work-queue.md#one-work-item-one-result-boundary), preserving
-known impact and the next useful outcome. Place reproduction, causal hypotheses, research,
+Use an ID/name/link/status [queue row](work-queue.md#one-work-item-one-result-boundary).
+Preserve known impact and the next useful outcome at its linked owner. Place reproduction, causal hypotheses, research,
 and verification under [documentation ownership](documentation.md#work-context-and-results):
 a short note can suffice; useful descriptions/procedures belong in their existing owners.
 No PRD, complete design, estimate, stage, or separate issue document is required just
