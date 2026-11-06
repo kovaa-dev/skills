@@ -226,8 +226,9 @@ data boundaries, delivery target, and dependencies. The absence of an explicit
 prohibition does not authorize creating a second UI, relocating an action, adding a new
 product flow, or changing a contract for technical convenience.
 
-The following changes are not routine details and require every agent to stop until the
-accepted contract is confirmed:
+The following changes require a confirmed accepted contract rather than a routine
+implementation choice. If that confirmation is missing, pause only work that depends
+on the unresolved decision and continue unaffected authorized work:
 
 - a new UI surface, actor, or user workflow;
 - a new category of data/owner/permission/retention or a public/versioned contract;
@@ -284,13 +285,15 @@ affected interface within the authorized task; these checks are separate from fi
 user acceptance. Report unavailable rendering and unverified claims rather than
 treating source inspection as visual evidence.
 
-A full manual usability gate is mandatory for a new capability, a changed primary
-Action/Surface/Visible result, or a new waiting/result state. For a localized copy,
-visual, or accessibility fix, focused UI inspection is sufficient. The user owns final
-manual acceptance; agent visual inspection and automated checks do not supply that
-confirmation. The agent may start and inspect the app before handing it to the user.
+For work with a UI effect, a full manual usability gate is mandatory for a new capability,
+a changed primary Action/Surface/Visible result, or a new waiting/result state. For a
+localized copy, visual, or accessibility fix, focused UI inspection is sufficient.
+Work without a UI effect follows its own applicable acceptance criteria. The user owns
+final manual acceptance; agent visual inspection and automated checks do not supply
+that confirmation. The agent may start and inspect the app before handing it to the user.
 
-After implementation, prepare concise test cases on the existing interface to verify:
+When the full gate is required, prepare concise test cases after implementation on the
+existing interface to verify:
 
 1. the user's Action is available on the accepted Surface;
 2. if the operation genuinely takes time and progress is part of the accepted contract,
@@ -371,16 +374,21 @@ prohibited.
 
 ### Complexity boundaries
 
-Do not compare production and auxiliary code by line count or create a LOC gate. Before
-the first successful manual gate, limit work to the production path, proportionate agent
-visual verification, and checks for the concrete failure scenarios above; do not add a
-new bespoke runner, fault framework, corpus, benchmark, or evidence system.
+Do not compare production and auxiliary code by line count or create a LOC gate. At every
+stage, each new auxiliary entity must address a concrete current failure scenario or a
+[necessary measurement](references/research-artifacts.md#necessary-and-sufficient-measurements)
+within the authorized scope, and must not duplicate an existing check.
 
-After the gate, every new auxiliary entity must address a concrete current failure
-scenario or a separately accepted measurement claim and not duplicate an existing check.
-For tests, use the simplest reliable existing test level. A second new
-runner/framework or an expanded corpus requires a separate accepted justification;
-"evidence completeness" and hypothetical future utility are insufficient.
+Before a required manual usability gate, prioritize the production path, proportionate
+agent visual verification, and checks for the concrete failure scenarios above. The
+smallest measurements that meet the research rules may run before user acceptance.
+Prefer existing tools; add minimal measurement code only when those tools are insufficient.
+Defer auxiliary infrastructure beyond these necessary checks and measurements until
+the gate succeeds.
+
+For tests, use the simplest reliable existing test level. A second new runner/framework
+or an expanded corpus requires a separate accepted justification; "evidence completeness"
+and hypothetical future utility are insufficient.
 
 Production complexity is likewise not measured by LOC. A standalone production
 abstraction, persistent state, process, service, or new execution path must have a
@@ -487,10 +495,10 @@ maintainers.
   pushes and CI runs are allowed for a discovered defect, CI failure/flake, review
   change, conflict, or material base update; do not hide a necessary fix to preserve a
   formal run count.
-- When explicit authority is used for early publication, collaborative review, or a
-  remote-only check, create a draft. While the user is sending consecutive batches of
-  the same work or known scope remains open, keep the PR draft. Do not switch between
-  draft/ready after every batch.
+- When explicitly authorized to publish unfinished work for early collaborative review
+  or to obtain a remote-only check needed to establish readiness, create a draft. While
+  the user is sending consecutive batches of the same work or known scope remains open,
+  keep the PR draft. Do not switch between draft/ready after every batch.
 - Before marking a draft ready and before merge, fetch and integrate the current base,
   resolve conflicts, and run risk-based ready checks.
 - Update PR metadata only for a material change in scope, blocker, or readiness. A
@@ -539,11 +547,11 @@ use an explicit reference to the task/PR/branch and, when necessary, one brief P
 update rather than a shared repository handoff.
 
 Do not update the handoff after every internal step. Delete the local file after a
-successful resume or completion of the work. Editing agents on the same task use
-separate branches/worktrees; the coordinator receives commits/PRs and a short result,
-not a shared mutable handoff. During migration, first remove any unique durable state
-from a legacy singleton handoff, then remove it from the active route within the agreed
-scope.
+successful resume or completion of the work. Worker isolation follows the
+[subagent rules](#7-subagents-and-orchestration). The coordinator receives scoped changes
+and a short result, not a shared mutable handoff. During migration, first remove any
+unique durable state from a legacy singleton handoff, then remove it from the active
+route within the agreed scope.
 
 ## 10. Completion
 
