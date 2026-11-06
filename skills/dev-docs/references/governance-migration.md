@@ -78,7 +78,8 @@ only within granted cleanup authority and after verified recovery.
 
 When the request also adopts/updates this skill, preserve unique project settings and
 scoped exceptions, and use [adoption](adoption.md). Keep one active rule source per
-responsibility. Product contracts stay in specifications, work state in queues, and
+responsibility. Product contracts stay in specifications, status at linked requirement/work
+owners with explicit queue projections, and
 accepted technical choices in their decision owners; none are copied into the skill.
 
 Update agent instructions, hooks, CI, Git, and delivery automation only under the active

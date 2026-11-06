@@ -37,6 +37,8 @@ Revision: 1. Basis: [Continue work across devices](#why-001-continue-work-across
 Acceptance: <observable scenario and method, or an explicit verification gap;
 use existing tests when sufficient>.
 Verification: unknown; no current result established.
+Delivery status: backlog (revision 1; if this delivery is registered in a queue).
+<The queue repeats this field; the requirement is the status authority.>
 
 ## Apply remote changes on active devices
 

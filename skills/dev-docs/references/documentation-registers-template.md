@@ -29,7 +29,8 @@ or duplicate an existing owner to match a form.
 - Applicability, acceptance, and current versus historical state are unambiguous.
 - Queue/index context stays concise; explanation/summaries link their canonical sources
   without creating competing normative contracts or work states.
-- Each work item has one canonical state and meaningful result boundary; concrete waits
+- Each work item has one linked status owner and matching copied statuses in queue rows,
+  plus a meaningful result boundary; concrete waits
   cross queue files correctly and do not create self/cyclic blocking.
 - Completed/cancelled results remain visible with honest verification limits.
 - New choices have acceptance; implementation reconciles the preserved contracts.

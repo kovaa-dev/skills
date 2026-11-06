@@ -16,7 +16,8 @@ or relationships between an index and its owners. Scope those checks to
 remaining source sources while adapting affected samples and checks for:
 
 - specification requirement IDs/anchors, revision/applicability, and real links;
-- one canonical work entry, cross-queue references, and result/history links;
+- one primary selection entry and status owner, matching queue status copies,
+  cross-queue references, and result/history links;
 - prerequisite versus reference/supersedes/rationale relationships and self/cycle checks;
 - historical verification versus proof of the current requirement revision;
 - converted notices and the route to new canonical owners.

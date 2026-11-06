@@ -134,7 +134,8 @@ second live requirement catalog or work queue.
    discoverability of the unconverted remainder. Reconcile any material source/input
    changes since the coverage check before continuing or claiming completion.
    Continue the selected converted scope only in its new canonical records; its old
-   formulation/status is historical. Do not duplicate live contracts or execution state.
+   formulation/status is historical. Do not create competing contract/status owners;
+   the queue intentionally repeats the current owner status under the queue rules.
 
 The coverage mapping is provenance/navigation, not another work state. On repeated entry,
 follow it and reuse the existing records; account only for actual new or changed material.
