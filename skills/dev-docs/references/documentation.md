@@ -196,21 +196,23 @@ Preserve unknowns as questions; coordinate schema changes with actual parsers.
 
 ## Layers and ID namespaces
 
-A **layer** is a named logical area of product/system responsibility with a defined
-contract and owning documentation. It may be product-wide or technical and span several
-components; it does not require a separate runtime module, team, queue, or giant document.
-Use the project's existing layer definitions and prefix mapping. In a project using
-layer IDs, these definitions are the authoritative namespaces, not obsolete task forms.
-Record missing meanings in existing project settings when needed; do not invent a layer
-tree for a project that has none.
+A **layer** is an established area of responsibility defined by the project's
+architecture, contracts, and owning documentation. Read the existing registry and
+historical naming rules before assigning a layer or choosing its prefix. A layer may
+span components; it does not require a separate runtime module, team, or queue.
+A record-type prefix is not automatically a layer: for example, PRD may identify legacy
+product task documents while LOCAL, EDITOR, and SYNC identify responsibility areas.
+Do not add a product layer or reinterpret a prefix merely to accommodate extracted
+requirements. Record missing meanings only when grounded in project sources or an
+explicitly accepted decision; do not invent a layer tree for a project that has none.
 
-Follow its readable sequential format, such as PRD-140 for a product requirement or
-LOCAL-025 for local-state work. Allocate the next unused number in the declared prefix
-namespace, checking current and historical records of all material kinds sharing it.
-The prefix identifies the owning responsibility; the document/section identifies whether
-the record is a requirement, investigation, decision, or result. Additional R/Q type
-segments and random suffixes are not implied. R-001/Q-001 are fallback examples for
-projects without an established convention, not replacements for an existing layer scheme.
+Follow the project's declared ID scheme. For layer-based requirements, choose the
+existing layer that owns the contract, then its next unused sequential ID, such as
+LOCAL-025; account for current and historical records sharing that namespace. A source
+card's type prefix does not determine the extracted requirements' owning layers.
+Distinguish layer namespaces from record-type namespaces and preserve their existing
+meanings. Additional R/Q type segments and random suffixes are not implied.
+R-001/Q-001 are fallback examples for projects without an established convention.
 
 Give a cross-layer obligation one canonical owner and let other layers reference it;
 do not duplicate it per consumer. A prefix does not establish dependency, priority,

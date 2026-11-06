@@ -14,7 +14,8 @@ A queue is a list of linked rows, grouped by useful headings. Each row has this 
 ```
 
 Keep only the ID, name/link, and delivery status in the row. Use the project's compatible
-status tokens and inline-code styling if established. Requirements, questions, context,
+status tokens, separator punctuation, and inline-code styling if established.
+Keep unaffected rows unchanged during a scoped conversion. Requirements, questions, context,
 waits, owner, priority, delivery target, acceptance, dates, and verification belong at
 the linked owning document/section. Reuse that owner; a row does not require its own file.
 Do not turn queue entries into inline work cards or append a second context/status table.
