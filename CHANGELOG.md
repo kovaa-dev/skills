@@ -8,6 +8,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 No unreleased changes.
 
+## [1.1.0](https://github.com/kovaa-dev/skills/compare/v1.0.0...v1.1.0) (2026-11-06)
+
+
+### Features
+
+* **dev-docs:** track requirement revision deliveries in queues ([9f828f1](https://github.com/kovaa-dev/skills/commit/9f828f1c5366bb0eb9b1f45fc3348b9b23127614))
+* **dev-rules:** add reviews, visual verification, and programmatic access ([#32](https://github.com/kovaa-dev/skills/issues/32)) ([c5c3d9e](https://github.com/kovaa-dev/skills/commit/c5c3d9ea88d60c04fa34c0e8f37c7a4875ff3e3c))
+
+
+### Bug Fixes
+
+* **cost-audit:** read zstd session logs ([aed487f](https://github.com/kovaa-dev/skills/commit/aed487f6b6719a00f479a1d4ac3ae7b4c7f41a91))
+* **dev-docs:** align requirement naming across guides and forms ([b4708f2](https://github.com/kovaa-dev/skills/commit/b4708f251e386a275ed3ab725efdf3e63fd72c2c))
+* **dev-docs:** distinguish layer IDs from legacy document types ([168b773](https://github.com/kovaa-dev/skills/commit/168b773d4862c2d8f3a7f946bf10e59a39a2c3e1))
+* **dev-docs:** make source transition schema independent ([ae0e6c3](https://github.com/kovaa-dev/skills/commit/ae0e6c3f83bb226e6cbae541746d2afdaaaf5537))
+* **dev-docs:** mirror owner delivery status in queues ([505695a](https://github.com/kovaa-dev/skills/commit/505695af39ef86b9ce9da1aaab72c79924073f88))
+* **dev-docs:** prefix layer requirement IDs with R ([3f21d1b](https://github.com/kovaa-dev/skills/commit/3f21d1bd054fd56239186d8a01add06b235749d5))
+* **dev-docs:** preserve compatible routes and requirement identities ([ab30613](https://github.com/kovaa-dev/skills/commit/ab306137eb6333f5ce63dc8cca3c57823bc7d263))
+* **dev-docs:** retain project layer ID namespaces ([8e3c7fc](https://github.com/kovaa-dev/skills/commit/8e3c7fc741ebf703bd42877e01c31d7dd8c532d5))
+* **dev-docs:** reuse existing queues during legacy transition ([70677f5](https://github.com/kovaa-dev/skills/commit/70677f5c32cc63c58d9202e555486244bf42a37f))
+* **dev-docs:** use linked queue rows and register useful outcomes ([c23e21c](https://github.com/kovaa-dev/skills/commit/c23e21c37c8034a84c7e8d18e60dd5003f94510c))
+* **dev-rules:** bound MCP discovery ([55c8faa](https://github.com/kovaa-dev/skills/commit/55c8faaeac931cb8f779c5ba430d7213fea081f0))
+* **dev-rules:** require explicit delivery authority ([#27](https://github.com/kovaa-dev/skills/issues/27)) ([1bdae11](https://github.com/kovaa-dev/skills/commit/1bdae118ae89ee67867335a0129a627fb8a00c9c))
+* **dev-rules:** resolve audit contradictions ([#37](https://github.com/kovaa-dev/skills/issues/37)) ([a421184](https://github.com/kovaa-dev/skills/commit/a421184053c711b90a2f50f7782eb8c81b261c1e))
+
+
+### Documentation
+
+* **dev-docs:** group requirement context in wiki folders ([#35](https://github.com/kovaa-dev/skills/issues/35)) ([42954ea](https://github.com/kovaa-dev/skills/commit/42954ea44aafdde11068f3270624fa44ae13e320))
+* **dev-docs:** keep requirements lean and embed research context ([8897600](https://github.com/kovaa-dev/skills/commit/88976003f695cb086d76120fea0a3c3c175e0a91))
+* **dev-rules:** decouple documentation policy ([11c9300](https://github.com/kovaa-dev/skills/commit/11c9300a7268202d06a88fbe12359f7d2c09eb6b))
+* **dev-rules:** refine branch name format ([eb4db69](https://github.com/kovaa-dev/skills/commit/eb4db69579bcd0063e5402fbacb083f8ea104589))
+* **dev-rules:** standardize branch names ([cde8325](https://github.com/kovaa-dev/skills/commit/cde8325ba591a2de78676138a612e60691c8f872))
+
 ## [1.0.0](https://github.com/kovaa-dev/skills/compare/v0.5.0...v1.0.0) (2026-10-23)
 
 
