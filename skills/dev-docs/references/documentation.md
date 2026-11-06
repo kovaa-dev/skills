@@ -1,8 +1,8 @@
 # Documentation governance
 
 The work model uses [requirements/specifications](requirements.md), [work queues](work-queue.md),
-decisions, and results alongside product/system descriptions and instructions. The old PRD/layer-task workflow is legacy:
-[convert selected material before continuing](legacy-transition.md).
+decisions, and results alongside product/system descriptions and instructions.
+[Assess existing material and reconcile only what needs conversion](source-transition.md).
 [Bootstrap](documentation-system-template.md) and [forms](documentation-registers-template.md)
 apply these rules without becoming competing policy sources.
 
@@ -122,13 +122,13 @@ do not select a convenient source or weaken another obligation for implementatio
 Requirement identity, semantic revisions, applicability, and preserved meaning follow
 [the requirement lifecycle](requirements.md#identity-state-and-revision). Work completion
 and later regressions follow [queue history](work-queue.md#completion-history-and-current-truth).
-Legacy facts follow [the transition rules](legacy-transition.md#history-and-unresolved-material).
+Source facts follow [the transition rules](source-transition.md#history-and-unresolved-material).
 
 ## Project documentation consistency check
 
 For audit, migrate, update, and affected contract changes, compare related project docs
 with one another before comparing their format to the skill. Include every relevant type,
-regardless of directory: specifications, decisions, queues, legacy PRDs/tasks, research,
+regardless of directory: specifications, decisions, queues, work records, research,
 verification, operational/product/marketing docs, README, instructions, and templates.
 A full check covers the agreed full scope; ordinary work checks the affected contracts
 and consumers without reading the whole repository.
@@ -162,7 +162,7 @@ and examples/procedures as feasible; disclose unverified steps and source gaps.
   instructions in the same workstream when their content changes or is needed.
 - Reconcile [new/changed requirements and material questions](requirements.md#questions-during-work)
   received during the work, including capture before handoff; migration also checks
-  [baseline coverage](legacy-transition.md#coverage-and-reconciliation).
+  [baseline coverage](source-transition.md#coverage-and-reconciliation).
 - Keep superseded meaning/reasons/acceptance accessible; Git history alone is not the
   explanation for why the current contract replaced an accepted one.
 - The queue links to the actual result and its verification; it does not copy the specification.
@@ -178,7 +178,7 @@ corrective work against the same requirement or its explicitly accepted revision
 Routine work does not require init or adopting this skill as project governance.
 Use the [maintenance contract](adoption.md#routine-maintenance-without-adoption).
 Compatible paths, language, IDs, and explicit project constraints remain intact; selected
-legacy content still follows bounded on-touch conversion where authorized.
+source content follows assessment and bounded conversion only where needed and authorized.
 A binding no-migration/old-format instruction is a real conflict to disclose, not permission
 to create a hidden parallel tracker.
 
@@ -200,8 +200,8 @@ A **layer** is an established area of responsibility defined by the project's
 architecture, contracts, and owning documentation. Read the existing registry and
 historical naming rules before assigning a layer or choosing its prefix. A layer may
 span components; it does not require a separate runtime module, team, or queue.
-A record-type prefix is not automatically a layer: for example, PRD may identify legacy
-product task documents while LOCAL, EDITOR, and SYNC identify responsibility areas.
+A record-type prefix is not automatically a layer. Determine its meaning from the
+project; do not infer a responsibility area from a document or work-item type.
 Do not add a product layer or reinterpret a prefix merely to accommodate extracted
 requirements. Record missing meanings only when grounded in project sources or an
 explicitly accepted decision; do not invent a layer tree for a project that has none.
@@ -209,7 +209,7 @@ explicitly accepted decision; do not invent a layer tree for a project that has 
 For layer-based requirements use `R-<LAYER>-NNN`, for example `R-LOCAL-001`:
 `R` identifies a requirement and `<LAYER>` identifies the established contract owner.
 Allocate the next unused number separately within each `R-<LAYER>` namespace, checking
-current and historical requirements; legacy task numbers do not consume requirement
+current and historical requirements; work-item numbers do not consume requirement
 numbers. Existing task, investigation, and result IDs keep their own conventions.
 A source card's type prefix does not determine the extracted requirement's owning layer.
 Honor an explicit project override and preserve existing stable IDs unless normalization
@@ -246,7 +246,7 @@ micro-documents.
 
 1. Read applicable instructions/settings; identify the reader's question, material type,
    and existing owner under [documentation purpose](#documentation-purpose-and-ownership).
-2. Use the [conversion trigger](legacy-transition.md#trigger-and-authority) for selected legacy
+2. Use the [conversion trigger](source-transition.md#trigger-and-authority) for selected existing
    material and [ongoing capture](requirements.md#questions-during-work) for new input.
    A factual description needs no invented requirement.
 3. Read relevant sources and context for that material. When requirements/decisions apply,

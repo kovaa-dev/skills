@@ -1,9 +1,9 @@
 # Product grooming and incremental delivery
 
 Use [requirements](requirements.md), [queues](work-queue.md), and
-[documentation governance](documentation.md). Selected old PRD/task work first follows
-[on-touch conversion](legacy-transition.md). New discovery produces specifications,
-questions, decisions, and work requests, not new legacy cards.
+[documentation governance](documentation.md). Assess selected existing sources through
+[source assessment](source-transition.md). New discovery produces specifications,
+questions, decisions, and work requests in their owning documents.
 
 ## Start with the nearest useful result
 

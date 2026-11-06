@@ -1,7 +1,7 @@
 # Technical and Architectural Decisions
 
 Rules: [requirements](requirements.md) and [work queues](work-queue.md), [documentation rules](documentation.md).
-Use the appropriate form; examples are not project decisions. Legacy tasks follow [on-touch conversion](legacy-transition.md).
+Use the appropriate form; examples are not project decisions. Assess existing material through [source assessment](source-transition.md).
 Adapt paths and field language to the project settings and the checks actually selected.
 Use [decision approval](documentation.md#decision-approval) for acceptance authority and
 [evidence vocabulary](documentation.md#evidence-vocabulary) to distinguish agreement from

@@ -1,23 +1,35 @@
-# On-touch transition from legacy work
+# Source assessment and incremental transition
 
-This is the ordinary preparation path, not an optional cleanup action. New work uses
-[requirements](requirements.md) and [queues](work-queue.md). The PRD/layer-task scheme is
-officially legacy and remains operational only for records not yet converted.
+The target model uses [requirements](requirements.md), [queues](work-queue.md), and
+owning documentation for decisions, questions, descriptions, and results. Projects may
+start from any arrangement. Inspect actual sources; do not assume a previous schema.
 For an explicit one-shot transition use [migrate](governance-migration.md).
 
 ## Trigger and authority
 
-Before continuing implementation, grooming, closure, or a material edit of a selected
-legacy PRD/task, first capture its affected contract and remaining work in the new model.
-Apply the same rule when carrying forward a pre-existing contract from an old chat,
-checklist, task, or another noncanonical document.
+Before continuing implementation, grooming, closure, or a material documentation edit,
+assess the selected sources by meaning and authority. Existing requirements, wiki pages,
+issue records, checklists, chats, research, or code may supply relevant information.
+Determine where obligations, decisions, open questions, work, results, and verification
+actually live; filenames, age, prefixes, and directory layout do not decide their role.
+
+Reuse material that already fits the target model in place. Different paths, headings,
+or presentation alone do not trigger conversion, renaming, copying, or a coverage map.
+When selected obligations or work lack suitable canonical owners, reconcile only that
+affected scope before continuing dependent work, using the coverage process below.
+A mixed source may need conversion for only part of its content. Preserve applicable
+decisions and compatible records as their own canonical destinations. Interpret source
+status tokens from project definitions: a completion label is not current verification,
+and a planning label does not establish readiness. Do not invent status equivalence.
+For an actual conversion, record converted scope and remaining sources in the project;
+reusing compatible material does not require a migration record.
 Requirements recovered from implementation use [code recovery](requirements.md#recovering-requirements-from-code).
 
 New requirements and clarifications received during current work use
 [ongoing capture](requirements.md#questions-during-work). Recording that input alone does
-not initiate a legacy conversion or require a separate migration baseline/map/notice.
+not initiate a source conversion or require a separate migration baseline/map/notice.
 
-Reading an unrelated legacy link is not a request to migrate it or the entire backlog.
+Reading an unrelated source link is not a request to migrate it or the entire backlog.
 Convert the selected outcome and the directly necessary shared contracts/prerequisites.
 The unit may be a section/range inside a larger source. Reuse existing canonical owners
 and conversion mappings; source-wide conversion requires coverage of all its active content.
@@ -43,7 +55,7 @@ required at either scale, without a mandatory extra file or permanent second reg
 2. **Account for meaning.** Identify each independent obligation and its conditions,
    exceptions, negative constraints, applicability, prerequisites, acceptance, open questions,
    decisions, deferred work, and historical results. A source heading/paragraph/item locator
-   is sufficient; no new legacy ID or per-line numbering is needed. For each unit, record
+   is sufficient; no new source ID or per-line numbering is needed. For each unit, record
    its canonical destination or explicit disposition and reason. Destinations may be R-ID
    and revision, decision/question anchor, description/procedure, or work/result/history.
 3. **Preserve distinctions.** Shared destinations are allowed only after checking that all
@@ -76,7 +88,7 @@ second live requirement catalog or work queue.
 
 ## Convert before continuing
 
-1. **Recover and classify.** Identify the legacy source/ID, actual outcome, accepted
+1. **Recover and classify.** Identify the source/ID, actual outcome, accepted
    requirements and decisions, open questions, dependencies, remaining work, and historic
    acceptance/verification. Preserve a recoverable VCS revision, exact copy, or patch
    before replacing source text. Use [coverage and reconciliation](#coverage-and-reconciliation)
@@ -86,7 +98,7 @@ second live requirement catalog or work queue.
    and honest definition/verification state. Reuse matching obligations rather than
    creating one requirement per checkbox. Allocate new requirement IDs under the
    [type/layer namespace rules](documentation.md#layers-and-id-namespaces); retain the
-   legacy source ID in the coverage mapping, not as the new obligation's identity.
+   source ID in the coverage mapping, not as the new obligation's identity.
    Preserve technical decisions in their owner.
    Record hypotheses as draft/questions and coherent unaccepted alternatives as proposed,
    targeting the current contract. Preserve proven obsolete material as nonbinding history
@@ -96,7 +108,7 @@ second live requirement catalog or work queue.
    result links under [existing queues during transition](work-queue.md#existing-queues-during-transition).
    Retain work IDs for unchanged result boundaries and source IDs/redirects for replaced
    aggregates; add work entries only for independently useful outcomes.
-   Use [current queue registration/readiness](work-queue.md). Preserve legacy state as history,
+   Use [current queue registration/readiness](work-queue.md). Preserve source state as history,
    not proof of current readiness. Research is work with an answer/artifact, not a fake
    product requirement. Map waits to specific supplying work/results; preserve unresolved
    external prerequisites explicitly. Import completed outcomes into queue history with
@@ -110,10 +122,10 @@ second live requirement catalog or work queue.
    and affected navigation. The queue/index remains the shared selection route for old
    and new work. Only verified ranges become historical for current execution.
    For a partial source, add a prominent notice identifying converted ranges and the
-   remaining active legacy sections/work. Keep that remainder readable and operational
+   remaining active source sections/work. Keep that remainder readable and operational
    under on-touch conversion; do not archive the whole body or retire its remaining work.
    Keep original IDs, closure facts, acceptance, and verification accessible. The converted
-   scope must be usable without old task text as required context.
+   scope must be usable without superseded source text as required context.
    After switching, check IDs, redirects, dependencies, applicable checks, and
    discoverability of the unconverted remainder. Reconcile any material source/input
    changes since the coverage check before continuing or claiming completion.
@@ -127,7 +139,7 @@ section or its title.
 
 ## History and unresolved material
 
-A legacy done checkbox is historical evidence, not fresh proof of an extracted current
+A source completion checkbox is historical evidence, not fresh proof of an extracted current
 requirement. Preserve the source version/date when known and explicitly label missing
 version or unverified current behavior. Import cancelled work as cancelled, not delivered.
 Do not reopen or invent remaining work for a completed outcome merely to populate a queue.
@@ -139,19 +151,20 @@ Classify current, proposed, and historical applicability before calling two form
 conflicting. Unresolved current conflicts remain visible; migration does not choose
 one by recency, severity, or convenience.
 
-If a necessary prerequisite is still legacy, convert its minimum relevant contract/work
+If a necessary prerequisite lacks a suitable owner, reconcile its minimum relevant contract/work
 or leave an exact unresolved wait with a source locator. The selected work cannot be
 declared ready while that prerequisite's required result is unknown. Do not expand the
 conversion into unrelated prerequisites, source corpora, or historical tasks.
 
-## Ending the legacy workflow
+## Completing the selected transition
 
-Navigation and agent-facing entrypoints must state the new model and this on-touch rule
-when they are in the authorized affected scope. Retained old templates/parsers are
-compatibility readers, not instructions to generate new task cards. Do not install a
+Navigation and agent-facing entrypoints must state the target model and assessment rule
+when they are in the authorized affected scope. Retain compatible templates/parsers;
+adapt only assumptions that conflict with the target model. Do not let source-format enforcement recreate replaced contracts. Do not install a
 parallel tracker or require a permanent migration-mode flag.
 
-Legacy operational routing ends when no unconverted active work remains in the declared
-scope and all relevant contracts have canonical destinations. Preserved historical
-tasks may remain archived/redirected without keeping the old workflow alive.
+The selected transition is complete when all active meaning in the declared scope has
+a verified canonical destination, whether reused in place or converted, and no remaining
+work is hidden in sources. Preserved historical
+sources may remain archived/redirected without remaining authoritative for converted scope.
 Do not delete them or rewrite their historical meaning without explicit cleanup authority.

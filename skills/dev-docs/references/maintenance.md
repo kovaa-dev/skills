@@ -1,8 +1,8 @@
 # Maintenance and continuing development
 
 Use [requirements](requirements.md), [work queues](work-queue.md), and
-[governance](documentation.md). Existing legacy bug/task/PRD work first follows
-[on-touch conversion](legacy-transition.md); do not create new legacy cards.
+[governance](documentation.md). Assess existing material through [source assessment](source-transition.md)
+and reconcile only scope that needs canonical ownership.
 
 ## Intake and registration
 
@@ -20,7 +20,7 @@ Use an ID/name/link/status [queue row](work-queue.md#one-work-item-one-result-bo
 Preserve known impact and the next useful outcome at its linked owner. Place reproduction, causal hypotheses, research,
 and verification under [documentation ownership](documentation.md#work-context-and-results):
 a short note can suffice; useful descriptions/procedures belong in their existing owners.
-No PRD, complete design, estimate, stage, or separate issue document is required just
+No complete specification, design, estimate, stage, or separate issue document is required just
 to preserve a finding.
 
 Keep observation, hypothesis, and established cause distinct. "Not reproduced" does

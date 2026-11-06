@@ -2,9 +2,9 @@
 
 This reference owns the model for new and converted requirements/specifications.
 Other documentation follows [purpose and ownership](documentation.md#documentation-purpose-and-ownership);
-registered work follows [queues](work-queue.md), and selected legacy scope follows
-[on-touch transition](legacy-transition.md). Legacy task schemas are not an alternative
-for new work.
+registered work follows [queues](work-queue.md). Existing material follows
+[source assessment](source-transition.md): reuse compatible contracts in place and
+reconcile only scope that needs different ownership or separation of meanings.
 
 ## Names and ownership
 
@@ -27,13 +27,13 @@ useful contracts, not one file per sentence or one giant file per technical laye
 
 Use stable, readable IDs with project-wide uniqueness across specifications. Follow
 the [ID namespace rules](documentation.md#layers-and-id-namespaces): `R-<LAYER>-NNN`
-for layer-based requirements, with separate numbering from legacy tasks. Honor explicit
+for layer-based requirements, with separate numbering from existing work. Honor explicit
 project overrides; R-001/R-002 are fallback examples for projects without layers.
 Numbers do not encode priority, phase, section order, or file position.
 Never renumber on reorder/rename or reuse a retired ID. Preserve existing stable
-requirement IDs when converting; do not copy a legacy task ID onto every extracted rule.
+requirement IDs when converting; do not copy a source work ID onto every extracted rule.
 An explicitly requested ID normalization follows the linked continuity rule. The `R`
-type prefix distinguishes a new requirement from a legacy task in the same layer.
+type prefix distinguishes a new requirement from a work record in the same layer.
 
 A requirement needs its ID, readable behavior/obligation, applicability, verification
 method or an explicit method gap, and known state. Shared context/metadata can live at
@@ -131,7 +131,7 @@ to the affected capability; routine work does not require a repository-wide extr
    Code absence does not retire an accepted obligation or recover unimplemented intent.
 
 Keep recovered behavior readable without opening source code. Code-derived candidates
-need no legacy conversion map merely because they were undocumented. Existing legacy
+need no source conversion map merely because they were undocumented. Existing source
 documents still require their own coverage; code recovery does not substitute for reading
 or preserving their requirements, questions, and history. Register separate work only
 under the normal queue threshold.
@@ -329,7 +329,7 @@ proof of universal consistency.
 
 During authorized write work, capture material new/changed requirements and open questions
 as they arise, before dependent implementation and no later than closure or handoff.
-This includes input received while converting legacy sources, discoveries in implementation,
+This includes input received while converting source records, discoveries in implementation,
 and answers that change scope. Read-only discussion records the proposed capture in the
 response; do not claim it persisted in project documentation.
 

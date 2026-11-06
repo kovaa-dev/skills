@@ -1,7 +1,7 @@
 # Adoption, updates, and ordinary maintenance
 
-Requirements/specifications and lean queues are the current model. Old PRD/task tracking
-is officially legacy; selected legacy work follows [on-touch conversion](legacy-transition.md).
+Requirements/specifications and lean queues are the target model. Assess actual project
+sources and reconcile only incompatible scope through [source assessment](source-transition.md).
 A full backlog transition uses the separately requested [one-shot migration](governance-migration.md).
 
 ## Routine maintenance without adoption
@@ -12,14 +12,14 @@ or an adoption-mode field. Maintain the affected scope using
 
 - Preserve compatible project paths, language, stable IDs, accepted meaning, history, and
   explicit constraints. Reuse existing specifications/wiki and queue locations.
-- Use the [conversion trigger](legacy-transition.md#trigger-and-authority) for selected legacy
+- Use the [conversion trigger](source-transition.md#trigger-and-authority) for selected existing
   material and [ongoing capture](requirements.md#questions-during-work) for new input.
-  Keep unrelated legacy records available with an explicit route to the new model.
+  Keep unrelated source records available with an explicit route to the new model.
 - Faithful capture of an existing accepted contract is continuity, not a new product
   decision. Do not ask again merely to convert the selected item or start already
   authorized work. Do not infer write permission from a read-only request.
 - Create only material needed for the actual question/contract/result; no empty indexes, layers,
-  PRDs, or ADRs to satisfy a template.
+  specifications, or decision records to satisfy a template.
 - Do not change binding agent instructions/hooks/CI or bulk-delete/restructure sources
   without the corresponding scope. If explicit project constraints prohibit conversion,
   show the exact conflict and proposed minimum change; do not claim conversion or silently
@@ -45,7 +45,7 @@ requested and the choice is not already authorized.
 
 Requirements, queues, decisions, artifacts, history, and local settings remain project
 content. General governance has one canonical source; do not keep a paraphrased third
-policy. Old task cards may remain unconverted after governance adoption, with explicit
+policy. Existing sources may remain unconverted after governance adoption, with explicit
 on-touch routing; adopting a source is not proof of a fully migrated backlog.
 
 ## Safe adoption and verification
@@ -55,7 +55,7 @@ on-touch routing; adopting a source is not proof of a fully migrated backlog.
    resolve conflicts with their authorized owner. A format difference is not automatically
    a product conflict.
 3. Apply the authorized copy/pointer and entrypoint/settings changes. Clearly state the
-   new default and the legacy conversion route. Execution policy owns agent/CI/Git changes.
+   new default and the source conversion route. Execution policy owns agent/CI/Git changes.
 4. Verify affected links, source availability, requirement/work identity, canonical state,
    applicability, and one ordinary request route.
 5. Claim only the achieved scope. If governance update or content conversion is partial,
@@ -64,11 +64,11 @@ on-touch routing; adopting a source is not proof of a fully migrated backlog.
 
 Full verification is required for an explicitly full migration/audit or an actual project
 policy requirement. It covers all source types/ranges in scope, preserved questions,
-acceptance/verification, cross-links/dependencies, real enforcement, and residual legacy
+acceptance/verification, cross-links/dependencies, real enforcement, and remaining source
 routing. It checks the documentation system, not product/security correctness.
 
 Detailed working coverage is used when migration scope or required traceability warrants
-it. Condense transient detail under the [coverage protocol](legacy-transition.md#coverage-and-reconciliation),
+it. Condense transient detail under the [coverage protocol](source-transition.md#coverage-and-reconciliation),
 keeping checked provenance accessible. It is not a permanent migration mode or live tracker.
 
 ## Update
@@ -82,12 +82,12 @@ For an authorized source revision update:
 3. Resolve material conflicts, update the canonical owner, then consumer references and
    applicable settings in one coherent change. Preserve accepted scoped exceptions;
    do not keep obsolete stricter requirements silently active.
-4. Update skill copy/pointer and affected routing to requirements/queues. Remaining legacy
-   work follows on-touch conversion; run the separate migrate action only when full
+4. Update skill copy/pointer and affected routing to requirements/queues. Remaining sources
+   follow assessment and conversion only where needed; run the separate migrate action only when full
    content conversion was requested.
 5. Verify the affected routes/checks and then finalize the pinned revision or committed
    copy. Do not claim completion if the selected source is inaccessible or links still
-   direct new work into old task authoring.
+   direct work away from its target canonical owners.
 
 Coordinated changes with project-work governance update the owning rule once and link
 consumers to it. This skill does not require a particular execution skill or gain

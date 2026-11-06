@@ -1,8 +1,8 @@
 # Specification and requirement form
 
 Use [requirements](requirements.md) and [governance](documentation.md).
-This replaces the legacy product-task/PRD form. Convert selected old work under
-[on-touch transition](legacy-transition.md); do not create a new legacy product-task card to use this example.
+Assess selected sources under [source assessment](source-transition.md); reuse compatible
+specifications instead of recreating them from this form.
 
 ## A specification with addressable requirements
 
