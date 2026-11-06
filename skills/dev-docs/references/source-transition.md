@@ -47,6 +47,12 @@ Every claimed converted range needs a reviewable source-to-destination accountin
 For a small conversion, keep it inline in the source notice or existing work result;
 a full/large migration can use the [coverage form](forms-migration.md). Completeness is
 required at either scale, without a mandatory extra file or permanent second registry.
+Preserve meaning and evidence, not the source's layout or administrative prose. Keep
+migration accounting in the source notice, existing provenance record, or migration work
+result, outside the current specification. Requirements retain relevant source locators,
+not migration dates, renamed-ID narratives, copied metadata, or old subtask checklists.
+Do not create a migration-history file merely to remove that text from a specification;
+reuse an existing durable result or provenance location.
 
 1. **Establish the baseline.** Name the selected sources/ranges and preserve their actual
    version or exact snapshot. Read all content in the claimed ranges, including applicable
@@ -121,6 +127,11 @@ second live requirement catalog or work queue.
    including new inputs received during the work. Resolve missing/unmapped source meaning
    before applying a converted or historical label. Verify only the ranges whose meaning
    is accounted for; an incomplete remainder stays active and explicitly incomplete.
+   Also check the destination for repeated contracts, migration/administrative prose,
+   obsolete plans, and mixed criteria/evidence. Remove or consolidate these without
+   weakening obligations or losing source/evidence locators. Apply the
+   [documentation ownership rules](documentation.md#documentation-purpose-and-ownership);
+   a shorter page alone is not proof of a successful conversion.
 5. **Switch the verified reading route and continue.** Mark the exact verified sections/ranges and
    link their new owners, replacement queue rows, and results from the old source
    and affected navigation. The queue/index remains the shared selection route for old
