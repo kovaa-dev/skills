@@ -34,7 +34,8 @@ Search results still require the [state/applicability check](requirements.md#cur
 Canonical entries can be partitioned by capability, team, or work kind. Each work ID has
 one home; other views are links or actual generated projections. Do not manually
 duplicate statuses/dependencies across several queue tables.
-Completed/cancelled work stays visible in history, with its result locator.
+All queue views use linked ID/name/status rows, including completed/cancelled history;
+context and verification stay at the linked result owner.
 
 Dependency links cross queues. A blocked entry does not freeze the group.
 Stages/sprints are optional selection/grouping, not requirement IDs or implementation

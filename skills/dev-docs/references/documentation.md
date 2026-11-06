@@ -34,8 +34,9 @@ For reconstructing missing contracts, use [code recovery and provenance](require
 Update or create descriptions and instructions when a changed system or reader's actual
 question makes them useful. Requirements and delivery records do not replace those
 explanations. A documentation-only correction uses the existing owner without inventing
-R-IDs or another Q entry inside already tracked work. Independently assigned/deferred
-outcomes follow the queue's registration rule.
+R-IDs or another Q entry inside already tracked work. Registration requires the
+[queue outcome test](work-queue.md#one-work-item-one-result-boundary); an instruction
+to maintain records is not itself a separately useful tracked result.
 
 Canonical ownership prevents competing normative sources or work states. Overviews,
 guides, and references may summarize and explain for their audience, linking to the
@@ -48,8 +49,9 @@ Keep durable product/system knowledge in its owning document, and the selected w
 state in its canonical queue entry. Keep short-lived plans, investigation trails, and
 reproduction detail in the executor's working context or an existing relevant note/section.
 Persist only what is needed for continuation, handoff, traceability, or a useful result,
-within the existing write authority. A short context/acceptance note can fit inline in
-the queue when sufficient; longer material is linked rather than copied into every view.
+within the existing write authority. The queue row contains only ID, name/link, and
+delivery status; even short context/acceptance notes belong at the linked owner. Reuse
+an existing section instead of requiring a file per row.
 
 Do not force each repair to create an artifact file or append its incident history to
 the specification. Create a separate document only for independently useful content.

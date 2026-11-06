@@ -6,25 +6,36 @@ for intake/severity and [on-touch conversion](legacy-transition.md) before conti
 
 ## One work item, one result boundary
 
-Use a short canonical entry with a stable project-wide ID, default Q-001 for new work, a result-oriented
-title, status, and links to the relevant contract, documentation, or result/question.
-Include owner, priority, work kind, delivery target, or an exact wait only when useful
-for selecting/executing the work. Put shared owner/context at queue level where practical.
+A queue is a list of linked rows, grouped by useful headings. Each row has this form:
 
-The entry may live inline in a shared Markdown queue; one file per item is not required.
-Keep only the context needed to select/execute the work, including a short result or
-acceptance note when sufficient. Link larger context according to
-[documentation ownership and work-context placement](documentation.md#work-context-and-results);
-do not turn a lean queue into a requirement catalog or require an artifact file per repair.
+```md
+- [Q-001 Establish a usable preferences representation](wiki/personal-preferences.md#representation-question) – ready
+- [R-002 Cross-device preferences](wiki/personal-preferences.md#r-002) – planned
+```
 
-Work can implement several requirements or have no new product requirement: a repair,
-investigation, documentation update, dataset, experiment, configuration, or external action.
-Name the expected deliverable and how/where it will be accepted. Do not invent a PRD,
-requirement, TD, or subtask hierarchy merely to fit work into a template.
+Keep only the ID, name/link, and delivery status in the row. Use the project's compatible
+status tokens and inline-code styling if established. Requirements, questions, context,
+waits, owner, priority, delivery target, acceptance, dates, and verification belong at
+the linked owning document/section. Reuse that owner; a row does not require its own file.
+Do not turn queue entries into inline work cards or append a second context/status table.
 
-Register explicitly assigned/deferred work, an independently actionable unresolved
-blocker, or significant enduring risk. A local step or defect resolved within current
-work stays there. Do not turn every conversation, question, or observation into a queue item.
+An R-ID may directly identify delivery of its requirement; no wrapper Q-item is needed.
+The row status describes that delivery, not whether the requirement is accepted, active,
+or verified against the current revision. Those states remain in the specification.
+A separate repair against an unchanged requirement or an independent investigation uses
+its own work ID, default Q-001 for new work, and links its owning context. Do not create
+both an R-row and a Q-row for the same delivery merely to satisfy a schema. Several
+requirements delivered together can share execution context without wrapper subtasks.
+
+Register a separately useful requested/deferred outcome for the product, system, or its
+users, or an independently actionable unresolved blocker/significant enduring risk.
+Being an explicit instruction or an executed step alone is insufficient: ask what useful
+outcome requires selection or follow-up beyond bookkeeping of the current work.
+Required documentation capture, queue edits, migration notices, and closure recording
+are supporting steps of that work; their performance does not itself create another
+queued deliverable. Independently useful documentation, research, datasets, configurations,
+and external results remain valid outputs under the same outcome test. Do not invent
+product requirements, tasks, or artifact files merely to record having maintained records.
 
 ## Existing queues during transition
 
@@ -40,15 +51,17 @@ certify its readiness. Its unconverted contract and work remain in the old sourc
 the selected scope follows [on-touch conversion](legacy-transition.md). Capture new
 requirements directly in their owners and register work only at the threshold above.
 
-During conversion, update the selected existing work entry in place: retain its ID,
-incoming navigation, history, and delivery grouping, and link the captured requirements
-and expected result. A retained PRD/layer ID identifies work or its source, never an
-extracted requirement. Conversion alone does not require a new Q-ID or a second work
-entry. Split or consolidate entries only for actual result boundaries, preserving source
-mappings and any active remainder. For partial conversion, make converted and residual
-scope and their status owners explicit; do not retire the whole source or maintain two
-current statuses for the same scope. Whole-source coverage still follows the transition
-protocol. Completed/cancelled results retain the history described below.
+During conversion, replace the selected legacy selection links with the covered
+requirements/results, keeping one row per selected result and preserving delivery grouping,
+history, incoming resolution, and any active remainder. Retain an existing work ID when
+it still identifies the same result. If an aggregate task is replaced by extracted R-ID
+rows or consolidated outcomes, keep its old ID accessible as a source/redirect with the
+verified mapping; do not retain it as a second active delivery of the same scope.
+A PRD/layer ID does not become a requirement ID by renaming. Conversion alone does not
+require new Q-items. Split/consolidate only along actual result boundaries. For partial
+conversion, name the exact converted/residual scope and their status owners at the linked
+source; whole-source coverage still follows the transition protocol. Completed/cancelled
+results retain the history described below.
 
 This transition needs no generator, synchronization script, duplicate status table, or
 permanent migration register. Use existing project checks; adapt real enforcement only
@@ -92,9 +105,10 @@ independently maintained copy of status, dependencies, or acceptance.
 
 ## Dependencies and multiple queues
 
-Implementation prerequisites belong to requirements. For each missing input, the queue
-also records the specific supplying work/condition, for example "Q-002 waits for Q-001's
-accepted representation experiment". Do not pretend that Markdown computes this mapping.
+Implementation prerequisites belong to requirements. For each missing input, the linked
+work context records the specific supplying work/condition, for example "Q-002 waits for
+Q-001's accepted representation experiment". The queue row shows the waiting status.
+Do not pretend that Markdown computes this mapping.
 Keep the reason/result explicit; a done supplier is insufficient if its required result
 was not actually delivered or is invalid for the target baseline.
 
@@ -115,13 +129,14 @@ by project-work policy, not inferred from queue grouping.
 
 ## Completion, history, and current truth
 
-Keep completed and cancelled work visible in the queue's history or one linked archive,
-with result and meaningful completion date/version where known. Historical done entries,
+Keep completed and cancelled rows visible in the queue's history or one linked archive
+using the same ID/name/link/status format. Their linked result owns the completion
+date/version, evidence, cancellation reason, and limitations where known. Historical done entries,
 acceptance, and verification are not rewritten for a later regression or new scope.
 A new repair can reference the same unchanged requirement and earlier delivery; it does
 not need a duplicate requirement. Preserve uncertainty when importing historical records.
 
-A concise completion entry links the actual artifact/result and applicable verification.
+The completed row links the actual artifact/result or its owning verification section.
 The verification owner records requirements/baseline checked, method, observed result,
 and material limitations. Product/manual acceptance follows the existing execution
 policy; no inferred automation or relaxed gate is introduced by this skill.
