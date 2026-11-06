@@ -26,9 +26,9 @@ useful contracts, not one file per sentence or one giant file per technical laye
 ## Identity, state, and revision
 
 Use stable, readable IDs with project-wide uniqueness across specifications. Follow
-the project's [layer/prefix namespace](documentation.md#layers-and-id-namespaces), including
-its shared number allocation with work where applicable. R-001/R-002 are fallbacks only
-when no project convention exists; R-ID examples elsewhere do not mandate that prefix.
+the [ID namespace rules](documentation.md#layers-and-id-namespaces): `R-<LAYER>-NNN`
+for layer-based requirements, with separate numbering from legacy tasks. Honor explicit
+project overrides; R-001/R-002 are fallback examples for projects without layers.
 Numbers do not encode priority, phase, section order, or file position.
 Never renumber on reorder/rename or reuse a retired ID. Preserve existing stable
 requirement IDs when converting; do not copy a legacy task ID onto every extracted rule.

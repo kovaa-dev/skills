@@ -206,13 +206,15 @@ Do not add a product layer or reinterpret a prefix merely to accommodate extract
 requirements. Record missing meanings only when grounded in project sources or an
 explicitly accepted decision; do not invent a layer tree for a project that has none.
 
-Follow the project's declared ID scheme. For layer-based requirements, choose the
-existing layer that owns the contract, then its next unused sequential ID, such as
-LOCAL-025; account for current and historical records sharing that namespace. A source
-card's type prefix does not determine the extracted requirements' owning layers.
-Distinguish layer namespaces from record-type namespaces and preserve their existing
-meanings. Additional R/Q type segments and random suffixes are not implied.
-R-001/Q-001 are fallback examples for projects without an established convention.
+For layer-based requirements use `R-<LAYER>-NNN`, for example `R-LOCAL-001`:
+`R` identifies a requirement and `<LAYER>` identifies the established contract owner.
+Allocate the next unused number separately within each `R-<LAYER>` namespace, checking
+current and historical requirements; legacy task numbers do not consume requirement
+numbers. Existing task, investigation, and result IDs keep their own conventions.
+A source card's type prefix does not determine the extracted requirement's owning layer.
+Honor an explicit project override and preserve existing stable IDs unless normalization
+is requested. R-001/Q-001 remain fallback examples for projects without layers;
+random suffixes are not implied.
 
 Give a cross-layer obligation one canonical owner and let other layers reference it;
 do not duplicate it per consumer. A prefix does not establish dependency, priority,
