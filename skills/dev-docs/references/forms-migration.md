@@ -7,6 +7,7 @@ compatible records and capture obligations, work, decisions, and results in thei
 Use the shared [coverage protocol](source-transition.md#coverage-and-reconciliation).
 A small conversion keeps the same accounting inline in the source notice or work result;
 a detailed temporary table is for full/large migration or required traceability.
+This form belongs to migration provenance, not inside the current requirements document.
 Rows identify meaningful units/conditions, not merely filenames; group only when each
 contributing meaning and destination remains checkable.
 

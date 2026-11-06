@@ -43,6 +43,15 @@ guides, and references may summarize and explain for their audience, linking to 
 owning contract where it matters; they need not become link-only pages. Check their
 accuracy together with affected sources.
 
+Keep current specifications focused on the contract, applicability, dependencies, material
+uncertainties, and concise verification references. Do not include migration narratives,
+old task/subtask structures, or explanations of documentation mechanics (such as why the
+queue repeats a status). Keep each detailed assertion at one owner; summarize elsewhere
+only when it helps the reader, with a link instead of a second maintained formulation.
+Before adding a file or moving a section to shorten a page, remove duplication and reuse
+existing owners. Length alone does not justify splitting a document; preserve details
+whose removal would change meaning, hide a constraint, or prevent verification.
+
 ## Work context and results
 
 Keep durable product/system knowledge in its owning document, and the selected work's
@@ -60,6 +69,28 @@ the specification. Create a separate document only for independently useful cont
 Verification can live in an existing result, release, or relevant documentation section,
 with the exact contract/source baseline and honest limits. Preserve useful findings in
 the appropriate description, procedure, requirement, or decision.
+
+## Research alongside requirements
+
+For research serving a specification, prefer a clearly labeled section in that file
+when it keeps the current question and conclusions close to the affected requirements.
+A separate work identity does not require a separate file. Reuse an existing stable
+work ID and anchor; do not assign an R-ID to an investigation. The queue links to this
+section and repeats its own research status, independently of requirement delivery.
+
+Keep the active section concise: type (research), ID and status, question, linked
+requirements, completion criteria, current conclusion with uncertainties, and remaining
+checks. Link evidence with dates/versions and material limitations. Hypotheses remain
+nonbinding; completing research neither accepts a technical choice nor delivers the
+requirements. A supported negative answer can complete the investigation when it meets
+its agreed completion criteria; implementation need not succeed for research to finish.
+
+Keep a short useful evidence history inline. Move a bulky experiment journal to linked
+history, preserving evidence and superseded conclusions while keeping current findings
+in the active section. Use a separate research document when it has an independent
+reading purpose or would overwhelm the specification; location alone is not a reason
+to move or duplicate compatible existing records. For source-heavy external research,
+use the [bounded handoff](research-handoff.md).
 
 ## Necessity, sufficiency, and proportionality of a solution
 

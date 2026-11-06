@@ -31,6 +31,8 @@ scanning. This is a required projection, not a second authority. Definition/acce
 and implementation/verification remain distinct fields in the requirement.
 For independent repair/research work, the linked work-context section owns its status;
 its row repeats that value without changing the requirement's delivery status.
+Research can live [inside the specification](documentation.md#research-alongside-requirements)
+with its own ID, anchor, and status; a separate work row does not require a separate file.
 A historical row always reads its own delivery/revision result, not the current
 requirement's newest delivery status; do not overwrite history during reconciliation.
 A separate repair against an unchanged requirement or an independent investigation uses
