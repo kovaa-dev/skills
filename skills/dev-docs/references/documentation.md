@@ -191,9 +191,33 @@ source. Keep only necessary settings in an existing project document:
 - accepted scope/ownership boundaries and scoped exceptions;
 - a reproducible immutable public source when that adoption method was chosen.
 
-A technical layer is optional context, not a mandatory task namespace or separate team.
 Example paths do not imply a vendor, service, SLO, budget, jurisdiction, or platform.
 Preserve unknowns as questions; coordinate schema changes with actual parsers.
+
+## Layers and ID namespaces
+
+A **layer** is a named logical area of product/system responsibility with a defined
+contract and owning documentation. It may be product-wide or technical and span several
+components; it does not require a separate runtime module, team, queue, or giant document.
+Use the project's existing layer definitions and prefix mapping. In a project using
+layer IDs, these definitions are the authoritative namespaces, not obsolete task forms.
+Record missing meanings in existing project settings when needed; do not invent a layer
+tree for a project that has none.
+
+Follow its readable sequential format, such as PRD-140 for a product requirement or
+LOCAL-025 for local-state work. Allocate the next unused number in the declared prefix
+namespace, checking current and historical records of all material kinds sharing it.
+The prefix identifies the owning responsibility; the document/section identifies whether
+the record is a requirement, investigation, decision, or result. Additional R/Q type
+segments and random suffixes are not implied. R-001/Q-001 are fallback examples for
+projects without an established convention, not replacements for an existing layer scheme.
+
+Give a cross-layer obligation one canonical owner and let other layers reference it;
+do not duplicate it per consumer. A prefix does not establish dependency, priority,
+acceptance, or execution order. Keep the ID when moving/reordering a record or changing
+its owner. Explicitly authorized ID normalization preserves a source-to-successor mapping
+and incoming resolution, such as old anchors, and updates affected links; it does not
+reassign a retired ID to a different obligation. Ordinary conversion preserves stable IDs.
 
 ## Granularity of any document
 

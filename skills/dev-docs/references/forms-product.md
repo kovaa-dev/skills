@@ -2,12 +2,14 @@
 
 Use [requirements](requirements.md) and [governance](documentation.md).
 This replaces the legacy product-task/PRD form. Convert selected old work under
-[on-touch transition](legacy-transition.md); do not create a new PRD to use this example.
+[on-touch transition](legacy-transition.md); do not create a new legacy product-task card to use this example.
 
 ## A specification with addressable requirements
 
 Illustrative docs/wiki/personal-preferences.md; adapt placement/language and omit unused
 fields. Shared metadata applies until a requirement needs a narrower scope.
+Use the project's [layer/prefix IDs](documentation.md#layers-and-id-namespaces) when
+established; R-001 below is a fallback example.
 
 ```md
 # Personal preferences

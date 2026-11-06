@@ -26,6 +26,8 @@ use [existing queues during transition](references/work-queue.md#existing-queues
 Queues are linked ID/name/status rows; context and results stay at their linked owners.
 Register useful outcomes under the [queue rules](references/work-queue.md), not the
 supporting record maintenance performed during the current work.
+Reuse the project's [layer definitions and sequential ID namespaces](references/documentation.md#layers-and-id-namespaces);
+the R/Q examples are fallbacks, not a requirement to replace its existing prefixes.
 
 1. Read applicable project instructions and the selected canonical skill source. Respect
    explicit project/user constraints, existing paths, language, and accepted contracts.
@@ -106,7 +108,8 @@ requiring adoption or a whole-repository reorganization.
   accepted product requirement to draft. Respect discussion/read-only mode.
 - **init** — when explicitly requested, adopt the needed documentation entrypoints through
   a complete project-local skill copy or a pinned public source.
-  Create only needed documents; no layer registry, empty template tree, or legacy tracker.
+  Create only needed documents; reuse existing layer definitions instead of creating an
+  empty registry/template tree or a legacy tracker.
 - **audit** — read-only consistency and impact review of the selected scope. Classify
   descriptions, guides/procedures, specifications, decisions, queues, results, and legacy sources by
   meaning, regardless of directory. Show conflicting formulations, applicability,

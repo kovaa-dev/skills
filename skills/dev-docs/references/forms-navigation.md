@@ -47,7 +47,7 @@ Record only choices the project actually uses in an existing settings section:
 
 - specification/wiki, queue, decision, result, and history locations;
 - selected skill copy or immutable public pointer, when governance adoption was requested;
-- requirement/work ID conventions and prose/metadata language;
+- requirement/work ID conventions, existing layer/prefix meanings, and prose/metadata language;
 - compatible state tokens and whether any views are actually generated;
 - accepted delivery groups, ownership/area boundaries, and scoped exceptions;
 - actual documentation/parser checks and code-map locator when useful.

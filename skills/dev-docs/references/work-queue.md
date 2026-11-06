@@ -19,12 +19,13 @@ waits, owner, priority, delivery target, acceptance, dates, and verification bel
 the linked owning document/section. Reuse that owner; a row does not require its own file.
 Do not turn queue entries into inline work cards or append a second context/status table.
 
-An R-ID may directly identify delivery of its requirement; no wrapper Q-item is needed.
+A requirement ID may directly identify its delivery; no wrapper work item is needed.
 The row status describes that delivery, not whether the requirement is accepted, active,
 or verified against the current revision. Those states remain in the specification.
 A separate repair against an unchanged requirement or an independent investigation uses
-its own work ID, default Q-001 for new work, and links its owning context. Do not create
-both an R-row and a Q-row for the same delivery merely to satisfy a schema. Several
+its own work ID under the project's [ID namespace](documentation.md#layers-and-id-namespaces)
+and links its owning context; Q-001 is a fallback only when no convention exists. Do not
+create both requirement and work rows for the same delivery merely to satisfy a schema. Several
 requirements delivered together can share execution context without wrapper subtasks.
 
 Register a separately useful requested/deferred outcome for the product, system, or its
