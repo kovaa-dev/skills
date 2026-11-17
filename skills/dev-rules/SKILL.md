@@ -37,43 +37,55 @@ for destructive operations, merge, release, or deploy.
 
 ## Tool choice, information access, and external communication
 
-For information retrieval and operations, prefer a suitable available programmatic
-interface over browser automation or Computer Use. This also applies to unfamiliar
-sources, which may be internal: use context and bounded read-only evidence to establish
-network and authorization requirements rather than assuming public access or a need
-for an authenticated browser.
+Choose tools for the concrete operation and the evidence needed next. Apply these
+criteria during work; they do not require a separate plan, fixed timeout, retry quota,
+or diagnostic checklist.
 
-For remote operations against a named project system, prefer its configured MCP tools
-over ad hoc HTTP requests, CLI wrappers, browser automation, or computer-control tools.
-Use bounded discovery rather than repeatedly checking every available integration:
-
-1. First inspect the tool namespaces and catalog already exposed in the current session;
-   this does not require a tool call.
-2. If relevant MCP tools are deferred, perform at most one targeted discovery for the
-   service and requested operation during the task. Do not enumerate every server,
-   resource, or unrelated tool.
-3. Reuse that discovery result for the remainder of the task. Repeat it only when the
-   user says connections changed, the runtime exposes a changed tool inventory, or an
-   integration reports that reconnection is required.
-4. When a matching MCP is available and supports the operation, do not load or use browser,
-   computer-control, generic HTTP, CLI, or orchestrator skills unless the user or project
-   explicitly selected that interface.
-
-If no matching MCP is available or it does not support the operation, briefly state the
-limitation once and choose an existing authorized programmatic route suited to the source.
-Local filesystem and Git operations continue to use the appropriate local tools.
-
-On failure, distinguish source/authorization, network/environment, and tool-capability
-problems before changing route. A failed supported call does not prove an integration
-unsupported or a source browser-only. Use a supported recovery or permission path when
-it addresses the evidenced cause and is allowed; respect denied authority. Reuse known
-capability failures until conditions change.
-
-Choose the next step from that evidence, not by enumerating every access method.
-Use browser automation or Computer Use for access when explicitly chosen or the needed
-capability is unavailable programmatically. A browser launched through CLI is still a
-browser route. Do not require ceremonial failed attempts or a new adapter solely to
-avoid a necessary UI step; briefly explain a non-obvious fallback once.
+1. **Find the needed capability.** Identify the operation: source search, file retrieval,
+   log query, service inspection, or page interaction. Inspect exposed tool namespaces
+   and catalogs before making calls; use targeted discovery for the service and operation
+   when tools are deferred. Read relevant tool/skill guidance when it resolves a concrete
+   uncertainty, rather than enumerating unrelated integrations or access methods.
+2. **Distinguish presence from usability.** Configured, installed, exposed, connected,
+   authorized, and able to perform the requested operation are different states. Check
+   only unknown prerequisites of the selected action. An open page does not establish
+   working browser control, and a successful health check does not establish log access.
+3. **Choose the direct available route.** For a named remote project system, prefer a
+   matching configured MCP when available and capable. Do not load or use alternate
+   interface skills merely to replace it; honor an interface explicitly selected by the
+   user or project. Otherwise prefer a suitable existing authorized programmatic route;
+   use an authenticated browser session when the user chose it or the needed capability
+   is unavailable programmatically. Local filesystem and Git work use appropriate local
+   tools. A browser launched through CLI remains a browser route. Establish unfamiliar
+   sources' network and authorization requirements from context and bounded read-only
+   evidence; do not assume public access or browser-only access.
+4. **Probe the required operation cheaply.** Use a small relevant read or reversible
+   interaction whose result confirms the needed capability: a narrow log query, an
+   observed page interaction, or a connection check for CDP/SSH. Use short bounded probes
+   for availability checks and establish necessary prerequisites before expensive startup
+   or retrieval. Do not require ceremonial failed alternatives or build a new adapter
+   solely to avoid a necessary UI step.
+5. **Resolve the evidenced prerequisite.** Distinguish source/authorization,
+   network/environment, invalid-call, and tool-capability failures. Find the supported
+   setup or recovery for the actual cause: activate a tool, connect a session, configure
+   an option, obtain authorization, or add a missing component. Perform permitted routine
+   setup; involve the user only where their authority, access, or action is required,
+   naming the specific prerequisite. Respect denied authority and scope boundaries.
+6. **Give retries and route changes a reason.** A repeat or alternative needs a concrete
+   expectation of a different result, such as transient recovery, a corrected call,
+   changed conditions, or a capability that addresses the failure. A failed supported
+   call does not prove the integration unsupported or the source browser-only. Assess
+   information gained and cumulative effort across the whole access branch, including
+   tool switches; when it stops advancing, resolve the known prerequisite or reconsider
+   the approach instead of extending a chain of equivalent attempts. Briefly explain a
+   non-obvious fallback or concrete blocker once.
+7. **Reuse capability evidence and keep calls focused.** Reuse discovery, schemas,
+   commands, connections, permissions, and known limitations; revisit them when conditions
+   change or specific evidence calls them into question. Use schemas and state already
+   supplied by the runtime rather than fetching them again. Batch independent short
+   checks, return the fields or source fragments needed for the question, and perform
+   bookkeeping only under its applicable conditions. Check retrieval completeness before
+   interpreting an unexpectedly empty or truncated result.
 
 For a supplied page/source, verify that the returned content is the intended document,
 then extract the relevant information. Public search is a separate discovery choice,

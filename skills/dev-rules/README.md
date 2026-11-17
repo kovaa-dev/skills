@@ -21,7 +21,7 @@ Use `dev-rules` for:
 ## Why use it
 
 - **Scope authority:** distinguishes accepted product behavior from reversible implementation detail and stops changes that would silently expand the contract.
-- **Information access:** combines MCP precedence with programmatic access before browser/Computer Use, including unfamiliar sources, bounded discovery, and cause-based recovery; visual verification remains separate.
+- **Information access:** selects tools by operation and actual usability, preserves MCP precedence, checks needed capabilities cheaply, resolves missing prerequisites directly, and evaluates retries across the whole access branch while reusing known state; visual verification remains separate.
 - **User-visible-first execution:** when choosing the next increment, prioritizes the smallest end-to-end user-visible path and an early manual usability gate for UI work; necessary checks and measurements can precede acceptance, while optional infrastructure waits.
 - **Risk-proportionate validation:** selects the cheapest reliable test level for each risk instead of requiring every task to use the same TDD, E2E, or full-suite ceremony.
 - **Completion review:** uses risk models, scenario tracing, and failure hypotheses to check the finished result, reusing valid test and visual evidence across stages without repeating checks solely for a new checklist.
