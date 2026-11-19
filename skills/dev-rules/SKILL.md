@@ -511,8 +511,12 @@ maintainers.
   or to obtain a remote-only check needed to establish readiness, create a draft. While
   the user is sending consecutive batches of the same work or known scope remains open,
   keep the PR draft. Do not switch between draft/ready after every batch.
-- Before marking a draft ready and before merge, fetch and integrate the current base,
-  resolve conflicts, and run risk-based ready checks.
+- Before marking a draft ready and before merge, fetch and integrate the current base
+  and resolve conflicts. Run risk-based ready checks when marking a draft ready.
+- Before merging, limit additional local checks to changes made in the current
+  session and their effects. Reuse checks already completed in the session unless
+  there is a specific reason to rerun them. Wait for the repository's normal
+  pre-merge CI to pass for the version being merged.
 - Update PR metadata only for a material change in scope, blocker, or readiness. A
   routine push does not require a separate body update.
 - Incomplete published scope is draft; completed scope after the boundary is ready.
