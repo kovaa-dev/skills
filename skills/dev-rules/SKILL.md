@@ -141,8 +141,35 @@ Before the first write:
    setting. The active tool root, shell worktree, and edited paths must match.
 4. If they do not match, reactivate the correct project/worktree or stop; do not write
    to an accidentally opened checkout.
-5. Run the project bootstrap/route/resume command if one exists, and read only the rules
-   it names and their immediate owner sources.
+5. For a new task, [synchronize the base](#synchronize-the-base-for-new-work)
+   before substantive analysis, bootstrap, or edits. Then run the project
+   bootstrap/route/resume command if one exists and read the rules it names and
+   their immediate owner sources.
+
+### Synchronize the base for new work
+
+Updating the Git base is the default first action for every new repository task,
+including documentation-only work. Use the configured remote and primary branch
+(usually `origin/main` or `origin/master`), or the base explicitly selected by the
+user or project. Complete startup synchronization by incorporating the fetched
+base into the intended working checkout.
+
+- On the local primary branch, run `git pull --ff-only <remote> <base>`.
+- On the intended existing work branch, run
+  `git fetch <remote> <base> && git merge --no-edit FETCH_HEAD`.
+- For a new branch or worktree, fetch first and create it from the exact fetched
+  base. Use this route when the current checkout belongs to another task or
+  contains unrelated edits or commits.
+
+Attempt synchronization before doing task work. Resolve conflicts in the intended
+work branch, preserving existing changes. If the local primary branch cannot
+fast-forward or local edits prevent a safe update, preserve that checkout and use
+an isolated one that includes the fetched base. Bring across the commits and
+working changes needed for the task when they can be transferred safely. Follow
+explicit read-only, offline, or pinned-revision constraints. For a read-only
+review of current source, inspect the fetched ref and leave the checkout intact. In a local-only repository use its local
+primary branch. Routine turns on the same task reuse the synchronized base until
+a new task, a project trigger, or a delivery check calls for another update.
 
 ### Branch naming
 
@@ -186,10 +213,6 @@ Do not create worktrees under an arbitrary `/tmp` or another ad hoc location.
 Run bootstrap/shared-state commands (`agent:*`, install, prepare, codegen, migrations,
 Git config, and similar commands) sequentially. Run commands in parallel only when they
 are proven read-only and have no shared workspace/cache/Git side effects.
-
-Do not perform a network fetch before local analysis. Fetch/integration is needed only
-before creating a branch from a remote base, when explicitly requested, before ready/merge,
-or when there is a known conflict or contract-compatibility risk.
 
 ## 2. Source of truth and confirmed scope
 
@@ -470,10 +493,11 @@ deploy.
 
 ## 8. Git, commits, and PR
 
-Implementation authority permits scoped working-tree changes and, when needed, creation
-of a local branch or isolated worktree. It does not authorize commits, pushes, or
-creating/updating a PR. Perform each of those delivery actions only under an unambiguous
-user instruction that names the action or a directly encompassing delivery result.
+Implementation authority permits scoped working-tree changes, creation of a local
+branch or worktree, and [local base synchronization](#synchronize-the-base-for-new-work),
+including a merge commit when Git needs one on the work branch. Other commits, pushes,
+and creating/updating a PR each require an unambiguous user instruction that names the
+action or a directly encompassing delivery result.
 Requests to implement, fix, review, finish, or answer feedback; confirmation of an
 execution brief; and transition to `in-progress` are not delivery authority.
 
@@ -481,8 +505,8 @@ An explicit request to create or open a PR authorizes the coherent commits and p
 needed for that PR unless the user limits the request. A request to commit authorizes
 only local commits; a request to push authorizes the named push but not creating or
 updating a PR. Without the applicable authority, leave completed changes uncommitted or
-unpublished and report their state in chat. Destructive reset/delete/force, merge,
-release, and deploy always require separate authority.
+unpublished and report their state in chat. Destructive reset/delete/force, merging
+a PR or work into a delivery branch, release, and deploy always require separate authority.
 
 Write PR descriptions as a concise explanation to a colleague familiar with the project
 but not necessarily the task discussion. Explain the specific problem or need, the

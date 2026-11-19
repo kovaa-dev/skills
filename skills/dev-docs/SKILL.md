@@ -37,8 +37,12 @@ Use [requirement IDs and existing layer definitions](references/documentation.md
 new layer-based requirements use `R-<LAYER>-NNN`, numbered separately from existing work.
 Preserve existing stable IDs unless normalization is requested; explicit project overrides apply.
 
-1. Read applicable project instructions and the selected canonical skill source. Respect
-   explicit project/user constraints, existing paths, language, and accepted contracts.
+1. Read applicable project instructions and the selected canonical skill source.
+   For each new Git task, including documentation-only work, fetch and integrate
+   the configured primary branch before selecting or relying on project records.
+   Apply the “Synchronize the base for new work” procedure in `dev-rules` when
+   available. Respect explicit project/user constraints, existing paths, language,
+   and accepted contracts.
 2. Identify the reader's question and material type using
    [documentation purpose and ownership](references/documentation.md#documentation-purpose-and-ownership).
    Reuse its owning document; requirements and queue entries are created only when their
