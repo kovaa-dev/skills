@@ -37,8 +37,17 @@ Use [requirement IDs and existing layer definitions](references/documentation.md
 new layer-based requirements use `R-<LAYER>-NNN`, numbered separately from existing work.
 Preserve existing stable IDs unless normalization is requested; explicit project overrides apply.
 
-1. Read applicable project instructions and the selected canonical skill source. Respect
-   explicit project/user constraints, existing paths, language, and accepted contracts.
+1. Determine the mode and read the instructions needed to identify the task,
+   checkout, and base. For a new task with edits, fetch and integrate the current
+   task base before substantive work. Default to the configured primary branch
+   and honor a base selected by the user, project, or active PR. Prefer the
+   current checkout when the needed switch or update can preserve existing work.
+   Begin edits after the base is integrated and the merge is complete. Reread
+   changed by the update and reuse it for the same task, checkout, and base.
+   For read-only work, inspect the requested revision, fetching it when needed,
+   and leave the checkout intact. Follow explicit offline or pinned revisions.
+   Use the startup procedure in `dev-rules` when available. Respect user and
+   project constraints, existing paths, language, and accepted contracts.
 2. Identify the reader's question and material type using
    [documentation purpose and ownership](references/documentation.md#documentation-purpose-and-ownership).
    Reuse its owning document; requirements and queue entries are created only when their
