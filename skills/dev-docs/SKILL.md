@@ -40,8 +40,9 @@ Preserve existing stable IDs unless normalization is requested; explicit project
 1. Determine the mode and read the instructions needed to identify the task,
    checkout, and base. For a new task with edits, fetch and integrate the current
    task base before substantive work. Default to the configured primary branch
-   and honor a base selected by the user, project, or active PR. Begin edits
-   after the base is integrated and the merge is complete. Reread instructions
+   and honor a base selected by the user, project, or active PR. Prefer the
+   current checkout when the needed switch or update can preserve existing work.
+   Begin edits after the base is integrated and the merge is complete. Reread
    changed by the update and reuse it for the same task, checkout, and base.
    For read-only work, inspect the requested revision, fetching it when needed,
    and leave the checkout intact. Follow explicit offline or pinned revisions.

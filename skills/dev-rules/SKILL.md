@@ -159,18 +159,18 @@ local-only repository use its local primary branch.
 - On the local primary branch, run `git pull --ff-only <remote> <base>`.
 - On the intended existing work branch, run
   `git fetch <remote> <base> && git merge --no-edit FETCH_HEAD`.
-- For a new branch or worktree, fetch first and create it from the exact fetched
-  base. Use this route when the current checkout belongs to another task or
-  contains unrelated edits or commits.
+- For a new task branch, fetch first and create it from the exact fetched base.
+  Follow [worktree selection](#worktree-selection) when choosing where to switch
+  to or create the task branch.
 
 Proceed with edits once the fetched commit is an ancestor of `HEAD` and Git has
 no merge in progress. Verify ancestry with
 `git merge-base --is-ancestor <fetched-commit> HEAD`. Resolve conflicts and finish
 the merge before starting the requested changes. If the local primary branch
-cannot fast-forward or local edits prevent a safe update, preserve that checkout
-and use an isolated one that includes the fetched base. Bring across the commits
-and working changes needed for the task when they can be transferred safely.
-If fetching fails, report the blocker and continue independent work until the
+cannot fast-forward, preserve its history and create a task branch from the
+fetched base. Apply [worktree selection](#worktree-selection) when local edits
+prevent a safe switch or update. If fetching fails, report the blocker and
+continue independent work until the
 current base is available or an explicit offline or pinned mode is selected.
 
 For read-only work, inspect the requested revision or working tree. Fetch the
@@ -210,6 +210,20 @@ and `fix/PROJ-123_login-timeout`.
 Choose the type from the work's primary outcome rather than an incidental implementation
 step, keep the name stable for the life of the work, and validate generated names with
 `git check-ref-format --branch` before creating the branch.
+
+### Worktree selection
+
+Prefer the current worktree so the result is visible in the user's open
+checkout. Switch to or create the intended task branch there when Git can
+preserve existing work. Keep unrelated local edits in place and stage only the
+task's changes.
+
+Use a separate worktree only when the current one cannot accommodate the task
+while preserving existing work, or when explicitly requested by the user or
+project. Examples include a required switch or base update that would overwrite
+local changes, or an active task that needs this checkout on a different branch.
+Bring across the task's commits and working changes only when they can be
+transferred safely.
 
 When a task needs a separate workspace, first use the current environment's workspace
 management (for example its UI, API, or CLI) if available. Reuse a suitable workspace
