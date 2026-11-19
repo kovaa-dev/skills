@@ -131,18 +131,55 @@ For reviews of completed changes and codebase audits, use the
 
 ## 1. Start and correct worktree
 
-Before the first write:
+Before substantive task work:
 
 1. Determine the exact requested result and mode: read-only, implementation, or
    Git/delivery.
 2. Check the active editor/code-navigation project (Serena, when available), the shell
    Git top-level/worktree, branch, and status.
-3. Derive the intended branch from the request, active PR/task, or explicit project
-   setting. The active tool root, shell worktree, and edited paths must match.
-4. If they do not match, reactivate the correct project/worktree or stop; do not write
-   to an accidentally opened checkout.
-5. Run the project bootstrap/route/resume command if one exists, and read only the rules
-   it names and their immediate owner sources.
+3. Identify the task, intended branch, and base from the request, active PR/task, or
+   explicit project setting. Use a matching [handoff](#9-handoff-and-context) or
+   a read-only route/resume step when needed to distinguish new work from a
+   continuation. If the tool root, shell worktree, and intended paths disagree,
+   select and verify the correct checkout before changing it.
+4. Apply [base synchronization](#synchronize-the-base-for-new-work) before
+   substantive analysis, bootstrap that writes project state, or edits. After
+   updating, reread any changed instructions that apply, including `AGENTS.md`.
+   Run the remaining authorized bootstrap against the selected baseline.
+
+### Synchronize the base for new work
+
+For every new task that changes a Git checkout, fetch and incorporate the
+current base before beginning the work, including documentation-only work. Use
+the base specified by the user, project, or active PR. Otherwise use the
+repository's configured primary remote and branch, usually `origin/main` or
+`origin/master`. Respect an explicit offline mode or pinned revision. In a
+local-only repository use its local primary branch.
+
+- On the local primary branch, run `git pull --ff-only <remote> <base>`.
+- On the intended existing work branch, run
+  `git fetch <remote> <base> && git merge --no-edit FETCH_HEAD`.
+- For a new task branch, fetch first and create it from the exact fetched base.
+  Follow [worktree selection](#worktree-selection) when choosing where to switch
+  to or create the task branch.
+
+Proceed with edits once the fetched commit is an ancestor of `HEAD` and Git has
+no merge in progress. Verify ancestry with
+`git merge-base --is-ancestor <fetched-commit> HEAD`. Resolve conflicts and finish
+the merge before starting the requested changes. If the local primary branch
+cannot fast-forward, preserve its history and create a task branch from the
+fetched base. Apply [worktree selection](#worktree-selection) when local edits
+prevent a safe switch or update. If fetching fails, report the blocker and
+continue independent work until the
+current base is available or an explicit offline or pinned mode is selected.
+
+For read-only work, inspect the requested revision or working tree. Fetch the
+needed ref when it is missing or current remote state is part of the request,
+and leave the checkout intact.
+
+Reuse a successful startup update for the same task, checkout, and base selection
+across user turns, skill changes, and handoffs. Follow project triggers and the
+[delivery checks](#8-git-commits-and-pr) when they require a fresh update.
 
 ### Branch naming
 
@@ -174,6 +211,20 @@ Choose the type from the work's primary outcome rather than an incidental implem
 step, keep the name stable for the life of the work, and validate generated names with
 `git check-ref-format --branch` before creating the branch.
 
+### Worktree selection
+
+Prefer the current worktree so the result is visible in the user's open
+checkout. Switch to or create the intended task branch there when Git can
+preserve existing work. Keep unrelated local edits in place and stage only the
+task's changes.
+
+Use a separate worktree only when the current one cannot accommodate the task
+while preserving existing work, or when explicitly requested by the user or
+project. Examples include a required switch or base update that would overwrite
+local changes, or an active task that needs this checkout on a different branch.
+Bring across the task's commits and working changes only when they can be
+transferred safely.
+
 When a task needs a separate workspace, first use the current environment's workspace
 management (for example its UI, API, or CLI) if available. Reuse a suitable workspace
 for the same task. Switch the active workspace when the environment supports it;
@@ -186,10 +237,6 @@ Do not create worktrees under an arbitrary `/tmp` or another ad hoc location.
 Run bootstrap/shared-state commands (`agent:*`, install, prepare, codegen, migrations,
 Git config, and similar commands) sequentially. Run commands in parallel only when they
 are proven read-only and have no shared workspace/cache/Git side effects.
-
-Do not perform a network fetch before local analysis. Fetch/integration is needed only
-before creating a branch from a remote base, when explicitly requested, before ready/merge,
-or when there is a known conflict or contract-compatibility risk.
 
 ## 2. Source of truth and confirmed scope
 
@@ -470,10 +517,11 @@ deploy.
 
 ## 8. Git, commits, and PR
 
-Implementation authority permits scoped working-tree changes and, when needed, creation
-of a local branch or isolated worktree. It does not authorize commits, pushes, or
-creating/updating a PR. Perform each of those delivery actions only under an unambiguous
-user instruction that names the action or a directly encompassing delivery result.
+Implementation authority permits scoped working-tree changes, creation of a local
+branch or worktree, and [local base synchronization](#synchronize-the-base-for-new-work),
+including a merge commit when Git needs one on the work branch. Other commits, pushes,
+and creating/updating a PR each require an unambiguous user instruction that names the
+action or a directly encompassing delivery result.
 Requests to implement, fix, review, finish, or answer feedback; confirmation of an
 execution brief; and transition to `in-progress` are not delivery authority.
 
@@ -481,8 +529,8 @@ An explicit request to create or open a PR authorizes the coherent commits and p
 needed for that PR unless the user limits the request. A request to commit authorizes
 only local commits; a request to push authorizes the named push but not creating or
 updating a PR. Without the applicable authority, leave completed changes uncommitted or
-unpublished and report their state in chat. Destructive reset/delete/force, merge,
-release, and deploy always require separate authority.
+unpublished and report their state in chat. Destructive reset/delete/force, merging
+a PR or work into a delivery branch, release, and deploy always require separate authority.
 
 Write PR descriptions as a concise explanation to a colleague familiar with the project
 but not necessarily the task discussion. Explain the specific problem or need, the
