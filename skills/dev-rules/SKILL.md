@@ -131,28 +131,30 @@ For reviews of completed changes and codebase audits, use the
 
 ## 1. Start and correct worktree
 
-Before the first write:
+Before substantive task work:
 
 1. Determine the exact requested result and mode: read-only, implementation, or
    Git/delivery.
 2. Check the active editor/code-navigation project (Serena, when available), the shell
    Git top-level/worktree, branch, and status.
-3. Derive the intended branch from the request, active PR/task, or explicit project
-   setting. The active tool root, shell worktree, and edited paths must match.
-4. If they do not match, reactivate the correct project/worktree or stop; do not write
-   to an accidentally opened checkout.
-5. For a new task, [synchronize the base](#synchronize-the-base-for-new-work)
-   before substantive analysis, bootstrap, or edits. Then run the project
-   bootstrap/route/resume command if one exists and read the rules it names and
-   their immediate owner sources.
+3. Identify the task, intended branch, and base from the request, active PR/task, or
+   explicit project setting. Use a matching [handoff](#9-handoff-and-context) or
+   a read-only route/resume step when needed to distinguish new work from a
+   continuation. If the tool root, shell worktree, and intended paths disagree,
+   select and verify the correct checkout before changing it.
+4. Apply [base synchronization](#synchronize-the-base-for-new-work) before
+   substantive analysis, bootstrap that writes project state, or edits. After
+   updating, reread any changed instructions that apply, including `AGENTS.md`.
+   Run the remaining authorized bootstrap against the selected baseline.
 
 ### Synchronize the base for new work
 
-Updating the Git base is the default first action for every new repository task,
-including documentation-only work. Use the configured remote and primary branch
-(usually `origin/main` or `origin/master`), or the base explicitly selected by the
-user or project. Complete startup synchronization by incorporating the fetched
-base into the intended working checkout.
+For every new task that changes a Git checkout, fetch and incorporate the
+current base before beginning the work, including documentation-only work. Use
+the base specified by the user, project, or active PR. Otherwise use the
+repository's configured primary remote and branch, usually `origin/main` or
+`origin/master`. Respect an explicit offline mode or pinned revision. In a
+local-only repository use its local primary branch.
 
 - On the local primary branch, run `git pull --ff-only <remote> <base>`.
 - On the intended existing work branch, run
@@ -161,15 +163,23 @@ base into the intended working checkout.
   base. Use this route when the current checkout belongs to another task or
   contains unrelated edits or commits.
 
-Attempt synchronization before doing task work. Resolve conflicts in the intended
-work branch, preserving existing changes. If the local primary branch cannot
-fast-forward or local edits prevent a safe update, preserve that checkout and use
-an isolated one that includes the fetched base. Bring across the commits and
-working changes needed for the task when they can be transferred safely. Follow
-explicit read-only, offline, or pinned-revision constraints. For a read-only
-review of current source, inspect the fetched ref and leave the checkout intact. In a local-only repository use its local
-primary branch. Routine turns on the same task reuse the synchronized base until
-a new task, a project trigger, or a delivery check calls for another update.
+Proceed with edits once the fetched commit is an ancestor of `HEAD` and Git has
+no merge in progress. Verify ancestry with
+`git merge-base --is-ancestor <fetched-commit> HEAD`. Resolve conflicts and finish
+the merge before starting the requested changes. If the local primary branch
+cannot fast-forward or local edits prevent a safe update, preserve that checkout
+and use an isolated one that includes the fetched base. Bring across the commits
+and working changes needed for the task when they can be transferred safely.
+If fetching fails, report the blocker and continue independent work until the
+current base is available or an explicit offline or pinned mode is selected.
+
+For read-only work, inspect the requested revision or working tree. Fetch the
+needed ref when it is missing or current remote state is part of the request,
+and leave the checkout intact.
+
+Reuse a successful startup update for the same task, checkout, and base selection
+across user turns, skill changes, and handoffs. Follow project triggers and the
+[delivery checks](#8-git-commits-and-pr) when they require a fresh update.
 
 ### Branch naming
 
